@@ -701,7 +701,7 @@ void Hook_Timer1SecEventA(void)
 	//ACOutProchotRelease();  //MEILING055:remove.
 	//GPUProchotOnControl();  //MEILING055:remove.
 	CPUThrottlingDelay();   //MEILING052:add.
-	disCPUturbo90s(); //COKEYXU044:add
+	//disCPUturbo90s(); //COKEYXU044:add
 #endif
 }
 

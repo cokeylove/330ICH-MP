@@ -973,18 +973,19 @@ void Thro_Turbo(BYTE BTurboRem, BYTE BTurboOff, BYTE BTType)
 	{	// Set Internal CPU.
 
 //JERRYCH005:s+Add cpu turbo enable/disable event.		
-		if (( TEMP_Buff_3 <= BTurboRem )&&	( VGA_TBuff3 <=60))// Check turbo resume. //COKEYXU027: enable CPU turbo when GPU temp <= 60
+		if (( TEMP_Buff_3 <= BTurboRem )&&	( VGA_TBuff3 <=80))// Check turbo resume. //COKEYXU027: enable CPU turbo when GPU temp <= 60
 		{ CLR_MASK(Thro_Status, b3Turbo_CPU); }
 		else
 		{
-			if (( TEMP_Buff_3 >= BTurboOff )||(VGA_TBuff3 >=65))//COKEYXU027: disable CPU turbo when GPU temp > = 65.
+			if (( TEMP_Buff_3 >= BTurboOff )||(VGA_TBuff3 >=84))//COKEYXU027: disable CPU turbo when GPU temp > = 65.
 			{
 				SET_MASK(Thro_Status, b3Turbo_CPU);
 			}
 		}
 	}
 		
-    if ( IS_MASK_CLEAR(Thro_Status, b3Turbo_CPU ) && (DisCPUTurboFor90s == 0) && (DisCPUTurboForLTP == 0) && IS_MASK_CLEAR(Adapter90WWA,b1_DisCPUturbo) && (nAtmFanSpeed > 5))//COKEYXU029: add fan1 speed > 500 and system start after 90s,then enable CPU turbo. //COKEYXU046: when low temp protect£¬disable CPU turbo.
+    if ( IS_MASK_CLEAR(Thro_Status, b3Turbo_CPU ) )/* && (DisCPUTurboFor90s == 0) && (DisCPUTurboForLTP == 0) && IS_MASK_CLEAR(Adapter90WWA,b1_DisCPUturbo)  //remove for L340 test
+    && (nAtmFanSpeed > 5))*/ //COKEYXU029: add fan1 speed > 500 and system start after 90s,then enable CPU turbo. //COKEYXU046: when low temp protect disable CPU turbo.
 	{                                                                                                                                          //COKEYXU030: add W/A for 90W adapter,cannot charge battery RSOC up when system consumption is very high.              
 		if ( IS_MASK_SET(uVGATurboFun,uDisCPUTurboOK) )		
 		{

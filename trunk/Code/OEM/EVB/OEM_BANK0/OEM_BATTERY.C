@@ -2023,7 +2023,7 @@ void OEM_PollingBatData_TASK(void)
 		if(GPUProchotONCnt == 0) //ANGELAG033: add
 		{ //ANGELAG033: add
 			ChkBattery_OTP();
-			ChkBattery_LTP();//COKEYXU039:Add Battery Low Temperature Protect
+			//ChkBattery_LTP();//COKEYXU039:Add Battery Low Temperature Protect//remove for L340 test
 			//ChkBattery_OCP();  //MEILING046:remove.//MEILING051:-Add cpu P_STATE function.
 			//ChkBattery_OCP();  //ANGELAG017: add
 			//ChkPsys();  //ANGELAG019: add //COKEYXU008 : remove

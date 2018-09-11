@@ -292,7 +292,8 @@ void ScanADCDyChannel1(void)
 		{
 			CLR_MASK(GPU_Prochot, b5_adapter);
 			CLR_MASK(Thro_Status4, b0ProCH_ADP);
-
+			
+        /* //remove for L340 test
 			if(uMBGPU == 0x02) //COKEYXU030: add when system consumption > 82W disable CPU turbo.
 			{
 				if(ADPI_AvgData>ECprochot_82W)   
@@ -304,6 +305,7 @@ void ScanADCDyChannel1(void)
 					CLEAR_MASK(Adapter90WWA,b1_DisCPUturbo);
 				}
 			}	
+		*/
 		}
 		//ANGELAG046: add end
 		
