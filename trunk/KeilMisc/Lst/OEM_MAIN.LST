@@ -1,0 +1,3417 @@
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 1   
+
+
+C51 COMPILER V8.12, COMPILATION OF MODULE OEM_MAIN
+OBJECT MODULE PLACED IN Code\OEM\OEM_MAIN.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE Code\OEM\OEM_MAIN.C LA WL(1) CD OT(9,SIZE) NOAREGS OR INCDIR(.\Code\CORE\IN
+                    -CLUDE\;.\Code\OEM\INCLUDE\;.\Code\CHIP\INCLUDE\)
+
+line level    source
+
+   1          /*-----------------------------------------------------------------------------
+   2           * TITLE: OEM_MAIN.C - OEM specific code
+   3           *
+   4           * Some "HOOKS" from CHIPHOOK.C are copied into this file in order to replace
+   5           * (or augment) core functions.
+   6           *
+   7           * Copyright (c) 1983-2007, Insyde Software Corporation. All Rights Reserved.
+   8           *
+   9           * You may not reproduce, distribute, publish, display, perform, modify, adapt,
+  10           * transmit, broadcast, present, recite, release, license or otherwise exploit
+  11           * any part of this publication in any form, by any means, without the prior
+  12           * written permission of Insyde Software Corporation.
+  13           *---------------------------------------------------------------------------*/
+  14          
+  15          #include <CORE_INCLUDE.H>
+  16          #include <OEM_INCLUDE.H>
+  17          
+  18          //------------------------------------------------------------
+  19          // Hook 1ms events
+  20          // EventId is 0 ~ 9 cycle
+  21          //------------------------------------------------------------
+  22          void Hook_Timer1msEvent(IBYTE EventId)
+  23          {
+  24   1              if(SystemIsS0)
+  25   1          {
+  26   2                      if(USB_Delay!=0x00)
+  27   2                      {
+  28   3                              USB_Delay--;
+  29   3                              if(USB_Delay==0x00)
+  30   3                              {
+  31   4                      USB_ON_OUTPUT;
+  32   4                      USB_ON_LOW();
+  33   4                              }
+  34   3             }
+  35   2         }  
+  36   1      #if !EN_PwrSeqTest 
+  37   1              //GC6_FBClamp(); 
+  38   1      #endif  
+  39   1          PollingBIOS80Port();
+  40   1          EventManager(EventId);      // Polling system event
+  41   1          Oem_SysPowerContrl();       // System Power Control
+  42   1          SetVGA_AC_DET();
+  43   1      
+  44   1              //if(SystemIsS0) //ANGELAS013:Modify SD power function.
+  45   1                      //Set_SD_PWR_EN();//angela  //MEILING001:remove.
+  46   1      
+  47   1          if ( !Read_ENBKL_IN() )
+  48   1          { 
+  49   2              BKOFF_OFF(); 
+  50   2          }
+  51   1      #if PS8625_SUPPORT 
+                      //  for PS8625 translator initial+
+                  if( SystemIsS0 && (delayEDPTm==0) )           // CMW Temp
+                  {
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 2   
+
+                      if( (initMark !=0xAA) && (TEMP_Error < 20) )
+                      {
+                              Init_PS8625();
+                      }
+                  }
+              #endif  
+  61   1              // CWM  for PS8625 translator initial -
+  62   1              
+  63   1      }
+  64          
+  65          //------------------------------------------------------------
+  66          // Hook 5ms events
+  67          //------------------------------------------------------------
+  68          void Hook_Timer5msEvent(void)
+  69          {
+  70   1              //VPC_interface();
+  71   1      }
+  72          
+  73          //------------------------------------------------------------
+  74          // Hook 10ms events
+  75          //------------------------------------------------------------
+  76          void Hook_Timer10msEventA(void)
+  77          {
+  78   1              /* if((Reset_Delay==0x44)||(Reset_Delay==0x55))
+  79   1              {
+  80   1                      Reset_Delay_Count++;
+  81   1               if(Reset_Delay_Count==0xFF)  //T070B:change 0x64 to 0xFF
+  82   1              {
+  83   1                              Reset_Delay_Count=0x00; //G30:Remove work around
+  84   1            
+  85   1              }
+  86   1              } 
+  87   1              else 
+  88   1              {
+  89   1                      Reset_Delay_Count=0x00;
+  90   1              }*/
+  91   1              // start for save P80 code to setup. 
+  92   1              /*   //remove below code.
+  93   1              if(CheckDebugMode())
+  94   1              {
+  95   1              SET_MASK(P80CMOSSts,P80CMOSDis);
+  96   1              //RamDebug(0x88+P80CMOSSts);
+  97   1              }
+  98   1              */     
+  99   1              // end for save P80 code to setup. 
+ 100   1              ScanADCFixChannel();
+ 101   1              CPUProchotCtrl(); ////ANGELAG028: add.  
+ 102   1              GPUProchotOnControl();  //ANGELAG028:add.
+ 103   1              //H2RAMprocess();
+ 104   1              TPInfor_ToVPC(); //ANGELAG008: add
+ 105   1              Backlight_Control();
+ 106   1              EscScanCode(); //10ms
+ 107   1      #if !EN_PwrSeqTest
+ 108   1              if (PWRBTN_pressCnt !=0)
+ 109   1              {
+ 110   2                      PWRBTN_pressCnt--;
+ 111   2                      if (PWRBTN_pressCnt==0)
+ 112   2                      {
+ 113   3                              PM_PWRBTN_HI();
+ 114   3                              //CLEAR_MASK(SysStatus,EnterDS3byLid);
+ 115   3                      }
+ 116   2              }
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 3   
+
+ 117   1              /*//ANGELAS007:s-Optimize power on sequence.
+ 118   1              //ANGELAS005:s+ Support UMA SKU EC_ON pin design.
+ 119   1              if(NTC_V1>682)
+ 120   1              {
+ 121   1                      if ((LID_readytime != 0) && (IS_MASK_SET(GPDRF,BIT(0))))
+ 122   1                      { 
+ 123   1                              LID_readytime--; 
+ 124   1                      }
+ 125   1              }
+ 126   1              else
+ 127   1              {
+ 128   1              //ANGELAS005:e+ Support UMA SKU EC_ON pin design.
+ 129   1              if ((LID_readytime != 0) && (Read_EC_ON()))
+ 130   1              { 
+ 131   1                      LID_readytime--; 
+ 132   1             }
+ 133   1              }//ANGELAS005:Support UMA SKU EC_ON pin design.
+ 134   1              *///ANGELAS007:e-Optimize power on sequence.
+ 135   1          //if(!Read_ADAPTERID_ON())  //MEILING001:remove.
+ 136   1          if(AdapterIDOn_Flag) //MEILING001:add.
+ 137   1          {
+ 138   2              if(ADPIDON10MS_NUM>0x00)
+ 139   2              {
+ 140   3                      ADPIDON10MS_NUM--; 
+ 141   3              }
+ 142   2              else 
+ 143   2              {
+ 144   3                  //SetPowerBatteryparameter(); //
+ 145   3                  //ADAPTERIDON_HI();  //MEILING001:remove.
+ 146   3                  SetPowerBatteryparameter2(); //MEILING001:add.
+ 147   3                  AdapterIDOn_Flag = 0x00; //MEILING001:add.
+ 148   3                  ADPIDON10MS_NUM=0xFF; 
+ 149   3              }    
+ 150   2          } 
+ 151   1          else 
+ 152   1          {
+ 153   2              if(ADPIDON10MS_NUM>0x01)
+ 154   2              {
+ 155   3                  ADPIDON10MS_NUM--; 
+ 156   3              }
+ 157   2              else 
+ 158   2              {   
+ 159   3                  if(ADPIDON10MS_NUM==0x01)
+ 160   3                  {
+ 161   4                      //T058B-  CLEAR_MASK(SYS_STATUS,AC_ADP);        //T058A+
+ 162   4                              //ACOFF_HI();         //T078-                                //T058A+
+ 163   4                      //T058B-  ECSMI_SCIEvent(ACPI_ACOUT_SCI); 
+ 164   4                      ADPIDON10MS_NUM--;
+ 165   4                  }     
+ 166   3               }
+ 167   2         }
+ 168   1      #endif
+ 169   1              //change deep sleep From 1ms hook to 1s hook start
+ 170   1      #if     Support_EC_Sleep
+ 171   1              if( CheckCanEnterDeepSleep() )
+ 172   1              {
+ 173   2                      InitEnterDeepSleep();
+ 174   2                      EnableAllInterrupt();   // enable global interrupt
+ 175   2                      PLLCTRL = 0x01;
+ 176   2                      PCON    = 0x02;                 /* Enter Deep Sleep mode.  */
+ 177   2                      _nop_();                                /* Wake-up delay.  */
+ 178   2                      _nop_();
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 4   
+
+ 179   2                      _nop_();
+ 180   2                      _nop_();
+ 181   2                      _nop_();
+ 182   2                      _nop_();
+ 183   2                      _nop_();
+ 184   2                      _nop_();
+ 185   2                      IER3 = 0x00;
+ 186   2                      InitWakeFromDeepSleep();
+ 187   2                      WakeUp_DO_Function();
+ 188   2                      //WakeUp_30ms_Function();
+ 189   2              }
+ 190   1              else
+ 191   1              {
+ 192   2                      PCON=1; // Enter idle mode
+ 193   2              }
+ 194   1      #else
+                      PCON=1; // Enter idle mode
+              #endif  // Support_EC_Sleep
+ 197   1              //:change deep sleep From 1ms hook to 1s hook end
+ 198   1      }
+ 199          
+ 200          
+ 201          //MARTINH154:Add  start
+ 202          void Deal_CLEAR_CMOS(void)
+ 203          {
+ 204   1              if (IS_MASK_SET(CMOS_TEST,b0_CMOS_FunctionKey))
+ 205   1              {
+ 206   2                      if(SystemIsS5)
+ 207   2                      {     
+ 208   3                      if(IS_MASK_CLEAR(CMOS_TEST,b1_CMOS_delay1flag))
+ 209   3                              { 
+ 210   4                              cmosdelay++;
+ 211   4                                      RSMRST_LOW();
+ 212   4                                      if(cmosdelay==0x01)
+ 213   4                                      {
+ 214   5                                      PCH_PWR_EN_OFF();
+ 215   5                                      }
+ 216   4                                      if(cmosdelay==0x02)
+ 217   4                                      {
+ 218   5                                      EC_ON_LOW();
+ 219   5                                      }
+ 220   4                                      if(cmosdelay==0x03)
+ 221   4                                      {
+ 222   5                                      //PCH_PWREN_HI();
+ 223   5                                      PM_PWRBTN_LOW();
+ 224   5                                      AC_PRESENT_LOW();
+ 225   5                                      }
+ 226   4                              if(cmosdelay==22)
+ 227   4                                      {               
+ 228   5                                      RTCRST_ON_HI();
+ 229   5                                      cmosdelay=0;
+ 230   5                                      RamDebug(0x23);
+ 231   5                                              SET_MASK(CMOS_TEST,b1_CMOS_delay1flag);
+ 232   5                                              cmosdelay1 = 0x00;
+ 233   5                                      }       
+ 234   4                              }
+ 235   3                              else if(cmosdelay1>=35) //3.5S
+ 236   3                              {
+ 237   4                                      cmosdelay++;
+ 238   4                                      RTCRST_ON_LOW();
+ 239   4                                      SET_MASK(CMOS_TEST,BIT3);       
+ 240   4                                      if(cmosdelay==10)
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 5   
+
+ 241   4                                      {
+ 242   5                                              if(Read_AC_IN())
+ 243   5                                              EC_ON_HI();
+ 244   5                                      }
+ 245   4                              if(cmosdelay==11)
+ 246   4                                      {
+ 247   5                                      //PCH_PWREN_LOW();
+ 248   5                                              if(Read_AC_IN())
+ 249   5                                                      PM_PWRBTN_HI();
+ 250   5                                      }               
+ 251   4                                      if(cmosdelay==12)
+ 252   4                                      {
+ 253   5                                      if(Read_AC_IN())
+ 254   5                                      PCH_PWR_EN_ON(); 
+ 255   5                                      }
+ 256   4                              if(cmosdelay==15)
+ 257   4                                      {
+ 258   5                                              if(Read_AC_IN())
+ 259   5                                              RSMRST_HI();
+ 260   5                                              CLEAR_MASK(CMOS_TEST,b1_CMOS_delay1flag);
+ 261   5                                      CLEAR_MASK(CMOS_TEST,b0_CMOS_FunctionKey);
+ 262   5                                                      CLEAR_MASK(CMOS_TEST,BIT3);
+ 263   5                                      cmosdelay1=0;
+ 264   5                                              if(Read_AC_IN())
+ 265   5                                      AC_PRESENT_HI();        
+ 266   5                                      RamDebug(0x4A);
+ 267   5                                      }
+ 268   4                      
+ 269   4                              }
+ 270   3                      }
+ 271   2              }
+ 272   1              else
+ 273   1              {
+ 274   2                      cmosdelay=0;
+ 275   2              }
+ 276   1      }
+ 277          //MARTINH154:Add  end
+ 278          
+ 279          //------------------------------------------------------------
+ 280          // Hook 10ms events
+ 281          //------------------------------------------------------------
+ 282          void Hook_Timer10msEventB(void)
+ 283          {
+ 284   1          CheckSBPowerButton(); 
+ 285   1      #if !EN_PwrSeqTest
+ 286   1              ScanADCDyChannel1();
+ 287   1              //Chk_Wrong_ADP();
+ 288   1              
+ 289   1              if(SystemIsS0&& (PwrOnDly5Sec==0)) 
+ 290   1              {
+ 291   2                      PollingCPURT(); 
+ 292   2                      //if(uMBGPU&0x02) //ELMERZH002:all are dis
+ 293   2                      {
+ 294   3                              PollingGPURT(); 
+ 295   3                      }
+ 296   2              }
+ 297   1              
+ 298   1      #endif
+ 299   1              //Mos: Conflict with turbo boost, Pending.
+ 300   1              //Chk_ACOP();
+ 301   1      #if EC_Brightness_Ctrl
+                      Brightness_Control(); // EC control brightness.
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 6   
+
+              #endif  // EC_Brightness_Ctrl
+ 304   1              if( delayEDPTm > 0 )       // CMW Temp
+ 305   1              {
+ 306   2              delayEDPTm--;
+ 307   2              }
+ 308   1              
+ 309   1              //Deal_CLEAR_CMOS();
+ 310   1      }
+ 311          
+ 312          //------------------------------------------------------------
+ 313          // Hook 50ms events A
+ 314          //------------------------------------------------------------
+ 315          void Hook_Timer50msEventA(void)
+ 316          {
+ 317   1      #if !EN_PwrSeqTest
+ 318   1              #if UCS1022_Support
+                      UCS1002_TimerX_FakeISR();
+                      #endif
+ 321   1      #endif  // EN_PwrSeqTest
+ 322   1      
+ 323   1              if (cOsLedCtrl.fbit.cOL_CtrlRight ==0 )
+ 324   1                      Lenovo_LED();
+ 325   1              else
+ 326   1                      MFG_LED();
+ 327   1      }
+ 328          
+ 329          //------------------------------------------------------------
+ 330          // Hook 50ms events B
+ 331          //------------------------------------------------------------
+ 332          void Hook_Timer50msEventB(void)
+ 333          {
+ 334   1              PWM_TimeCount();
+ 335   1              /* //ANGELAS050:remove start
+ 336   1      #if Support_ODDZeroPower
+ 337   1              ODDPowerSaving();
+ 338   1      #endif  // Support_ODDZeroPower
+ 339   1              *///ANGELAS050:remove end
+ 340   1              //Check_heavy_loading_500ms(); //ANGELAG056: add //COKEYXU021: remove for 8% RSOC change to 5% suddenly.
+ 341   1      }
+ 342          
+ 343          //------------------------------------------------------------
+ 344          // Hook 50ms events C
+ 345          //------------------------------------------------------------
+ 346          void Hook_Timer50msEventC(void)
+ 347          {
+ 348   1              MuteProcess();
+ 349   1      #if !EN_PwrSeqTest
+ 350   1              Chk_pDevStus();
+ 351   1              Update_EEPROMB07();
+ 352   1      #endif
+ 353   1      //JERRYCH00:s+Modify the fan control from linear to the ladder. 
+ 354   1              //if(SystemIsS0)
+ 355   1                      //Chk_FAN_RPM_Control();        // Check FAN is AP control.
+ 356   1      
+ 357   1                       #if !EN_PwrSeqTest
+ 358   1                      //if ( nFanManual == 0 )
+ 359   1                      //{
+ 360   1                              if ( IS_MASK_CLEAR(THERMAL_STATUS, INITOK) )
+ 361   1                              {       // EC control fan.
+ 362   2                                #if FAN_TABLE_Already
+ 363   2                                        CheckFanRPM1();
+ 364   2                            CheckFanRPM2();
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 7   
+
+ 365   2                                #endif        // FAN_TABLE_Already
+ 366   2                              }
+ 367   1                      //}
+ 368   1      //JERRYCH00:e+Modify the fan control from linear to the ladder. 
+ 369   1        #endif        
+ 370   1      }
+ 371          
+ 372          //------------------------------------------------------------
+ 373          // Hook 100ms events A
+ 374          //------------------------------------------------------------
+ 375          void Hook_Timer100msEventA(void)
+ 376          {
+ 377   1              //ThmIC_Temperature();  //disable thermal.G06 ENABLE thermal  
+ 378   1              /*  
+ 379   1            if(SystemIsS0)
+ 380   1           {
+ 381   1                      if(USB_Delay!=0x00)
+ 382   1                      {
+ 383   1                              USB_Delay--;
+ 384   1                              if(USB_Delay==0x00)
+ 385   1                              {
+ 386   1                                      USB_ON_OUTPUT;
+ 387   1                                      USB_ON_LOW();
+ 388   1                              }
+ 389   1              }
+ 390   1              }  
+ 391   1              */      
+ 392   1      #if !EN_PwrSeqTest
+ 393   1              #if WDT_Support
+ 394   1              ResetInternalWDT();
+ 395   1              #endif
+ 396   1              
+ 397   1              if (IS_MASK_SET(SEL_STATE0,PRESENT_A))
+ 398   1              { 
+ 399   2                      OEM_PollingBatData_TASK(); 
+ 400   2          }
+ 401   1              else
+ 402   1              { CLEAR_MASK(StatusKeeper, BatteryProtectCHG); }
+ 403   1          #if Support_USB_Charge 
+                              #if UCS1022_Support
+                              UCS1002ID_Main();
+                              #else
+                              GL887_Main();
+                              #endif
+                  #endif                          
+ 410   1      #endif  // EN_PwrSeqTest
+ 411   1              //MARTINH154 add start
+ 412   1              if (IS_MASK_SET(CMOS_TEST,b1_CMOS_delay1flag)&&IS_MASK_CLEAR(CMOS_TEST,BIT3))
+ 413   1              {
+ 414   2              cmosdelay1++;
+ 415   2              }
+ 416   1      
+ 417   1              //MARTINH154 add end
+ 418   1      }
+ 419          
+ 420          //------------------------------------------------------------
+ 421          // Hook 100ms events B
+ 422          //------------------------------------------------------------
+ 423          void Hook_Timer100msEventB(void)
+ 424          {
+ 425   1          //VGA_Temperature();  
+ 426   1      #if !EN_PwrSeqTest
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 8   
+
+ 427   1              #if Support_WebCam
+                      CameraProcess();
+                      #endif  // Support_WebCam
+ 430   1              WirelessProcess();              // Control WLAN and BT.
+ 431   1              IFFSProcess();
+ 432   1      #endif
+ 433   1              ACOutProchotRelease();  //MEILING055:add.
+ 434   1              //ANGELAS084 add start
+ 435   1          if((FunctionKeyDebounce&0x0F)!=0)
+ 436   1          {
+ 437   2            FunctionKeyDebounce--;
+ 438   2            if((FunctionKeyDebounce&0x0F)==0x00)
+ 439   2            {
+ 440   3                (HotKey_Fn_Fx[((FunctionKeyDebounce&0xF0)>>0x04)-1])(1);
+ 441   3                    FunctionKeyDebounce=0x00;
+ 442   3            } 
+ 443   2          }
+ 444   1              //ANGELAS084 add end
+ 445   1      }
+ 446          
+ 447          //------------------------------------------------------------
+ 448          // Hook 100ms events C
+ 449          //------------------------------------------------------------
+ 450          void Hook_Timer100msEventC(void)
+ 451          {
+ 452   1      #if !EN_PwrSeqTest
+ 453   1              //Oem_Fan_Speed();//JERRYCH00:Modify the fan control from linear to the ladder.
+ 454   1          ThrottlingControl(); 
+ 455   1              GPUThrottlingControl(); //MEILING033:add.
+ 456   1              //CPUProchotCtrl(); //ANGELAG028: remove //MEILING033:add.  
+ 457   1              //GPUProchotOnControl();  //ANGELAG028: remove //MEILING055:add.
+ 458   1              Battery100ms();
+ 459   1              if (TouchPadCount !=0)
+ 460   1              { 
+ 461   2                  TouchPadCount--; 
+ 462   2          }
+ 463   1              
+ 464   1              //Oem_Thermal_Control();        // Read CPU temperature by PECI.//:Change read cpu temperature from 100ms to 1s.
+ 465   1      ///JERRYCH00:s+Modify the fan control from linear to the ladder.
+ 466   1              //if ( uReserve07.fbit.nFanManual == 0 )
+ 467   1              //{
+ 468   1                      if ( IS_MASK_CLEAR(THERMAL_STATUS, INITOK) )
+ 469   1                      {       // EC control fan.
+ 470   2                              #if FAN_TABLE_Already
+ 471   2                              //Oem_Fan_Control();
+ 472   2                              FanManager();
+ 473   2                              #else
+                                      FanSpeedConWhenFanTableNotReady();
+                                      #endif  // FAN_TABLE_Already
+ 476   2                      }
+ 477   1                      else
+ 478   1                      { 
+ 479   2                              //FAN_Dust_Mode(); 
+ 480   2              }
+ 481   1              //}
+ 482   1      ///JERRYCH00:e+Modify the fan control from linear to the ladder.
+ 483   1              /*#if FAN_TABLE_Already
+ 484   1              OEM_Throttling_Ctrl();
+ 485   1              #endif  */// FAN_TABLE_Already  //G68:change OEM_Throttling_Ctrl from 100ms to 1s.
+ 486   1      #endif
+ 487   1      }
+ 488          
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 9   
+
+ 489          //------------------------------------------------------------
+ 490          // Hook 500ms events A
+ 491          //------------------------------------------------------------
+ 492          void Hook_Timer500msEventA(void)
+ 493          {
+ 494   1      #if !EN_PwrSeqTest
+ 495   1              if (IS_MASK_SET(SEL_STATE0,PRESENT_A))
+ 496   1              {
+ 497   2                      Chk_BatSMbusFailCount();
+ 498   2      
+ 499   2                      if (Read_AC_IN() && IS_MASK_CLEAR(BATTUPDATEFW,BIT0))
+ 500   2                      {
+ 501   3                              Battery_Expresscharge(); //COKEYXU011: Add express charge method.
+ 502   3                      WriteSmartChgIC();
+ 503   3                              ReadSmartChgIC();
+ 504   3                      }
+ 505   2              }
+ 506   1      
+ 507   1              //ThmIC_Temperature();
+ 508   1      
+ 509   1              //Mos: Update Battery info after FW update
+ 510   1              if(IS_MASK_SET(BATTUPDATEFW, BIT0))
+ 511   1                      SET_MASK(StatusKeeper, BatteryFwUpdate);
+ 512   1              if(IS_MASK_SET(StatusKeeper, BatteryFwUpdate) && IS_MASK_CLEAR(BATTUPDATEFW, BIT0))
+ 513   1              {
+ 514   2                      CLEAR_MASK(StatusKeeper, BatteryFwUpdate);
+ 515   2                      FirstGetBatData();
+ 516   2                      Service_Auth_Step = 1;                          // start SHA1
+ 517   2              }
+ 518   1      
+ 519   1          #if SHA1_Support
+ 520   1          if(nDesignCapL !=0 && nPresentVoltH != 0)
+ 521   1          {
+ 522   2                      if ((IS_MASK_SET(SEL_STATE0,PRESENT_A))
+ 523   2            && IS_MASK_CLEAR(StatusKeeper, BatteryFwUpdate))//MARTINA033:add "BatteryFwUpdate" judge
+ 524   2                      {
+ 525   3                              LV_BAT_Authentication();
+ 526   3                      }
+ 527   2          }
+ 528   1          #endif      // SHA1_Support
+ 529   1      #endif  // EN_PwrSeqTest
+ 530   1      }
+ 531          
+ 532          //------------------------------------------------------------
+ 533          // Hook 500ms events B
+ 534          //------------------------------------------------------------
+ 535          void Hook_Timer500msEventB(void)
+ 536          {
+ 537   1      #if !EN_PwrSeqTest
+ 538   1              //VGA_Temperature();   
+ 539   1              SetKeyboardLED(); //MEILING001:add.
+ 540   1      
+ 541   1              #if SW_ISCT
+                      ISCT_Process();
+                      #endif  // SW_ISCT
+ 544   1      
+ 545   1              #if UCS1022_Support
+                      Ck_UpdateProfiles();
+                      #endif  // UCS1022_Support
+ 548   1      
+ 549   1              //MEILING055:S+
+ 550   1              if(cGPUACtoBattTime!=0)
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 10  
+
+ 551   1              {
+ 552   2                      cGPUACtoBattTime--;
+ 553   2              }
+ 554   1              DownACtoBatteryGPUState();
+ 555   1              //MEILING055:E+
+ 556   1              
+ 557   1                      //ANGELAG012:S+.
+ 558   1              if(PCH_ColdBoot_TimeOut > 0) 
+ 559   1              {
+ 560   2                      PCH_ColdBoot_TimeOut--;
+ 561   2                      if((PCH_ColdBoot_TimeOut == 0)&&SystemIsS0)
+ 562   2                      {
+ 563   3                              ProcessSID(COLDBOOTFAIL_ID);
+ 564   3                              SET_MASK(ACPI_HOTKEY, b7BIOS_NoShut);
+ 565   3                              RSMRST_LOW();
+ 566   3                              Delay1MS(1); 
+ 567   3                              RSMRST_HI();
+ 568   3                      }
+ 569   2                      
+ 570   2                      if(SysPowState != SYSTEM_S0) 
+ 571   2                              PCH_ColdBoot_TimeOut = 0; 
+ 572   2              }
+ 573   1              //ANGELAG012:E+.        
+ 574   1      
+ 575   1              
+ 576   1              
+ 577   1              
+ 578   1      #endif
+ 579   1      }
+ 580          
+ 581          //------------------------------------------------------------
+ 582          // Hook 500ms events C
+ 583          //------------------------------------------------------------
+ 584          void Hook_Timer500msEventC(void)
+ 585          {
+ 586   1      #if !EN_PwrSeqTest
+ 587   1              Clear_Batt_First_Used_Date(); //ANGELAG015: add
+ 588   1              /*
+ 589   1            if(IS_MASK_CLEAR(SysStatus,LidKBIgnore))
+ 590   1            { 
+ 591   1                      // change LID implement method.
+ 592   1                      #if !LID_OnlyQEvent_Support 
+ 593   1                      //Lid_Process();
+ 594   1                      #else   
+ 595   1                      //EC_LID_OUT_INPUT(); 
+ 596   1                      #endif
+ 597   1                      // change LID implement method.
+ 598   1            }
+ 599   1            */
+ 600   1                     Lid_Process(); //ANGELAG008: add
+ 601   1      
+ 602   1              // Check KBC Output Buffer Full
+ 603   1          if (IS_MASK_SET(KBHISR,OBF)&&(SystemIsS0))
+ 604   1          {
+ 605   2                      KB_OBF_count++;
+ 606   2                      if ((KB_OBF_count & 0x0F) > 10)                         // OBF=1 over 5sec?
+ 607   2                      {
+ 608   3                              KB_OBF_count = KB_OBF_count + 0x10;             // high nibble for count times of clear
+ 609   3                              KB_OBF_count &= 0xF0 ;
+ 610   3                              GENIRQ = 0x01; //ANGELAG026: modify 0x0c to 0x01, because TP is not ues 6064 and 0X12 IRQ no resource
+ 611   3                      }
+ 612   2          }
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 11  
+
+ 613   1          else
+ 614   1          {
+ 615   2                      KB_OBF_count &= 0xF0 ;
+ 616   2          }
+ 617   1      #endif
+ 618   1      }
+ 619          
+ 620          
+ 621          //MARTINH154:Add start
+ 622          void checkclearcmos(void)
+ 623          {
+ 624   1              if (IS_MASK_SET(CMOS_TEST,BIT2))
+ 625   1              {
+ 626   2                      if((!Read_SLPS3())&&(!Read_SLPS4()))
+ 627   2                      {
+ 628   3                              cmosshutdelay++;
+ 629   3                              RamDebug(0x4B);
+ 630   3                      }
+ 631   2                      else
+ 632   2                      {
+ 633   3                              cmosshutdelay=0;
+ 634   3                              CLEAR_MASK(CMOS_TEST,BIT2);
+ 635   3                      }
+ 636   2                      if(cmosshutdelay==5)
+ 637   2                      {
+ 638   3                               SysPowState=SYSTEM_S5;  
+ 639   3                               //SET_MASK(CMOS_TEST,BIT0); //ANGELAS052:remove
+ 640   3                               SET_MASK(CMOS_TEST,b0_CMOS_FunctionKey); //ANGELAS052:add
+ 641   3                               CLEAR_MASK(CMOS_TEST,BIT2);
+ 642   3                               cmosshutdelay = 0x00;           
+ 643   3                      }
+ 644   2              }
+ 645   1      }       
+ 646          //MARTINH154:Add end
+ 647          
+ 648          //------------------------------------------------------------
+ 649          // Hook 1sec events A
+ 650          //------------------------------------------------------------
+ 651          void Hook_Timer1SecEventA(void)
+ 652          {
+ 653   1              checkclearcmos();//jerry cmos //MARTINH154:Add
+ 654   1              //ANGELAG007: add start
+ 655   1              if(PowerOVP_REG|PowerUVP_REG|PowerOCP_REG|PowerOTP_REG)
+ 656   1              {
+ 657   2                      
+ 658   2              }
+ 659   1              else
+ 660   1              {
+ 661   2                      if(SystemNotS5)
+ 662   2                              PollingOTP();
+ 663   2              }
+ 664   1              //ANGELAG007: add end
+ 665   1              if ( SystemIsS0 && (PwrOnDly5Sec!=0) )
+ 666   1              { PwrOnDly5Sec--; } 
+ 667   1              //COKEYXU032: S+ Enable charge for 65W and 45W Adapter when S3/S5. 
+ 668   1              if(SystemIsS3 || SystemIsS5)
+ 669   1              {
+ 670   2                      CLEAR_MASK(ACOFF_SOURCE,BATTLEARN);
+ 671   2                      CLEAR_MASK(CHGIC_WriteCmd0x12L,BatLearnEnable);
+ 672   2              }
+ 673   1              //COKEYXU032: E+
+ 674   1              
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 12  
+
+ 675   1      #if !EN_PwrSeqTest
+ 676   1          VGA_Temperature();// :Remove read VGA temperature.
+ 677   1      
+ 678   1          Oem_Thermal_Control();  // Read CPU temperature by PECI.//G56:Change read cpu temperature from 100ms t
+             -o 1s.
+ 679   1      
+ 680   1              // ThmIC_Temperature(); //:transfer from 100ms to 1s //ANGELAS022: Remove thermal sensor function.
+ 681   1              // #if FAN_TABLE_Already//:change OEM_Throttling_Ctrl from 100ms to 1s. //ANGELAS026:Modify PROCHOT# func
+             -tion.
+ 682   1              OEM_Throttling_Ctrl();
+ 683   1              // #endif       // FAN_TABLE_Already //ANGELAS026:Modify PROCHOT# function.
+ 684   1      
+ 685   1              Battery1Sec();
+ 686   1          
+ 687   1      
+ 688   1              if ( SystemIsS5 )
+ 689   1              {
+ 690   2                      if (ECSleepCount !=0)
+ 691   2                      { 
+ 692   3                          ECSleepCount--; 
+ 693   3              }
+ 694   2              }
+ 695   1      
+ 696   1              if (CountSecAfterPswPressed < 255)
+ 697   1                      CountSecAfterPswPressed++;
+ 698   1              if (CountSecAfterNOVOPressed < 255)
+ 699   1                      CountSecAfterNOVOPressed++;
+ 700   1      
+ 701   1              //ACOutProchotRelease();  //MEILING055:remove.
+ 702   1              //GPUProchotOnControl();  //MEILING055:remove.
+ 703   1              CPUThrottlingDelay();   //MEILING052:add.
+ 704   1              disCPUturbo90s(); //COKEYXU044:add
+ 705   1      #endif
+ 706   1      }
+ 707          
+ 708          //------------------------------------------------------------
+ 709          // Hook 1sec events B
+ 710          //------------------------------------------------------------
+ 711          void Hook_Timer1SecEventB(void)
+ 712          {
+ 713   1      #if !EN_PwrSeqTest
+ 714   1              if(QEVENT_DEBUG!=0x00)
+ 715   1          {
+ 716   2              ECQEvent(QEVENT_DEBUG);
+ 717   2              QEVENT_DEBUG=0x00;
+ 718   2          }  
+ 719   1              SystemAutoOn();
+ 720   1              //Lenovo_CPU_auto_mode();
+ 721   1              //ChkBattery_abnormal();  //LMLKBL0007:remove.
+ 722   1      
+ 723   1              if(IS_MASK_CLEAR(BATTUPDATEFW,BIT0) && IS_MASK_SET(BT1_STATUS1,bat_in))
+ 724   1              {
+ 725   2                      bRWSMBus(SMbusChB, SMbusRW, SmBat_Addr,C_FW_Status,&FirmwareUpdateStatusL,SMBus_NoPEC);
+ 726   2                      bRSMBusBlock(SMbusChB,SMbusRBK,SmBat_Addr,C_BAT_Info,&BatterymakerIDL);
+ 727   2              }
+ 728   1      #endif
+ 729   1              //ANGELAS033:Add start                  
+ 730   1              if(IS_MASK_SET(SEL_STATE0,PRESENT_A))
+ 731   1              {
+ 732   2              if(IS_MASK_SET(pProject0,b5FUBIOSWriteReady))
+ 733   2              {
+ 734   3                              if(bRWSMBus(SMbusChB,SMbusWW,SmBat_Addr,FirstUsedDate,&batteryFirstUsedDateL,SMBus_NeedPEC))
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 13  
+
+ 735   3                              {    
+ 736   4                                      RamDebug(0xAF);
+ 737   4                              }
+ 738   3                              CLEAR_MASK(pProject0,b5FUBIOSWriteReady);
+ 739   3                              CLEAR_MASK(pProject0,b3uBatteryTimeNoOK);
+ 740   3              }         
+ 741   2              }               
+ 742   1              //ANGELAS033:Add end
+ 743   1      
+ 744   1      }
+ 745          
+ 746          //------------------------------------------------------------
+ 747          // Hook 1sec events C
+ 748          //------------------------------------------------------------
+ 749          void Hook_Timer1SecEventC(void)
+ 750          {
+ 751   1              //  remove MBID
+ 752   1          /*   if((uMBID!=MBID_FB)&&SystemIsS0)
+ 753   1             {
+ 754   1                      uMBID = eEEPROMData=MBID_FB;              
+ 755   1                   SET_MASK(LENOVOPMFW_Temp,EEPROM_Token);
+ 756   1                      Update_EEPROMMark();
+ 757   1                   CLEAR_MASK(LENOVOPMFW_Temp,EEPROM_Token);       
+ 758   1                   if(((uMBID&0xFC)==0x30)||((uMBID&0xFC)==0x20)||((uMBID&0xFC)==0x10)||((uMBID&0xFC)==0x34)||((
+             -uMBID&0xFC)==0x24)||((uMBID&0xFC)==0x14)||((uMBID&0xFC)==0x3C)||((uMBID&0xFC)==0x2C)||((uMBID&0xFC)==0x1C)) //T050C: add
+             - 1C,2C,3C judge.
+ 759   1                   {
+ 760   1                      MBID_READY=0x01;
+ 761   1                   }
+ 762   1                   else 
+ 763   1                   {
+ 764   1                         MBID_READY=0x00;
+ 765   1                   }    
+ 766   1             }*/
+ 767   1              //Start Shipmode disable 6s loop once 20130608 20:28 
+ 768   1              if(IS_MASK_CLEAR(StatusKeeper, BatteryFwUpdate) ) //ANGELAS032
+ 769   1              { //ANGELAS032
+ 770   2                      if(ShipModeCnt>0)
+ 771   2                      {
+ 772   3                              ShipModeCnt--;
+ 773   3                              if(ShipModeCnt==0)
+ 774   3                              {
+ 775   4                                      Unlock_ShipMode();
+ 776   4                              }
+ 777   3                      }
+ 778   2              } //ANGELAS032
+ 779   1              // End Shipmode disable 6s loop once 20130608 20:28 
+ 780   1      
+ 781   1      #if !EN_PwrSeqTest
+ 782   1              if ( uReserve07.fbit.nFanManual == 0 )
+ 783   1              {
+ 784   2                      if ( IS_MASK_CLEAR(THERMAL_STATUS, INITOK) )
+ 785   2                      {
+ 786   3                              EC_FAN_ANTI_OFF();//JERRYCRZ014:Add fan can be reversed  in dust removal mode.
+ 787   3                              EC_FAN_ANTI_INPUT;//JERRYCRZ014:Add fan can be reversed  in dust removal mode.
+ 788   3                      }
+ 789   2                      else
+ 790   2                      { 
+ 791   3                         // FAN_Dust_Mode(); //JERRYCH00:-Modify the fan control from linear to the ladder.
+ 792   3              }
+ 793   2              }
+ 794   1              //ANGELAS094:s+Add workaround for hang bios.
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 14  
+
+ 795   1              #if WorkaroundHangBios
+ 796   1          Workaround_For_HangBios();
+ 797   1          #endif
+ 798   1              //ANGELAS094:e+Add workaround for hang bios.
+ 799   1      #endif
+ 800   1      
+ 801   1      
+ 802   1              /*   
+ 803   1              Oem_Thermal_Control();  // Read CPU temperature by PECI.
+ 804   1      
+ 805   1      #if !EN_PwrSeqTest
+ 806   1              if ( uReserve07.fbit.nFanManual == 0 )
+ 807   1              {
+ 808   1                      if ( IS_MASK_CLEAR(THERMAL_STATUS, INITOK) )
+ 809   1                      {       // EC control fan.
+ 810   1                              #if FAN_TABLE_Already
+ 811   1                              Oem_Fan_Control();
+ 812   1                              #endif  // FAN_TABLE_Already
+ 813   1                      }
+ 814   1                      else
+ 815   1                      { 
+ 816   1                              FAN_Dust_Mode(); 
+ 817   1                    }
+ 818   1              }
+ 819   1      
+ 820   1              #if FAN_TABLE_Already
+ 821   1              OEM_Throttling_Ctrl();
+ 822   1              #endif  // FAN_TABLE_Already
+ 823   1      #endif
+ 824   1              */   
+ 825   1              // After enter OS 5S,then read CPU temperature for PECI fail test.
+ 826   1              /*
+ 827   1              if( ((SYS_STATUS & 0x07) != 0 )&&(PECIBIOSTEST==2))
+ 828   1      
+ 829   1              { 
+ 830   1                      PwrOnDly5Sec=5;
+ 831   1                      PECIBIOSTEST=0;
+ 832   1                      Init_PECI();//:Change PECI initialize after S0 states.
+ 833   1      
+ 834   1              }
+ 835   1              */
+ 836   1              // After enter OS 5S,then read CPU temperature for PECI fail test.
+ 837   1              
+ 838   1      }
+ 839          
+ 840          //------------------------------------------------------------
+ 841          // Hook1min events
+ 842          //------------------------------------------------------------
+ 843          void Hook_Timer1MinEvent(void)
+ 844          {
+ 845   1      #if !EN_PwrSeqTest
+ 846   1              Chk_CHG_TimeOut();
+ 847   1      
+ 848   1              #if SW_ISCT
+                      ISCT_TimerCnt();
+                      #endif  // SW_ISCT
+ 851   1      #endif
+ 852   1      }
+ 853          
+ 854          //------------------------------------------------------------
+ 855          // service_OEM_1
+ 856          //------------------------------------------------------------
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 15  
+
+ 857          void service_OEM_1(void)
+ 858          {
+ 859   1      
+ 860   1      }
+ 861          
+ 862          //------------------------------------------------------------
+ 863          // service_OEM_2
+ 864          //------------------------------------------------------------
+ 865          void service_OEM_2(void)
+ 866          {
+ 867   1      
+ 868   1      }
+ 869          
+ 870          //------------------------------------------------------------
+ 871          // service_OEM_3
+ 872          //------------------------------------------------------------
+ 873          void service_OEM_3(void)
+ 874          {
+ 875   1      
+ 876   1      }
+ 877          
+ 878          //------------------------------------------------------------
+ 879          // service_OEM_4
+ 880          //------------------------------------------------------------
+ 881          void service_OEM_4(void)
+ 882          {
+ 883   1      
+ 884   1      }
+ 885          
+ 886          //------------------------------------------------------------
+ 887          //
+ 888          //------------------------------------------------------------
+ 889          void Hook_main_service_H(void)
+ 890          {
+ 891   1      
+ 892   1      }
+ 893          
+ 894          //------------------------------------------------------------
+ 895          //
+ 896          //------------------------------------------------------------
+ 897          void Hook_main_service_L(void)
+ 898          {
+ 899   1      
+ 900   1      }
+ 901          
+ 902          //------------------------------------------------------------
+ 903          // Timer event control function
+ 904          // Return :
+ 905          //  Only_Timer1msEvent : Only Timer1msEvent and Hook_Timer1msEvent function
+ 906          //  All_TimerEvent : All timer events are OK.
+ 907          //------------------------------------------------------------
+ 908          BYTE Hook_Only_Timer1msEvent(void)
+ 909          {
+ 910   1              // Return :
+ 911   1              //  Only_Timer1msEvent : Only Timer1msEvent and Hook_Timer1msEvent function
+ 912   1              //  All_TimerEvent : All timer events are OK.
+ 913   1          return(All_TimerEvent);
+ 914   1      }
+ 915          
+ 916          //----------------------------------------------------------------------------
+ 917          // OEM_SkipMainServiceFunc
+ 918          //  Note:
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 16  
+
+ 919          //      1. Always return(0xFF|Normal_MainService) to run normal main_service function.
+ 920          //      2. If you don't understand the use of OEM_SkipMainServiceFunc function, don't change anything.
+ 921          //----------------------------------------------------------------------------
+ 922          BYTE OEM_SkipMainServiceFunc(void)
+ 923          {
+ 924   1      
+ 925   1          // Return :
+ 926   1          return(Normal_MainService);
+ 927   1      }
+ 928          
+ 929          
+ 930          //-----------------------------------------------------------------------------
+ 931          const BYTE code SEG7_Table[]=
+ 932          {
+ 933                  /*            a
+ 934                         ---------
+ 935                         |       |
+ 936                     f   |   g   |  b
+ 937                        ---------
+ 938                         |       |
+ 939                     e   |       |  c
+ 940                         ---------
+ 941                             d      . h
+ 942               */
+ 943                  // COMMON ANODE SEVEN SEGMENT DISPLAY TABLE
+ 944              //  0         1     2     3     4     5     6     7
+ 945                 0xC0, 0xF9, 0xA4, 0xB0, 0x99, 0x92, 0x82, 0xF8,
+ 946              //  8     9     A     b     C     d     E     F
+ 947                 0x80, 0x90, 0x88, 0x83, 0xC6, 0xA1, 0x86, 0x8E,
+ 948          };
+ 949          
+ 950          //-----------------------------------------------------------------------------
+ 951          // Out7SegLED
+ 952          //-----------------------------------------------------------------------------
+ 953          void Out7SegLED(BYTE bData)
+ 954          {
+ 955   1              BYTE bIndex = 7;
+ 956   1              
+ 957   1              while(bIndex != -1)
+ 958   1              {
+ 959   2                      if (bData & BIT(bIndex))
+ 960   2                      { 
+ 961   3                          O_DEBUG_DAT_HI(); 
+ 962   3              }
+ 963   2                      else
+ 964   2                      { 
+ 965   3                          O_DEBUG_DAT_LO(); 
+ 966   3              }
+ 967   2                      O_DEBUG_CLK_LO();
+ 968   2                      O_DEBUG_CLK_HI();
+ 969   2                      bIndex--;
+ 970   2              }
+ 971   1      }
+ 972          
+ 973          //-----------------------------------------------------------------------------
+ 974          // Dark7SegLed
+ 975          //-----------------------------------------------------------------------------
+ 976          void Dark7SegLed(void)
+ 977          {
+ 978   1              Out7SegLED(0xFF);       // drak LED
+ 979   1              Out7SegLED(0xFF);       // drak LED
+ 980   1      }
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 17  
+
+ 981          
+ 982          
+ 983          //-----------------------------------------------------------------------------
+ 984          // P80LedOut
+ 985          //-----------------------------------------------------------------------------
+ 986          void P80LedOut(BYTE bData)
+ 987          {
+ 988   1              BYTE code * data_pntr;
+ 989   1      
+ 990   1              //if(FgDebugCarIn)                                                      // if card dose not exist, return
+ 991   1              {
+ 992   2                      // out upper byte
+ 993   2                      data_pntr = SEG7_Table;                                 // get 7-seg table
+ 994   2                      data_pntr +=((bData & 0xF0) >> 4);              // mask upper byte and shit 4 bytes     then get data of table
+ 995   2      
+ 996   2                      BRAM3A = *data_pntr;
+ 997   2                      Out7SegLED(*data_pntr);                                 // display upper value.
+ 998   2      
+ 999   2                      // out lower byte
+1000   2                      data_pntr = SEG7_Table;                                 // get 7-seg table
+1001   2                      data_pntr += (bData & 0x0F);                    // mask lower byte then get data of table.
+1002   2      
+1003   2                      BRAM3B = *data_pntr;
+1004   2      
+1005   2                      Out7SegLED(*data_pntr);                                 // dispaly lower value.
+1006   2              }
+1007   1      }
+1008          
+1009          
+1010          //-----------------------------------------------------------------------------
+1011          // PollingBIOS80Port
+1012          //-----------------------------------------------------------------------------
+1013          void PollingBIOS80Port(void)
+1014          {
+1015   1              if ( SystemNotS0 )
+1016   1              {
+1017   2                      EC_RX_INPUT;
+1018   2                      EC_TX_INPUT;
+1019   2              UART_DB_RAM = 0x00; 
+1020   2                      return;
+1021   2              }
+1022   1      
+1023   1              //if(UART_DB_RAM != 0xEE)  //T043-   // For Only once detect
+1024   1              if((IS_MASK_CLEAR(UART_DB_RAM,BIT7))&&(IS_MASK_CLEAR(UART_DB_RAM,BIT3))) 
+1025   1              {
+1026   2                      if(Read_EC_TX())     // EC_TX for detect debug card plug in Dont hot plug
+1027   2                      {
+1028   3                              GPCRE6 = OUTPUT;
+1029   3                      GPCRC7 = OUTPUT; //EC_RX and BT_DIS common used WLAN/BT Module
+1030   3                              //UART_DB_RAM = 0xEE; 
+1031   3                              UART_DB_RAM = UART_DB_RAM|0x80;
+1032   3                      }
+1033   2      
+1034   2              if(IS_MASK_CLEAR(P80CMOSSts,P80CMOSDis))
+1035   2              {
+1036   3                  UART_DB_RAM = UART_DB_RAM|0x08;
+1037   3              }
+1038   2                    
+1039   2                      return;
+1040   2              }
+1041   1      
+1042   1      
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 18  
+
+1043   1              BRAM3D++;
+1044   1              if(BRAM3F != BRAM3E)                            // if no data in , return.
+1045   1              {       // clear it.
+1046   2                      printf("\nP80h : 0x%bX",BRAM3F);
+1047   2                      BRAM3E= BRAM3F;                                 // clear it.
+1048   2                      DelayXms(1);
+1049   2                      /*
+1050   2                      DelayXms(1);
+1051   2      
+1052   2                      EC_RX_OUTPUT;
+1053   2                      EC_TX_OUTPUT;
+1054   2                      P80LedOut(BRAM3F);                              // to show it
+1055   2                      EC_RX_ALT;
+1056   2                      EC_TX_ALT;
+1057   2                      */
+1058   2              }
+1059   1              else
+1060   1              {
+1061   2                      if(BRAM3F != BRAM3C)                    // if no data in , return.
+1062   2                      {
+1063   3                              BRAM3C= BRAM3F;                         // clear it.
+1064   3                      //GCR15 &= 0x3F;
+1065   3                  if(IS_MASK_SET(UART_DB_RAM,BIT7))  //T042 +  T043A:IS_MASK_SET
+1066   3                  {
+1067   4                                      EC_RX_OUTPUT;
+1068   4                                      EC_TX_OUTPUT;
+1069   4                          P80LedOut(BRAM3F);                  // to show it
+1070   4                  }      
+1071   3                              // start for save P80 code to setup. 
+1072   3                      if((P80Index < 0x07)&&(IS_MASK_CLEAR(P80CMOSSts,P80CMOSDis)))
+1073   3                              {
+1074   4                                      P80CMOS[P80Index]= BRAM3F;
+1075   4                                      P80Index++;
+1076   4                                      if(P80Index==0x07)
+1077   4                                      {
+1078   5                                      P80Index=0;
+1079   5                                      }
+1080   4                              }
+1081   3                              // end for save P80 code to setup. 
+1082   3                      //GCR15 |= 0xC0;
+1083   3                  if(IS_MASK_SET(UART_DB_RAM,BIT7)) 
+1084   3                  {
+1085   4                              EC_RX_ALT;
+1086   4                                      EC_TX_ALT;
+1087   4                  }
+1088   3                      }
+1089   2              }
+1090   1      }
+1091          
+1092          void ProcessSID(BYTE SID)       // Shutdown ID.
+1093          {
+1094   1              pLastSID4 = pLastSID3;
+1095   1              pLastSID3 = pLastSID2;
+1096   1              pLastSID2 = pLastSID;
+1097   1              pLastSID  = SID;
+1098   1      
+1099   1              Update_16ByteEEPROM();
+1100   1      }
+1101          
+1102          //----------------------------------------------------------------------------
+1103          // Output : 1 Debug mode
+1104          //          0 Normal mode
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 19  
+
+1105          //----------------------------------------------------------------------------
+1106          //T043: start for save P80 code to setup. 
+1107          bit CheckDebugMode(void)
+1108          {       // To add condition here
+1109   1              BYTE BKSOL,BKSOH1,BKSOH2;
+1110   1          BKSOL = KSOL;
+1111   1          BKSOH1 = KSOH1;
+1112   1          BKSOH2 = KSOH2;
+1113   1      
+1114   1              KSOL  = 0xFF;
+1115   1              KSOH1 = 0xBF;
+1116   1              KSOH2 = 0xFF;                   // Fn key (scan line b14)
+1117   1              WNCKR = 0x00;           // Delay 15.26 us
+1118   1              WNCKR = 0x00;           // Delay 15.26 us
+1119   1              
+1120   1              if ((KSI&0x10) != 0)    // Fn key (data line b4)
+1121   1              {
+1122   2                      KSOH1 = 0xFF;
+1123   2              KSOL  = BKSOL;
+1124   2              KSOH1 = BKSOH1;
+1125   2              KSOH2 = BKSOH2;
+1126   2                  return FALSE;
+1127   2              }
+1128   1              KSOL  = 0xFD;
+1129   1              KSOH1 = 0xFF;
+1130   1              KSOH2 = 0xFF;                   // "D" key (scan line b1)
+1131   1              WNCKR = 0x00;           // Delay 15.26 us
+1132   1              WNCKR = 0x00;           // Delay 15.26 us
+1133   1              
+1134   1              if ((KSI&0x10) != 0)    // "D" key (data line b4)
+1135   1              {
+1136   2                      KSOL  = 0xFF;
+1137   2              KSOL  = BKSOL;
+1138   2              KSOH1 = BKSOH1;
+1139   2              KSOH2 = BKSOH2;
+1140   2                  return FALSE;
+1141   2              }
+1142   1              KSOL  = 0xFF;
+1143   1          KSOL  = BKSOL;
+1144   1          KSOH1 = BKSOH1;
+1145   1          KSOH2 = BKSOH2;
+1146   1      
+1147   1              return TRUE;
+1148   1      }
+1149          
+1150          //ANGELAS094:s+Add workaround for hang bios.
+1151          void Workaround_For_HangBios(void)
+1152          {
+1153   1              if(Bioswatchdog==1)
+1154   1              {
+1155   2                      Bioswatchdogtime=Bioswatchdogtime+1;
+1156   2                      if(Bioswatchdogtime==60)
+1157   2                      {
+1158   3                              BRAM[63]=0x55;
+1159   3                              bios_count++;
+1160   3                  WinFlashMark=0x53;//Modify after flash EC can auto poweron follow bios.
+1161   3                      WinFlashMark2=0x35;//Modify after flash EC can auto poweron follow bios.
+1162   3                      WDTRST = 1;                             // Reset watch dog timer
+1163   3                              WDTEB = 1;                              // Enable watch dog
+1164   3                      while(1);                               // Wait for watch dog time-out
+1165   3                      }
+1166   2              }
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 20  
+
+1167   1              else
+1168   1              {
+1169   2                      Bioswatchdogtime=0;
+1170   2              }
+1171   1      }
+1172          //ANGELAS094:e+Add workaround for hang bios.
+1173          
+1174          //MEILING039:S+ add CPU and GPU prochot release after AC out 2S.
+1175          void ACOutProchotRelease(void)
+1176          {
+1177   1              if(CPUProchotONCnt > 0) //MEILING055:modify ProchotONCnt name.
+1178   1              { 
+1179   2                      CPUProchotONCnt--; 
+1180   2              }
+1181   1      
+1182   1              //MEILING055:S+
+1183   1              if(GPUProchotONCnt > 0)
+1184   1              { 
+1185   2                      GPUProchotONCnt--; 
+1186   2              }
+1187   1              //ANGELAG017: add start
+1188   1              if(BatteryOCPDelay > 0) 
+1189   1              { 
+1190   2                      BatteryOCPDelay--; 
+1191   2              }
+1192   1              //ANGELAG017: add end
+1193   1              //MEILING055:E+
+1194   1              
+1195   1              //MEILING042:S- remove.
+1196   1              /*if(ProchotONCnt == 0)
+1197   1              {
+1198   1                      GPU_PROCHOT_OFF();
+1199   1                      GPU_PROCHOT_INPUT; 
+1200   1              }*/
+1201   1              //MEILING042:E- remove.
+1202   1      }
+1203          //MEILING039:E+.
+1204          
+1205          //MEILING042:S+ add GPU prochot on after D5 3S.
+1206          void GPUProchotOnControl(void)
+1207          {
+1208   1      //      if(SystemIsS0 && cGPUBattThrottling == 4) //ANGELAG017: remove
+1209   1              //if((SystemIsS0) && ( (cGPUBattThrottling == 4)  || (cGPUBattOCPThrottling == 4) )) //ANGELAG019: remove
+             - //ANGELAG017: add
+1210   1              //ANGELAG024: remove start
+1211   1              /*if((SystemIsS0) && ( (cGPUBattOTPThrottling == 4)  || (cGPUBattOCPThrottling == 4) || (cGPUBattPsysThro
+             -ttling == 4))) //ANGELAG019: add
+1212   1                      GPUProchotDelay++;
+1213   1              else
+1214   1                      GPUProchotDelay = 0;*/  //ANGELAG024: remove end
+1215   1                      
+1216   1              //ANGELAG050: add start 
+1217   1              //add D5 to prochot delay counter
+1218   1              if((SystemIsS0) && ( (cGPUBattOTPThrottling == 4)  || (cGPUBattLowThrottling == 4))) //ANGELAG019: add
+1219   1                      GPUProchotDelay++;
+1220   1              else
+1221   1                      GPUProchotDelay = 0;
+1222   1              //ANGELAG050: add end
+1223   1      
+1224   1      
+1225   1              //if((GPUProchotONCnt == 0)&&(GPUProchotDelay < 20)) //ANGELAG020: remove //ANGELAG019: 500ms to 2s //MEI
+             -LING055:modify ProchotONCnt name.
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 21  
+
+1226   1              //if((GPUProchotONCnt == 0)&&(GPUProchotDelay < 20)&& (IS_MASK_CLEAR(GPU_Prochot, (b0_Thermal)))) //ANGEL
+             -AG024: remove //ANGELAG020: add
+1227   1              //ANGELAG028: add start
+1228   1              if(SystemNotS0)
+1229   1              {
+1230   2                      GPU_Prochot = 0;
+1231   2                      //ANGELAG033: remove start
+1232   2                      /*
+1233   2                      GPU_PROCHOT_OFF();
+1234   2                      GPU_PROCHOT_INPUT;
+1235   2                      return;
+1236   2                      */ //ANGELAG033: remove end
+1237   2              }
+1238   1              //ANGELAG028: add end
+1239   1              //if((SystemIsS0) && (GPUProchotONCnt == 0) && (IS_MASK_CLEAR(GPU_Prochot, (b0_Thermal+b1_Psys+b2_battery
+             -_OCP+b3_battery_OTP+b4_battery_low)))) //ANGELAG028: remove //ANGELAG024: add
+1240   1              if((GPUProchotONCnt == 0) && (GPUProchotDelay < 20) && (IS_MASK_CLEAR(GPU_Prochot, (b0_Thermal+b1_Psys+b2
+             -_battery_LTP+b3_battery_OTP+b4_battery_low+b5_adapter)))) //COKEYXU039: add b2_battery_LTP check
+1241   1              {
+1242   2                      GPU_PROCHOT_OFF();
+1243   2                      GPU_PROCHOT_INPUT;
+1244   2              }
+1245   1              else
+1246   1              {
+1247   2                      GPU_PROCHOT_OUTPUT;
+1248   2                      GPU_PROCHOT_ON();
+1249   2                      GPUProchotDelay = 20; //ANGELAG050: add 2s delay //ANGELAG024: remove delay //ANGELAG019: 500ms to 2s
+1250   2              }
+1251   1      //ANGELAG013: add start
+1252   1      /*      if((SystemIsS0) && (cGPUBattLowThrottling == 4)) //ANGELAG024: remove start
+1253   1              {
+1254   1                      GPU_PROCHOT_OUTPUT;
+1255   1                      GPU_PROCHOT_ON();
+1256   1              }*/ //ANGELAG024: remove end
+1257   1      //ANGELAG013: add end
+1258   1      }
+1259          //MEILING042:E+.
+1260          
+1261          //MEILING052:S+ add CPU throttling 0x1D event delay.
+1262          void CPUThrottlingDelay(void)
+1263          {
+1264   1              if(CPUThrottlingDelayTime > 0)
+1265   1                      CPUThrottlingDelayTime--;
+1266   1      }
+1267          //MEILING052:E+
+1268          
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 22  
+
+ASSEMBLY LISTING OF GENERATED OBJECT CODE
+
+
+             ; FUNCTION Com00A6 (BEGIN)
+0000         L?0167:
+0000 540F              ANL     A,#0FH
+0002 2D                ADD     A,R5
+0003 FD                MOV     R5,A
+0004 E4                CLR     A
+0005 3C                ADDC    A,R4
+0006 FC                MOV     R4,A
+0007 8D82              MOV     DPL,R5
+0009 F583              MOV     DPH,A
+000B E4                CLR     A
+000C 93                MOVC    A,@A+DPTR
+000D FF                MOV     R7,A
+000E 22                RET     
+000F         L?0168:
+000F 900000      E     MOV     DPTR,#KSOH1
+0012 F0                MOVX    @DPTR,A
+0013 900000      E     MOV     DPTR,#KSOH2
+0016 22                RET     
+0017         L?0169:
+0017 F0                MOVX    @DPTR,A
+0018 E4                CLR     A
+0019 900000      E     MOV     DPTR,#WNCKR
+001C F0                MOVX    @DPTR,A
+001D F0                MOVX    @DPTR,A
+001E 900000      E     MOV     DPTR,#KSI
+0021 E0                MOVX    A,@DPTR
+0022 22                RET     
+0023         L?0170:
+0023         L?0171:
+0023 900000      E     MOV     DPTR,#SysPowState
+0026 E0                MOVX    A,@DPTR
+0027 6411              XRL     A,#011H
+0029 22                RET     
+             ; FUNCTION Com00A6 (END)
+
+             ; FUNCTION _Hook_Timer1msEvent (BEGIN)
+                                           ; SOURCE LINE # 22
+0000 900000      R     MOV     DPTR,#EventId
+0003 EF                MOV     A,R7
+0004 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 23
+                                           ; SOURCE LINE # 24
+0005 900000      E     MOV     DPTR,#SysPowState
+0008 E0                MOVX    A,@DPTR
+0009 B41119            CJNE    A,#011H,?C0001
+                                           ; SOURCE LINE # 25
+                                           ; SOURCE LINE # 26
+000C 900000      E     MOV     DPTR,#USB_Delay
+000F E0                MOVX    A,@DPTR
+0010 6013              JZ      ?C0001
+                                           ; SOURCE LINE # 27
+                                           ; SOURCE LINE # 28
+0012 E0                MOVX    A,@DPTR
+0013 14                DEC     A
+0014 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 29
+0015 E0                MOVX    A,@DPTR
+0016 700D              JNZ     ?C0001
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 23  
+
+                                           ; SOURCE LINE # 30
+                                           ; SOURCE LINE # 31
+0018 900000      E     MOV     DPTR,#GPCRD5
+001B 7440              MOV     A,#040H
+001D F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 32
+001E 900000      E     MOV     DPTR,#GPDRD
+0021 E0                MOVX    A,@DPTR
+0022 54DF              ANL     A,#0DFH
+0024 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 33
+                                           ; SOURCE LINE # 34
+                                           ; SOURCE LINE # 35
+0025         ?C0001:
+                                           ; SOURCE LINE # 39
+0025 120000      R     LCALL   PollingBIOS80Port
+                                           ; SOURCE LINE # 40
+0028 900000      R     MOV     DPTR,#EventId
+002B E0                MOVX    A,@DPTR
+002C FF                MOV     R7,A
+002D 120000      E     LCALL   _EventManager
+                                           ; SOURCE LINE # 41
+0030 120000      E     LCALL   Oem_SysPowerContrl
+                                           ; SOURCE LINE # 42
+0033 120000      E     LCALL   SetVGA_AC_DET
+                                           ; SOURCE LINE # 47
+0036 900000      E     MOV     DPTR,#GPDRJ
+0039 E0                MOVX    A,@DPTR
+003A 30E503            JNB     ACC.5,?C0005
+003D D3                SETB    C
+003E 8001              SJMP    ?C0006
+0040         ?C0005:
+0040 C3                CLR     C
+0041         ?C0006:
+0041 4007              JC      ?C0007
+                                           ; SOURCE LINE # 48
+                                           ; SOURCE LINE # 49
+0043 900000      E     MOV     DPTR,#GPDRC
+0046 E0                MOVX    A,@DPTR
+0047 54FE              ANL     A,#0FEH
+0049 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 50
+                                           ; SOURCE LINE # 63
+004A         ?C0007:
+004A 22                RET     
+             ; FUNCTION _Hook_Timer1msEvent (END)
+
+             ; FUNCTION Hook_Timer5msEvent (BEGIN)
+                                           ; SOURCE LINE # 68
+                                           ; SOURCE LINE # 69
+                                           ; SOURCE LINE # 71
+0000 22                RET     
+             ; FUNCTION Hook_Timer5msEvent (END)
+
+             ; FUNCTION Hook_Timer10msEventA (BEGIN)
+                                           ; SOURCE LINE # 76
+                                           ; SOURCE LINE # 77
+                                           ; SOURCE LINE # 100
+0000 120000      E     LCALL   ScanADCFixChannel
+                                           ; SOURCE LINE # 101
+0003 120000      E     LCALL   CPUProchotCtrl
+                                           ; SOURCE LINE # 102
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 24  
+
+0006 120000      R     LCALL   GPUProchotOnControl
+                                           ; SOURCE LINE # 104
+0009 120000      E     LCALL   TPInfor_ToVPC
+                                           ; SOURCE LINE # 105
+000C 120000      E     LCALL   Backlight_Control
+                                           ; SOURCE LINE # 106
+000F 120000      E     LCALL   EscScanCode
+                                           ; SOURCE LINE # 108
+0012 900000      E     MOV     DPTR,#PWRBTN_pressCnt
+0015 E0                MOVX    A,@DPTR
+0016 600D              JZ      ?C0009
+                                           ; SOURCE LINE # 109
+                                           ; SOURCE LINE # 110
+0018 E0                MOVX    A,@DPTR
+0019 14                DEC     A
+001A F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 111
+001B E0                MOVX    A,@DPTR
+001C 7007              JNZ     ?C0009
+                                           ; SOURCE LINE # 112
+                                           ; SOURCE LINE # 113
+001E 900000      E     MOV     DPTR,#GPDRF
+0021 E0                MOVX    A,@DPTR
+0022 4402              ORL     A,#02H
+0024 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 115
+                                           ; SOURCE LINE # 116
+0025         ?C0009:
+                                           ; SOURCE LINE # 136
+0025 900000      E     MOV     DPTR,#AdapterIDOn_Flag
+0028 E0                MOVX    A,@DPTR
+0029 601B              JZ      ?C0011
+                                           ; SOURCE LINE # 137
+                                           ; SOURCE LINE # 138
+002B 900000      E     MOV     DPTR,#ADPIDON10MS_NUM
+002E E0                MOVX    A,@DPTR
+002F D3                SETB    C
+0030 9400              SUBB    A,#00H
+0032 4002              JC      ?C0012
+                                           ; SOURCE LINE # 139
+                                           ; SOURCE LINE # 140
+                                           ; SOURCE LINE # 141
+0034 8022              SJMP    ?C0164
+0036         ?C0012:
+                                           ; SOURCE LINE # 143
+                                           ; SOURCE LINE # 146
+0036 120000      E     LCALL   SetPowerBatteryparameter2
+                                           ; SOURCE LINE # 147
+0039 E4                CLR     A
+003A 900000      E     MOV     DPTR,#AdapterIDOn_Flag
+003D F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 148
+003E 900000      E     MOV     DPTR,#ADPIDON10MS_NUM
+0041 74FF              MOV     A,#0FFH
+0043 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 149
+                                           ; SOURCE LINE # 150
+0044 8015              SJMP    ?C0014
+0046         ?C0011:
+                                           ; SOURCE LINE # 152
+                                           ; SOURCE LINE # 153
+0046 900000      E     MOV     DPTR,#ADPIDON10MS_NUM
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 25  
+
+0049 E0                MOVX    A,@DPTR
+004A D3                SETB    C
+004B 9401              SUBB    A,#01H
+004D 4002              JC      ?C0015
+                                           ; SOURCE LINE # 154
+                                           ; SOURCE LINE # 155
+004F         ?C0163:
+                                           ; SOURCE LINE # 156
+004F 8007              SJMP    ?C0164
+0051         ?C0015:
+                                           ; SOURCE LINE # 158
+                                           ; SOURCE LINE # 159
+0051 900000      E     MOV     DPTR,#ADPIDON10MS_NUM
+0054 E0                MOVX    A,@DPTR
+0055 B40103            CJNE    A,#01H,?C0014
+                                           ; SOURCE LINE # 160
+                                           ; SOURCE LINE # 164
+0058         ?C0164:
+0058 E0                MOVX    A,@DPTR
+0059 14                DEC     A
+005A F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 165
+                                           ; SOURCE LINE # 166
+                                           ; SOURCE LINE # 167
+005B         ?C0014:
+                                           ; SOURCE LINE # 171
+005B 120000      E     LCALL   CheckCanEnterDeepSleep
+005E 5022              JNC     ?C0018
+                                           ; SOURCE LINE # 172
+                                           ; SOURCE LINE # 173
+0060 120000      E     LCALL   InitEnterDeepSleep
+                                           ; SOURCE LINE # 174
+0063 120000      E     LCALL   EnableAllInterrupt
+                                           ; SOURCE LINE # 175
+0066 900000      E     MOV     DPTR,#PLLCTRL
+0069 7401              MOV     A,#01H
+006B F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 176
+006C 758702            MOV     PCON,#02H
+                                           ; SOURCE LINE # 177
+006F 00                NOP     
+                                           ; SOURCE LINE # 178
+0070 00                NOP     
+                                           ; SOURCE LINE # 179
+0071 00                NOP     
+                                           ; SOURCE LINE # 180
+0072 00                NOP     
+                                           ; SOURCE LINE # 181
+0073 00                NOP     
+                                           ; SOURCE LINE # 182
+0074 00                NOP     
+                                           ; SOURCE LINE # 183
+0075 00                NOP     
+                                           ; SOURCE LINE # 184
+0076 00                NOP     
+                                           ; SOURCE LINE # 185
+0077 E4                CLR     A
+0078 900000      E     MOV     DPTR,#IER3
+007B F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 186
+007C 120000      E     LCALL   InitWakeFromDeepSleep
+                                           ; SOURCE LINE # 187
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 26  
+
+007F 020000      E     LJMP    WakeUp_DO_Function
+                                           ; SOURCE LINE # 189
+0082         ?C0018:
+                                           ; SOURCE LINE # 191
+                                           ; SOURCE LINE # 192
+0082 758701            MOV     PCON,#01H
+                                           ; SOURCE LINE # 193
+                                           ; SOURCE LINE # 198
+0085         ?C0020:
+0085 22                RET     
+             ; FUNCTION Hook_Timer10msEventA (END)
+
+             ; FUNCTION Deal_CLEAR_CMOS (BEGIN)
+                                           ; SOURCE LINE # 202
+                                           ; SOURCE LINE # 203
+                                           ; SOURCE LINE # 204
+0000 900000      E     MOV     DPTR,#CMOS_TEST
+0003 E0                MOVX    A,@DPTR
+0004 20E003            JB      ACC.0,$ + 6H
+0007 020000      R     LJMP    ?C0021
+                                           ; SOURCE LINE # 205
+                                           ; SOURCE LINE # 206
+000A 900000      E     MOV     DPTR,#SysPowState
+000D E0                MOVX    A,@DPTR
+000E 6455              XRL     A,#055H
+0010 6003              JZ      $ + 5H
+0012 020000      R     LJMP    ?C0040
+                                           ; SOURCE LINE # 207
+                                           ; SOURCE LINE # 208
+0015 900000      E     MOV     DPTR,#CMOS_TEST
+0018 E0                MOVX    A,@DPTR
+0019 20E167            JB      ACC.1,?C0023
+                                           ; SOURCE LINE # 209
+                                           ; SOURCE LINE # 210
+001C 900000      E     MOV     DPTR,#cmosdelay
+001F E0                MOVX    A,@DPTR
+0020 04                INC     A
+0021 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 211
+0022 900000      E     MOV     DPTR,#GPDRH
+0025 E0                MOVX    A,@DPTR
+0026 54FE              ANL     A,#0FEH
+0028 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 212
+0029 900000      E     MOV     DPTR,#cmosdelay
+002C E0                MOVX    A,@DPTR
+002D B40107            CJNE    A,#01H,?C0024
+                                           ; SOURCE LINE # 213
+                                           ; SOURCE LINE # 214
+0030 900000      E     MOV     DPTR,#GPDRH
+0033 E0                MOVX    A,@DPTR
+0034 54EF              ANL     A,#0EFH
+0036 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 215
+0037         ?C0024:
+                                           ; SOURCE LINE # 216
+0037 900000      E     MOV     DPTR,#cmosdelay
+003A E0                MOVX    A,@DPTR
+003B B40207            CJNE    A,#02H,?C0025
+                                           ; SOURCE LINE # 217
+                                           ; SOURCE LINE # 218
+003E 900000      E     MOV     DPTR,#GPDRF
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 27  
+
+0041 E0                MOVX    A,@DPTR
+0042 54FE              ANL     A,#0FEH
+0044 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 219
+0045         ?C0025:
+                                           ; SOURCE LINE # 220
+0045 900000      E     MOV     DPTR,#cmosdelay
+0048 E0                MOVX    A,@DPTR
+0049 B4030E            CJNE    A,#03H,?C0026
+                                           ; SOURCE LINE # 221
+                                           ; SOURCE LINE # 223
+004C 900000      E     MOV     DPTR,#GPDRF
+004F E0                MOVX    A,@DPTR
+0050 54FD              ANL     A,#0FDH
+0052 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 224
+0053 900000      E     MOV     DPTR,#GPDRJ
+0056 E0                MOVX    A,@DPTR
+0057 54BF              ANL     A,#0BFH
+0059 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 225
+005A         ?C0026:
+                                           ; SOURCE LINE # 226
+005A 900000      E     MOV     DPTR,#cmosdelay
+005D E0                MOVX    A,@DPTR
+005E 6416              XRL     A,#016H
+0060 6003              JZ      $ + 5H
+0062 020000      R     LJMP    ?C0040
+                                           ; SOURCE LINE # 227
+                                           ; SOURCE LINE # 228
+0065 900000      E     MOV     DPTR,#GPDRB
+0068 E0                MOVX    A,@DPTR
+0069 4420              ORL     A,#020H
+006B F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 229
+006C E4                CLR     A
+006D 900000      E     MOV     DPTR,#cmosdelay
+0070 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 230
+0071 7F23              MOV     R7,#023H
+0073 120000      E     LCALL   _RamDebug
+                                           ; SOURCE LINE # 231
+0076 900000      E     MOV     DPTR,#CMOS_TEST
+0079 E0                MOVX    A,@DPTR
+007A 4402              ORL     A,#02H
+007C F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 232
+007D E4                CLR     A
+007E 900000      E     MOV     DPTR,#cmosdelay1
+0081 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 233
+                                           ; SOURCE LINE # 234
+0082 22                RET     
+0083         ?C0023:
+                                           ; SOURCE LINE # 235
+0083 900000      E     MOV     DPTR,#cmosdelay1
+0086 E0                MOVX    A,@DPTR
+0087 C3                CLR     C
+0088 9423              SUBB    A,#023H
+008A 5003              JNC     $ + 5H
+008C 020000      R     LJMP    ?C0040
+                                           ; SOURCE LINE # 236
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 28  
+
+                                           ; SOURCE LINE # 237
+008F 900000      E     MOV     DPTR,#cmosdelay
+0092 E0                MOVX    A,@DPTR
+0093 04                INC     A
+0094 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 238
+0095 900000      E     MOV     DPTR,#GPDRB
+0098 E0                MOVX    A,@DPTR
+0099 54DF              ANL     A,#0DFH
+009B F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 239
+009C 900000      E     MOV     DPTR,#CMOS_TEST
+009F E0                MOVX    A,@DPTR
+00A0 4408              ORL     A,#08H
+00A2 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 240
+00A3 900000      E     MOV     DPTR,#cmosdelay
+00A6 E0                MOVX    A,@DPTR
+00A7 B40A0E            CJNE    A,#0AH,?C0030
+                                           ; SOURCE LINE # 241
+                                           ; SOURCE LINE # 242
+00AA 900000      E     MOV     DPTR,#GPDRB
+00AD E0                MOVX    A,@DPTR
+00AE 30E007            JNB     ACC.0,?C0030
+                                           ; SOURCE LINE # 243
+00B1 900000      E     MOV     DPTR,#GPDRF
+00B4 E0                MOVX    A,@DPTR
+00B5 4401              ORL     A,#01H
+00B7 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 244
+00B8         ?C0030:
+                                           ; SOURCE LINE # 245
+00B8 900000      E     MOV     DPTR,#cmosdelay
+00BB E0                MOVX    A,@DPTR
+00BC B40B0E            CJNE    A,#0BH,?C0032
+                                           ; SOURCE LINE # 246
+                                           ; SOURCE LINE # 248
+00BF 900000      E     MOV     DPTR,#GPDRB
+00C2 E0                MOVX    A,@DPTR
+00C3 30E007            JNB     ACC.0,?C0032
+                                           ; SOURCE LINE # 249
+00C6 900000      E     MOV     DPTR,#GPDRF
+00C9 E0                MOVX    A,@DPTR
+00CA 4402              ORL     A,#02H
+00CC F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 250
+00CD         ?C0032:
+                                           ; SOURCE LINE # 251
+00CD 900000      E     MOV     DPTR,#cmosdelay
+00D0 E0                MOVX    A,@DPTR
+00D1 B40C0E            CJNE    A,#0CH,?C0034
+                                           ; SOURCE LINE # 252
+                                           ; SOURCE LINE # 253
+00D4 900000      E     MOV     DPTR,#GPDRB
+00D7 E0                MOVX    A,@DPTR
+00D8 30E007            JNB     ACC.0,?C0034
+                                           ; SOURCE LINE # 254
+00DB 900000      E     MOV     DPTR,#GPDRH
+00DE E0                MOVX    A,@DPTR
+00DF 4410              ORL     A,#010H
+00E1 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 255
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 29  
+
+00E2         ?C0034:
+                                           ; SOURCE LINE # 256
+00E2 900000      E     MOV     DPTR,#cmosdelay
+00E5 E0                MOVX    A,@DPTR
+00E6 640F              XRL     A,#0FH
+00E8 703A              JNZ     ?C0040
+                                           ; SOURCE LINE # 257
+                                           ; SOURCE LINE # 258
+00EA 900000      E     MOV     DPTR,#GPDRB
+00ED E0                MOVX    A,@DPTR
+00EE 30E007            JNB     ACC.0,?C0037
+                                           ; SOURCE LINE # 259
+00F1 900000      E     MOV     DPTR,#GPDRH
+00F4 E0                MOVX    A,@DPTR
+00F5 4401              ORL     A,#01H
+00F7 F0                MOVX    @DPTR,A
+00F8         ?C0037:
+                                           ; SOURCE LINE # 260
+00F8 900000      E     MOV     DPTR,#CMOS_TEST
+00FB E0                MOVX    A,@DPTR
+00FC 54FD              ANL     A,#0FDH
+00FE F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 261
+00FF E0                MOVX    A,@DPTR
+0100 54FE              ANL     A,#0FEH
+0102 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 262
+0103 E0                MOVX    A,@DPTR
+0104 54F7              ANL     A,#0F7H
+0106 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 263
+0107 E4                CLR     A
+0108 900000      E     MOV     DPTR,#cmosdelay1
+010B F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 264
+010C 900000      E     MOV     DPTR,#GPDRB
+010F E0                MOVX    A,@DPTR
+0110 30E007            JNB     ACC.0,?C0038
+                                           ; SOURCE LINE # 265
+0113 900000      E     MOV     DPTR,#GPDRJ
+0116 E0                MOVX    A,@DPTR
+0117 4440              ORL     A,#040H
+0119 F0                MOVX    @DPTR,A
+011A         ?C0038:
+                                           ; SOURCE LINE # 266
+011A 7F4A              MOV     R7,#04AH
+011C 020000      E     LJMP    _RamDebug
+                                           ; SOURCE LINE # 267
+                                           ; SOURCE LINE # 269
+                                           ; SOURCE LINE # 270
+                                           ; SOURCE LINE # 271
+011F         ?C0021:
+                                           ; SOURCE LINE # 273
+                                           ; SOURCE LINE # 274
+011F E4                CLR     A
+0120 900000      E     MOV     DPTR,#cmosdelay
+0123 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 275
+                                           ; SOURCE LINE # 276
+0124         ?C0040:
+0124 22                RET     
+             ; FUNCTION Deal_CLEAR_CMOS (END)
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 30  
+
+
+             ; FUNCTION Hook_Timer10msEventB (BEGIN)
+                                           ; SOURCE LINE # 282
+                                           ; SOURCE LINE # 283
+                                           ; SOURCE LINE # 284
+0000 120000      E     LCALL   CheckSBPowerButton
+                                           ; SOURCE LINE # 286
+0003 120000      E     LCALL   ScanADCDyChannel1
+                                           ; SOURCE LINE # 289
+0006 900000      E     MOV     DPTR,#SysPowState
+0009 E0                MOVX    A,@DPTR
+000A B4110C            CJNE    A,#011H,?C0041
+000D 900000      E     MOV     DPTR,#PwrOnDly5Sec
+0010 E0                MOVX    A,@DPTR
+0011 7006              JNZ     ?C0041
+                                           ; SOURCE LINE # 290
+                                           ; SOURCE LINE # 291
+0013 120000      E     LCALL   PollingCPURT
+                                           ; SOURCE LINE # 293
+                                           ; SOURCE LINE # 294
+0016 120000      E     LCALL   PollingGPURT
+                                           ; SOURCE LINE # 295
+                                           ; SOURCE LINE # 296
+0019         ?C0041:
+                                           ; SOURCE LINE # 304
+0019 900000      E     MOV     DPTR,#delayEDPTm
+001C E0                MOVX    A,@DPTR
+001D D3                SETB    C
+001E 9400              SUBB    A,#00H
+0020 4003              JC      ?C0043
+                                           ; SOURCE LINE # 305
+                                           ; SOURCE LINE # 306
+0022 E0                MOVX    A,@DPTR
+0023 14                DEC     A
+0024 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 307
+                                           ; SOURCE LINE # 310
+0025         ?C0043:
+0025 22                RET     
+             ; FUNCTION Hook_Timer10msEventB (END)
+
+             ; FUNCTION Hook_Timer50msEventA (BEGIN)
+                                           ; SOURCE LINE # 315
+                                           ; SOURCE LINE # 316
+                                           ; SOURCE LINE # 323
+0000 900000      E     MOV     DPTR,#cOsLedCtrl
+0003 E0                MOVX    A,@DPTR
+0004 FF                MOV     R7,A
+0005 C4                SWAP    A
+0006 13                RRC     A
+0007 13                RRC     A
+0008 13                RRC     A
+0009 5401              ANL     A,#01H
+000B 20E003            JB      ACC.0,?C0044
+                                           ; SOURCE LINE # 324
+000E 020000      E     LJMP    Lenovo_LED
+0011         ?C0044:
+                                           ; SOURCE LINE # 326
+0011 120000      E     LCALL   MFG_LED
+                                           ; SOURCE LINE # 327
+0014         ?C0046:
+0014 22                RET     
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 31  
+
+             ; FUNCTION Hook_Timer50msEventA (END)
+
+             ; FUNCTION Hook_Timer50msEventB (BEGIN)
+                                           ; SOURCE LINE # 332
+                                           ; SOURCE LINE # 333
+                                           ; SOURCE LINE # 334
+0000 020000      E     LJMP    PWM_TimeCount
+             ; FUNCTION Hook_Timer50msEventB (END)
+
+             ; FUNCTION Hook_Timer50msEventC (BEGIN)
+                                           ; SOURCE LINE # 346
+                                           ; SOURCE LINE # 347
+                                           ; SOURCE LINE # 348
+0000 120000      E     LCALL   MuteProcess
+                                           ; SOURCE LINE # 350
+0003 120000      E     LCALL   Chk_pDevStus
+                                           ; SOURCE LINE # 351
+0006 120000      E     LCALL   Update_EEPROMB07
+                                           ; SOURCE LINE # 360
+0009 900000      E     MOV     DPTR,#THERMAL_STATUS
+000C E0                MOVX    A,@DPTR
+000D 20E306            JB      ACC.3,?C0049
+                                           ; SOURCE LINE # 361
+                                           ; SOURCE LINE # 363
+0010 120000      E     LCALL   CheckFanRPM1
+                                           ; SOURCE LINE # 364
+0013 120000      E     LCALL   CheckFanRPM2
+                                           ; SOURCE LINE # 366
+                                           ; SOURCE LINE # 370
+0016         ?C0049:
+0016 22                RET     
+             ; FUNCTION Hook_Timer50msEventC (END)
+
+             ; FUNCTION Hook_Timer100msEventA (BEGIN)
+                                           ; SOURCE LINE # 375
+                                           ; SOURCE LINE # 376
+                                           ; SOURCE LINE # 394
+0000 120000      E     LCALL   ResetInternalWDT
+                                           ; SOURCE LINE # 397
+0003 900000      E     MOV     DPTR,#SEL_STATE0
+0006 E0                MOVX    A,@DPTR
+0007 30E005            JNB     ACC.0,?C0050
+                                           ; SOURCE LINE # 398
+                                           ; SOURCE LINE # 399
+000A 120000      E     LCALL   OEM_PollingBatData_TASK
+                                           ; SOURCE LINE # 400
+000D 8007              SJMP    ?C0051
+000F         ?C0050:
+                                           ; SOURCE LINE # 402
+000F 900000      E     MOV     DPTR,#StatusKeeper
+0012 E0                MOVX    A,@DPTR
+0013 54FD              ANL     A,#0FDH
+0015 F0                MOVX    @DPTR,A
+0016         ?C0051:
+                                           ; SOURCE LINE # 412
+0016 900000      E     MOV     DPTR,#CMOS_TEST
+0019 E0                MOVX    A,@DPTR
+001A 30E10A            JNB     ACC.1,?C0053
+001D E0                MOVX    A,@DPTR
+001E 20E306            JB      ACC.3,?C0053
+                                           ; SOURCE LINE # 413
+                                           ; SOURCE LINE # 414
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 32  
+
+0021 900000      E     MOV     DPTR,#cmosdelay1
+0024 E0                MOVX    A,@DPTR
+0025 04                INC     A
+0026 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 415
+                                           ; SOURCE LINE # 418
+0027         ?C0053:
+0027 22                RET     
+             ; FUNCTION Hook_Timer100msEventA (END)
+
+             ; FUNCTION Hook_Timer100msEventB (BEGIN)
+                                           ; SOURCE LINE # 423
+                                           ; SOURCE LINE # 424
+                                           ; SOURCE LINE # 430
+0000 120000      E     LCALL   WirelessProcess
+                                           ; SOURCE LINE # 431
+0003 120000      E     LCALL   IFFSProcess
+                                           ; SOURCE LINE # 433
+0006 120000      R     LCALL   ACOutProchotRelease
+                                           ; SOURCE LINE # 435
+0009 900000      E     MOV     DPTR,#FunctionKeyDebounce
+000C E0                MOVX    A,@DPTR
+000D 540F              ANL     A,#0FH
+000F 6029              JZ      ?C0056
+                                           ; SOURCE LINE # 436
+                                           ; SOURCE LINE # 437
+0011 E0                MOVX    A,@DPTR
+0012 14                DEC     A
+0013 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 438
+0014 E0                MOVX    A,@DPTR
+0015 540F              ANL     A,#0FH
+0017 7021              JNZ     ?C0056
+                                           ; SOURCE LINE # 439
+                                           ; SOURCE LINE # 440
+0019 E0                MOVX    A,@DPTR
+001A 54F0              ANL     A,#0F0H
+001C FF                MOV     R7,A
+001D C4                SWAP    A
+001E 540F              ANL     A,#0FH
+0020 75F003            MOV     B,#03H
+0023 900000      E     MOV     DPTR,#HotKey_Fn_Fx-03H
+0026 120000      E     LCALL   ?C?OFFXADD
+0029 120000      E     LCALL   ?C?PLDCODE
+002C 8982              MOV     DPL,R1
+002E 8A83              MOV     DPH,R2
+0030 7F01              MOV     R7,#01H
+0032 120000      E     LCALL   ?C?ICALL2
+                                           ; SOURCE LINE # 441
+0035 E4                CLR     A
+0036 900000      E     MOV     DPTR,#FunctionKeyDebounce
+0039 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 442
+                                           ; SOURCE LINE # 443
+                                           ; SOURCE LINE # 445
+003A         ?C0056:
+003A 22                RET     
+             ; FUNCTION Hook_Timer100msEventB (END)
+
+             ; FUNCTION Hook_Timer100msEventC (BEGIN)
+                                           ; SOURCE LINE # 450
+                                           ; SOURCE LINE # 451
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 33  
+
+                                           ; SOURCE LINE # 454
+0000 120000      E     LCALL   ThrottlingControl
+                                           ; SOURCE LINE # 455
+0003 120000      E     LCALL   GPUThrottlingControl
+                                           ; SOURCE LINE # 458
+0006 120000      E     LCALL   Battery100ms
+                                           ; SOURCE LINE # 459
+0009 900000      E     MOV     DPTR,#TouchPadCount
+000C E0                MOVX    A,@DPTR
+000D 6003              JZ      ?C0057
+                                           ; SOURCE LINE # 460
+                                           ; SOURCE LINE # 461
+000F E0                MOVX    A,@DPTR
+0010 14                DEC     A
+0011 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 462
+0012         ?C0057:
+                                           ; SOURCE LINE # 468
+0012 900000      E     MOV     DPTR,#THERMAL_STATUS
+0015 E0                MOVX    A,@DPTR
+0016 20E303            JB      ACC.3,?C0060
+                                           ; SOURCE LINE # 469
+                                           ; SOURCE LINE # 472
+0019 120000      E     LCALL   FanManager
+                                           ; SOURCE LINE # 476
+                                           ; SOURCE LINE # 478
+                                           ; SOURCE LINE # 480
+                                           ; SOURCE LINE # 487
+001C         ?C0060:
+001C 22                RET     
+             ; FUNCTION Hook_Timer100msEventC (END)
+
+             ; FUNCTION Hook_Timer500msEventA (BEGIN)
+                                           ; SOURCE LINE # 492
+                                           ; SOURCE LINE # 493
+                                           ; SOURCE LINE # 495
+0000 900000      E     MOV     DPTR,#SEL_STATE0
+0003 E0                MOVX    A,@DPTR
+0004 30E01A            JNB     ACC.0,?C0061
+                                           ; SOURCE LINE # 496
+                                           ; SOURCE LINE # 497
+0007 120000      E     LCALL   Chk_BatSMbusFailCount
+                                           ; SOURCE LINE # 499
+000A 900000      E     MOV     DPTR,#GPDRB
+000D E0                MOVX    A,@DPTR
+000E 30E010            JNB     ACC.0,?C0061
+0011 900000      E     MOV     DPTR,#BATTUPDATEFW
+0014 E0                MOVX    A,@DPTR
+0015 20E009            JB      ACC.0,?C0061
+                                           ; SOURCE LINE # 500
+                                           ; SOURCE LINE # 501
+0018 120000      E     LCALL   Battery_Expresscharge
+                                           ; SOURCE LINE # 502
+001B 120000      E     LCALL   WriteSmartChgIC
+                                           ; SOURCE LINE # 503
+001E 120000      E     LCALL   ReadSmartChgIC
+                                           ; SOURCE LINE # 504
+                                           ; SOURCE LINE # 505
+0021         ?C0061:
+                                           ; SOURCE LINE # 510
+0021 900000      E     MOV     DPTR,#BATTUPDATEFW
+0024 E0                MOVX    A,@DPTR
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 34  
+
+0025 30E007            JNB     ACC.0,?C0063
+                                           ; SOURCE LINE # 511
+0028 900000      E     MOV     DPTR,#StatusKeeper
+002B E0                MOVX    A,@DPTR
+002C 4401              ORL     A,#01H
+002E F0                MOVX    @DPTR,A
+002F         ?C0063:
+                                           ; SOURCE LINE # 512
+002F 900000      E     MOV     DPTR,#StatusKeeper
+0032 E0                MOVX    A,@DPTR
+0033 30E017            JNB     ACC.0,?C0064
+0036 900000      E     MOV     DPTR,#BATTUPDATEFW
+0039 E0                MOVX    A,@DPTR
+003A 20E010            JB      ACC.0,?C0064
+                                           ; SOURCE LINE # 513
+                                           ; SOURCE LINE # 514
+003D 900000      E     MOV     DPTR,#StatusKeeper
+0040 E0                MOVX    A,@DPTR
+0041 54FE              ANL     A,#0FEH
+0043 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 515
+0044 120000      E     LCALL   FirstGetBatData
+                                           ; SOURCE LINE # 516
+0047 900000      E     MOV     DPTR,#Service_Auth_Step
+004A 7401              MOV     A,#01H
+004C F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 517
+004D         ?C0064:
+                                           ; SOURCE LINE # 520
+004D 900000      E     MOV     DPTR,#nDesignCapL
+0050 E0                MOVX    A,@DPTR
+0051 6017              JZ      ?C0067
+0053 900000      E     MOV     DPTR,#nPresentVoltH
+0056 E0                MOVX    A,@DPTR
+0057 6011              JZ      ?C0067
+                                           ; SOURCE LINE # 521
+                                           ; SOURCE LINE # 522
+0059 900000      E     MOV     DPTR,#SEL_STATE0
+005C E0                MOVX    A,@DPTR
+005D 30E00A            JNB     ACC.0,?C0067
+0060 900000      E     MOV     DPTR,#StatusKeeper
+0063 E0                MOVX    A,@DPTR
+0064 20E003            JB      ACC.0,?C0067
+                                           ; SOURCE LINE # 524
+                                           ; SOURCE LINE # 525
+0067 120000      E     LCALL   LV_BAT_Authentication
+                                           ; SOURCE LINE # 526
+                                           ; SOURCE LINE # 527
+                                           ; SOURCE LINE # 530
+006A         ?C0067:
+006A 22                RET     
+             ; FUNCTION Hook_Timer500msEventA (END)
+
+             ; FUNCTION Hook_Timer500msEventB (BEGIN)
+                                           ; SOURCE LINE # 535
+                                           ; SOURCE LINE # 536
+                                           ; SOURCE LINE # 539
+0000 120000      E     LCALL   SetKeyboardLED
+                                           ; SOURCE LINE # 550
+0003 900000      E     MOV     DPTR,#cGPUACtoBattTime
+0006 E0                MOVX    A,@DPTR
+0007 6003              JZ      ?C0068
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 35  
+
+                                           ; SOURCE LINE # 551
+                                           ; SOURCE LINE # 552
+0009 E0                MOVX    A,@DPTR
+000A 14                DEC     A
+000B F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 553
+000C         ?C0068:
+                                           ; SOURCE LINE # 554
+000C 120000      E     LCALL   DownACtoBatteryGPUState
+                                           ; SOURCE LINE # 558
+000F 900000      E     MOV     DPTR,#PCH_ColdBoot_TimeOut
+0012 E0                MOVX    A,@DPTR
+0013 D3                SETB    C
+0014 9400              SUBB    A,#00H
+0016 4036              JC      ?C0072
+                                           ; SOURCE LINE # 559
+                                           ; SOURCE LINE # 560
+0018 E0                MOVX    A,@DPTR
+0019 14                DEC     A
+001A F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 561
+001B E0                MOVX    A,@DPTR
+001C 7026              JNZ     ?C0070
+001E 900000      E     MOV     DPTR,#SysPowState
+0021 E0                MOVX    A,@DPTR
+0022 B4111F            CJNE    A,#011H,?C0070
+                                           ; SOURCE LINE # 562
+                                           ; SOURCE LINE # 563
+0025 7F3A              MOV     R7,#03AH
+0027 120000      R     LCALL   _ProcessSID
+                                           ; SOURCE LINE # 564
+002A 900000      E     MOV     DPTR,#ACPI_HOTKEY
+002D E0                MOVX    A,@DPTR
+002E 4480              ORL     A,#080H
+0030 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 565
+0031 900000      E     MOV     DPTR,#GPDRH
+0034 E0                MOVX    A,@DPTR
+0035 54FE              ANL     A,#0FEH
+0037 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 566
+0038 7F01              MOV     R7,#01H
+003A 120000      E     LCALL   _Delay1MS
+                                           ; SOURCE LINE # 567
+003D 900000      E     MOV     DPTR,#GPDRH
+0040 E0                MOVX    A,@DPTR
+0041 4401              ORL     A,#01H
+0043 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 568
+0044         ?C0070:
+                                           ; SOURCE LINE # 570
+0044 120000      R     LCALL   L?0170
+0047 6005              JZ      ?C0072
+                                           ; SOURCE LINE # 571
+0049 E4                CLR     A
+004A 900000      E     MOV     DPTR,#PCH_ColdBoot_TimeOut
+004D F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 572
+                                           ; SOURCE LINE # 579
+004E         ?C0072:
+004E 22                RET     
+             ; FUNCTION Hook_Timer500msEventB (END)
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 36  
+
+
+             ; FUNCTION Hook_Timer500msEventC (BEGIN)
+                                           ; SOURCE LINE # 584
+                                           ; SOURCE LINE # 585
+                                           ; SOURCE LINE # 587
+0000 120000      E     LCALL   Clear_Batt_First_Used_Date
+                                           ; SOURCE LINE # 600
+0003 120000      E     LCALL   Lid_Process
+                                           ; SOURCE LINE # 603
+0006 900000      E     MOV     DPTR,#KBHISR
+0009 E0                MOVX    A,@DPTR
+000A 30E024            JNB     ACC.0,?C0073
+000D 900000      E     MOV     DPTR,#SysPowState
+0010 E0                MOVX    A,@DPTR
+0011 B4111D            CJNE    A,#011H,?C0073
+                                           ; SOURCE LINE # 604
+                                           ; SOURCE LINE # 605
+0014 900000      E     MOV     DPTR,#KB_OBF_count
+0017 E0                MOVX    A,@DPTR
+0018 04                INC     A
+0019 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 606
+001A E0                MOVX    A,@DPTR
+001B 540F              ANL     A,#0FH
+001D D3                SETB    C
+001E 940A              SUBB    A,#0AH
+0020 4016              JC      ?C0076
+                                           ; SOURCE LINE # 607
+                                           ; SOURCE LINE # 608
+0022 E0                MOVX    A,@DPTR
+0023 2410              ADD     A,#010H
+0025 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 609
+0026 E0                MOVX    A,@DPTR
+0027 54F0              ANL     A,#0F0H
+0029 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 610
+002A 900000      E     MOV     DPTR,#GENIRQ
+002D 7401              MOV     A,#01H
+002F F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 611
+                                           ; SOURCE LINE # 612
+0030 22                RET     
+0031         ?C0073:
+                                           ; SOURCE LINE # 614
+                                           ; SOURCE LINE # 615
+0031 900000      E     MOV     DPTR,#KB_OBF_count
+0034 E0                MOVX    A,@DPTR
+0035 54F0              ANL     A,#0F0H
+0037 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 616
+                                           ; SOURCE LINE # 618
+0038         ?C0076:
+0038 22                RET     
+             ; FUNCTION Hook_Timer500msEventC (END)
+
+             ; FUNCTION checkclearcmos (BEGIN)
+                                           ; SOURCE LINE # 622
+                                           ; SOURCE LINE # 623
+                                           ; SOURCE LINE # 624
+0000 900000      E     MOV     DPTR,#CMOS_TEST
+0003 E0                MOVX    A,@DPTR
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 37  
+
+0004 30E250            JNB     ACC.2,?C0085
+                                           ; SOURCE LINE # 625
+                                           ; SOURCE LINE # 626
+0007 900000      E     MOV     DPTR,#GPDRD
+000A E0                MOVX    A,@DPTR
+000B 30E003            JNB     ACC.0,?C0079
+000E D3                SETB    C
+000F 8001              SJMP    ?C0080
+0011         ?C0079:
+0011 C3                CLR     C
+0012         ?C0080:
+0012 401A              JC      ?C0078
+0014 900000      E     MOV     DPTR,#GPDRD
+0017 E0                MOVX    A,@DPTR
+0018 30E103            JNB     ACC.1,?C0081
+001B D3                SETB    C
+001C 8001              SJMP    ?C0082
+001E         ?C0081:
+001E C3                CLR     C
+001F         ?C0082:
+001F 400D              JC      ?C0078
+                                           ; SOURCE LINE # 627
+                                           ; SOURCE LINE # 628
+0021 900000      E     MOV     DPTR,#cmosshutdelay
+0024 E0                MOVX    A,@DPTR
+0025 04                INC     A
+0026 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 629
+0027 7F4B              MOV     R7,#04BH
+0029 120000      E     LCALL   _RamDebug
+                                           ; SOURCE LINE # 630
+002C 800C              SJMP    ?C0083
+002E         ?C0078:
+                                           ; SOURCE LINE # 632
+                                           ; SOURCE LINE # 633
+002E E4                CLR     A
+002F 900000      E     MOV     DPTR,#cmosshutdelay
+0032 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 634
+0033 900000      E     MOV     DPTR,#CMOS_TEST
+0036 E0                MOVX    A,@DPTR
+0037 54FB              ANL     A,#0FBH
+0039 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 635
+003A         ?C0083:
+                                           ; SOURCE LINE # 636
+003A 900000      E     MOV     DPTR,#cmosshutdelay
+003D E0                MOVX    A,@DPTR
+003E B40516            CJNE    A,#05H,?C0085
+                                           ; SOURCE LINE # 637
+                                           ; SOURCE LINE # 638
+0041 900000      E     MOV     DPTR,#SysPowState
+0044 7455              MOV     A,#055H
+0046 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 640
+0047 900000      E     MOV     DPTR,#CMOS_TEST
+004A E0                MOVX    A,@DPTR
+004B 4401              ORL     A,#01H
+004D F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 641
+004E E0                MOVX    A,@DPTR
+004F 54FB              ANL     A,#0FBH
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 38  
+
+0051 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 642
+0052 E4                CLR     A
+0053 900000      E     MOV     DPTR,#cmosshutdelay
+0056 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 643
+                                           ; SOURCE LINE # 644
+                                           ; SOURCE LINE # 645
+0057         ?C0085:
+0057 22                RET     
+             ; FUNCTION checkclearcmos (END)
+
+             ; FUNCTION Hook_Timer1SecEventA (BEGIN)
+                                           ; SOURCE LINE # 651
+                                           ; SOURCE LINE # 652
+                                           ; SOURCE LINE # 653
+0000 120000      R     LCALL   checkclearcmos
+                                           ; SOURCE LINE # 655
+0003 900000      E     MOV     DPTR,#PowerUVP_REG
+0006 E0                MOVX    A,@DPTR
+0007 FF                MOV     R7,A
+0008 900000      E     MOV     DPTR,#PowerOVP_REG
+000B E0                MOVX    A,@DPTR
+000C 4F                ORL     A,R7
+000D FF                MOV     R7,A
+000E 900000      E     MOV     DPTR,#PowerOCP_REG
+0011 E0                MOVX    A,@DPTR
+0012 4F                ORL     A,R7
+0013 FF                MOV     R7,A
+0014 900000      E     MOV     DPTR,#PowerOTP_REG
+0017 E0                MOVX    A,@DPTR
+0018 4F                ORL     A,R7
+0019 700B              JNZ     ?C0087
+                                           ; SOURCE LINE # 656
+                                           ; SOURCE LINE # 658
+001B         ?C0086:
+                                           ; SOURCE LINE # 660
+                                           ; SOURCE LINE # 661
+001B 900000      E     MOV     DPTR,#SysPowState
+001E E0                MOVX    A,@DPTR
+001F 6455              XRL     A,#055H
+0021 6003              JZ      ?C0087
+                                           ; SOURCE LINE # 662
+0023 120000      E     LCALL   PollingOTP
+                                           ; SOURCE LINE # 663
+0026         ?C0087:
+                                           ; SOURCE LINE # 665
+0026 900000      E     MOV     DPTR,#SysPowState
+0029 E0                MOVX    A,@DPTR
+002A B41109            CJNE    A,#011H,?C0089
+002D 900000      E     MOV     DPTR,#PwrOnDly5Sec
+0030 E0                MOVX    A,@DPTR
+0031 6003              JZ      ?C0089
+                                           ; SOURCE LINE # 666
+0033 E0                MOVX    A,@DPTR
+0034 14                DEC     A
+0035 F0                MOVX    @DPTR,A
+0036         ?C0089:
+                                           ; SOURCE LINE # 668
+0036 900000      E     MOV     DPTR,#SysPowState
+0039 E0                MOVX    A,@DPTR
+003A 6433              XRL     A,#033H
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 39  
+
+003C 6004              JZ      ?C0091
+003E E0                MOVX    A,@DPTR
+003F B4550E            CJNE    A,#055H,?C0090
+0042         ?C0091:
+                                           ; SOURCE LINE # 669
+                                           ; SOURCE LINE # 670
+0042 900000      E     MOV     DPTR,#ACOFF_SOURCE
+0045 E0                MOVX    A,@DPTR
+0046 54FB              ANL     A,#0FBH
+0048 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 671
+0049 900000      E     MOV     DPTR,#CHGIC_WriteCmd0x12L
+004C E0                MOVX    A,@DPTR
+004D 54DF              ANL     A,#0DFH
+004F F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 672
+0050         ?C0090:
+                                           ; SOURCE LINE # 676
+0050 120000      E     LCALL   VGA_Temperature
+                                           ; SOURCE LINE # 678
+0053 120000      E     LCALL   Oem_Thermal_Control
+                                           ; SOURCE LINE # 682
+0056 120000      E     LCALL   OEM_Throttling_Ctrl
+                                           ; SOURCE LINE # 685
+0059 120000      E     LCALL   Battery1Sec
+                                           ; SOURCE LINE # 688
+005C 900000      E     MOV     DPTR,#SysPowState
+005F E0                MOVX    A,@DPTR
+0060 B45509            CJNE    A,#055H,?C0092
+                                           ; SOURCE LINE # 689
+                                           ; SOURCE LINE # 690
+0063 900000      E     MOV     DPTR,#ECSleepCount
+0066 E0                MOVX    A,@DPTR
+0067 6003              JZ      ?C0092
+                                           ; SOURCE LINE # 691
+                                           ; SOURCE LINE # 692
+0069 E0                MOVX    A,@DPTR
+006A 14                DEC     A
+006B F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 693
+                                           ; SOURCE LINE # 694
+006C         ?C0092:
+                                           ; SOURCE LINE # 696
+006C 900000      E     MOV     DPTR,#CountSecAfterPswPressed
+006F E0                MOVX    A,@DPTR
+0070 C3                CLR     C
+0071 94FF              SUBB    A,#0FFH
+0073 5003              JNC     ?C0094
+                                           ; SOURCE LINE # 697
+0075 E0                MOVX    A,@DPTR
+0076 04                INC     A
+0077 F0                MOVX    @DPTR,A
+0078         ?C0094:
+                                           ; SOURCE LINE # 698
+0078 900000      E     MOV     DPTR,#CountSecAfterNOVOPressed
+007B E0                MOVX    A,@DPTR
+007C C3                CLR     C
+007D 94FF              SUBB    A,#0FFH
+007F 5003              JNC     ?C0095
+                                           ; SOURCE LINE # 699
+0081 E0                MOVX    A,@DPTR
+0082 04                INC     A
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 40  
+
+0083 F0                MOVX    @DPTR,A
+0084         ?C0095:
+                                           ; SOURCE LINE # 703
+0084 120000      R     LCALL   CPUThrottlingDelay
+                                           ; SOURCE LINE # 704
+0087 020000      E     LJMP    disCPUturbo90s
+             ; FUNCTION Hook_Timer1SecEventA (END)
+
+             ; FUNCTION Hook_Timer1SecEventB (BEGIN)
+                                           ; SOURCE LINE # 711
+                                           ; SOURCE LINE # 712
+                                           ; SOURCE LINE # 714
+0000 900000      E     MOV     DPTR,#QEVENT_DEBUG
+0003 E0                MOVX    A,@DPTR
+0004 600A              JZ      ?C0097
+                                           ; SOURCE LINE # 715
+                                           ; SOURCE LINE # 716
+0006 E0                MOVX    A,@DPTR
+0007 FF                MOV     R7,A
+0008 120000      E     LCALL   _ECQEvent
+                                           ; SOURCE LINE # 717
+000B E4                CLR     A
+000C 900000      E     MOV     DPTR,#QEVENT_DEBUG
+000F F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 718
+0010         ?C0097:
+                                           ; SOURCE LINE # 719
+0010 120000      E     LCALL   SystemAutoOn
+                                           ; SOURCE LINE # 723
+0013 900000      E     MOV     DPTR,#BATTUPDATEFW
+0016 E0                MOVX    A,@DPTR
+0017 20E03C            JB      ACC.0,?C0098
+001A 900000      E     MOV     DPTR,#BT1_STATUS1
+001D E0                MOVX    A,@DPTR
+001E 30E035            JNB     ACC.0,?C0098
+                                           ; SOURCE LINE # 724
+                                           ; SOURCE LINE # 725
+0021 900000      E     MOV     DPTR,#?_bRWSMBus?BYTE+03H
+0024 7435              MOV     A,#035H
+0026 F0                MOVX    @DPTR,A
+0027 7E00        E     MOV     R6,#HIGH FirmwareUpdateStatusL
+0029 A3                INC     DPTR
+002A 7400        E     MOV     A,#HIGH FirmwareUpdateStatusL
+002C F0                MOVX    @DPTR,A
+002D A3                INC     DPTR
+002E 7400        E     MOV     A,#LOW FirmwareUpdateStatusL
+0030 F0                MOVX    @DPTR,A
+0031 E4                CLR     A
+0032 A3                INC     DPTR
+0033 F0                MOVX    @DPTR,A
+0034 7B16              MOV     R3,#016H
+0036 7D0C              MOV     R5,#0CH
+0038 7F01              MOV     R7,#01H
+003A 120000      E     LCALL   _bRWSMBus
+                                           ; SOURCE LINE # 726
+003D 900000      E     MOV     DPTR,#?_bRSMBusBlock?BYTE+03H
+0040 7437              MOV     A,#037H
+0042 F0                MOVX    @DPTR,A
+0043 7E00        E     MOV     R6,#HIGH BatterymakerIDL
+0045 A3                INC     DPTR
+0046 7400        E     MOV     A,#HIGH BatterymakerIDL
+0048 F0                MOVX    @DPTR,A
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 41  
+
+0049 A3                INC     DPTR
+004A 7400        E     MOV     A,#LOW BatterymakerIDL
+004C F0                MOVX    @DPTR,A
+004D 7B16              MOV     R3,#016H
+004F 7D14              MOV     R5,#014H
+0051 7F01              MOV     R7,#01H
+0053 120000      E     LCALL   _bRSMBusBlock
+                                           ; SOURCE LINE # 727
+0056         ?C0098:
+                                           ; SOURCE LINE # 730
+0056 900000      E     MOV     DPTR,#SEL_STATE0
+0059 E0                MOVX    A,@DPTR
+005A 30E036            JNB     ACC.0,?C0102
+                                           ; SOURCE LINE # 731
+                                           ; SOURCE LINE # 732
+005D 900000      E     MOV     DPTR,#pProject0
+0060 E0                MOVX    A,@DPTR
+0061 30E52F            JNB     ACC.5,?C0102
+                                           ; SOURCE LINE # 733
+                                           ; SOURCE LINE # 734
+0064 900000      E     MOV     DPTR,#?_bRWSMBus?BYTE+03H
+0067 743F              MOV     A,#03FH
+0069 F0                MOVX    @DPTR,A
+006A 7E00        E     MOV     R6,#HIGH batteryFirstUsedDateL
+006C A3                INC     DPTR
+006D 7400        E     MOV     A,#HIGH batteryFirstUsedDateL
+006F F0                MOVX    @DPTR,A
+0070 A3                INC     DPTR
+0071 7400        E     MOV     A,#LOW batteryFirstUsedDateL
+0073 F0                MOVX    @DPTR,A
+0074 A3                INC     DPTR
+0075 7401              MOV     A,#01H
+0077 F0                MOVX    @DPTR,A
+0078 7B16              MOV     R3,#016H
+007A 7D8C              MOV     R5,#08CH
+007C FF                MOV     R7,A
+007D 120000      E     LCALL   _bRWSMBus
+0080 EF                MOV     A,R7
+0081 6005              JZ      ?C0101
+                                           ; SOURCE LINE # 735
+                                           ; SOURCE LINE # 736
+0083 7FAF              MOV     R7,#0AFH
+0085 120000      E     LCALL   _RamDebug
+                                           ; SOURCE LINE # 737
+0088         ?C0101:
+                                           ; SOURCE LINE # 738
+0088 900000      E     MOV     DPTR,#pProject0
+008B E0                MOVX    A,@DPTR
+008C 54DF              ANL     A,#0DFH
+008E F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 739
+008F E0                MOVX    A,@DPTR
+0090 54F7              ANL     A,#0F7H
+0092 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 740
+                                           ; SOURCE LINE # 741
+                                           ; SOURCE LINE # 744
+0093         ?C0102:
+0093 22                RET     
+             ; FUNCTION Hook_Timer1SecEventB (END)
+
+             ; FUNCTION Hook_Timer1SecEventC (BEGIN)
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 42  
+
+                                           ; SOURCE LINE # 749
+                                           ; SOURCE LINE # 750
+                                           ; SOURCE LINE # 768
+0000 900000      E     MOV     DPTR,#StatusKeeper
+0003 E0                MOVX    A,@DPTR
+0004 20E012            JB      ACC.0,?C0103
+                                           ; SOURCE LINE # 769
+                                           ; SOURCE LINE # 770
+0007 900000      E     MOV     DPTR,#ShipModeCnt
+000A E0                MOVX    A,@DPTR
+000B D3                SETB    C
+000C 9400              SUBB    A,#00H
+000E 4009              JC      ?C0103
+                                           ; SOURCE LINE # 771
+                                           ; SOURCE LINE # 772
+0010 E0                MOVX    A,@DPTR
+0011 14                DEC     A
+0012 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 773
+0013 E0                MOVX    A,@DPTR
+0014 7003              JNZ     ?C0103
+                                           ; SOURCE LINE # 774
+                                           ; SOURCE LINE # 775
+0016 120000      E     LCALL   Unlock_ShipMode
+                                           ; SOURCE LINE # 776
+                                           ; SOURCE LINE # 777
+                                           ; SOURCE LINE # 778
+0019         ?C0103:
+                                           ; SOURCE LINE # 782
+0019 900000      E     MOV     DPTR,#uReserve07
+001C E0                MOVX    A,@DPTR
+001D FF                MOV     R7,A
+001E C4                SWAP    A
+001F 13                RRC     A
+0020 13                RRC     A
+0021 5403              ANL     A,#03H
+0023 20E014            JB      ACC.0,?C0106
+                                           ; SOURCE LINE # 783
+                                           ; SOURCE LINE # 784
+0026 900000      E     MOV     DPTR,#THERMAL_STATUS
+0029 E0                MOVX    A,@DPTR
+002A 20E30D            JB      ACC.3,?C0106
+                                           ; SOURCE LINE # 785
+                                           ; SOURCE LINE # 786
+002D 900000      E     MOV     DPTR,#GPDRE
+0030 E0                MOVX    A,@DPTR
+0031 54FD              ANL     A,#0FDH
+0033 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 787
+0034 900000      E     MOV     DPTR,#GPCRE1
+0037 7480              MOV     A,#080H
+0039 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 788
+                                           ; SOURCE LINE # 790
+                                           ; SOURCE LINE # 792
+                                           ; SOURCE LINE # 793
+003A         ?C0106:
+                                           ; SOURCE LINE # 796
+003A 020000      R     LJMP    Workaround_For_HangBios
+             ; FUNCTION Hook_Timer1SecEventC (END)
+
+             ; FUNCTION Hook_Timer1MinEvent (BEGIN)
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 43  
+
+                                           ; SOURCE LINE # 843
+                                           ; SOURCE LINE # 844
+                                           ; SOURCE LINE # 846
+0000 020000      E     LJMP    Chk_CHG_TimeOut
+             ; FUNCTION Hook_Timer1MinEvent (END)
+
+             ; FUNCTION service_OEM_1 (BEGIN)
+                                           ; SOURCE LINE # 857
+                                           ; SOURCE LINE # 858
+                                           ; SOURCE LINE # 860
+0000 22                RET     
+             ; FUNCTION service_OEM_1 (END)
+
+             ; FUNCTION service_OEM_2 (BEGIN)
+                                           ; SOURCE LINE # 865
+                                           ; SOURCE LINE # 866
+                                           ; SOURCE LINE # 868
+0000 22                RET     
+             ; FUNCTION service_OEM_2 (END)
+
+             ; FUNCTION service_OEM_3 (BEGIN)
+                                           ; SOURCE LINE # 873
+                                           ; SOURCE LINE # 874
+                                           ; SOURCE LINE # 876
+0000 22                RET     
+             ; FUNCTION service_OEM_3 (END)
+
+             ; FUNCTION service_OEM_4 (BEGIN)
+                                           ; SOURCE LINE # 881
+                                           ; SOURCE LINE # 882
+                                           ; SOURCE LINE # 884
+0000 22                RET     
+             ; FUNCTION service_OEM_4 (END)
+
+             ; FUNCTION Hook_main_service_H (BEGIN)
+                                           ; SOURCE LINE # 889
+                                           ; SOURCE LINE # 890
+                                           ; SOURCE LINE # 892
+0000 22                RET     
+             ; FUNCTION Hook_main_service_H (END)
+
+             ; FUNCTION Hook_main_service_L (BEGIN)
+                                           ; SOURCE LINE # 897
+                                           ; SOURCE LINE # 898
+                                           ; SOURCE LINE # 900
+0000 22                RET     
+             ; FUNCTION Hook_main_service_L (END)
+
+             ; FUNCTION Hook_Only_Timer1msEvent (BEGIN)
+                                           ; SOURCE LINE # 908
+                                           ; SOURCE LINE # 909
+                                           ; SOURCE LINE # 913
+0000 7F00              MOV     R7,#00H
+                                           ; SOURCE LINE # 914
+0002         ?C0117:
+0002 22                RET     
+             ; FUNCTION Hook_Only_Timer1msEvent (END)
+
+             ; FUNCTION OEM_SkipMainServiceFunc (BEGIN)
+                                           ; SOURCE LINE # 922
+                                           ; SOURCE LINE # 923
+                                           ; SOURCE LINE # 926
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 44  
+
+0000 7FFF              MOV     R7,#0FFH
+                                           ; SOURCE LINE # 927
+0002         ?C0118:
+0002 22                RET     
+             ; FUNCTION OEM_SkipMainServiceFunc (END)
+
+             ; FUNCTION _Out7SegLED (BEGIN)
+                                           ; SOURCE LINE # 953
+;---- Variable 'bData' assigned to Register 'R5' ----
+0000 CD                XCH     A,R5
+0001 EF                MOV     A,R7
+0002 CD                XCH     A,R5
+                                           ; SOURCE LINE # 954
+                                           ; SOURCE LINE # 955
+;---- Variable 'bIndex' assigned to Register 'R4' ----
+0003 7C07              MOV     R4,#07H
+0005         ?C0119:
+                                           ; SOURCE LINE # 957
+0005 EC                MOV     A,R4
+0006 F4                CPL     A
+0007 6033              JZ      ?C0123
+                                           ; SOURCE LINE # 958
+                                           ; SOURCE LINE # 959
+0009 7401              MOV     A,#01H
+000B 7E00              MOV     R6,#00H
+000D C8                XCH     A,R0
+000E EC                MOV     A,R4
+000F C8                XCH     A,R0
+0010 08                INC     R0
+0011 8005              SJMP    ?C0162
+0013         ?C0161:
+0013 C3                CLR     C
+0014 33                RLC     A
+0015 CE                XCH     A,R6
+0016 33                RLC     A
+0017 CE                XCH     A,R6
+0018         ?C0162:
+0018 D8F9              DJNZ    R0,?C0161
+001A FF                MOV     R7,A
+001B ED                MOV     A,R5
+001C FB                MOV     R3,A
+001D EF                MOV     A,R7
+001E 5B                ANL     A,R3
+001F 900000      E     MOV     DPTR,#GPDRE
+0022 6006              JZ      ?C0121
+                                           ; SOURCE LINE # 960
+                                           ; SOURCE LINE # 961
+0024 E0                MOVX    A,@DPTR
+0025 4440              ORL     A,#040H
+0027 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 962
+0028 8004              SJMP    ?C0122
+002A         ?C0121:
+                                           ; SOURCE LINE # 964
+                                           ; SOURCE LINE # 965
+002A E0                MOVX    A,@DPTR
+002B 54BF              ANL     A,#0BFH
+002D F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 966
+002E         ?C0122:
+                                           ; SOURCE LINE # 967
+002E 900000      E     MOV     DPTR,#GPDRC
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 45  
+
+0031 E0                MOVX    A,@DPTR
+0032 547F              ANL     A,#07FH
+0034 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 968
+0035 E0                MOVX    A,@DPTR
+0036 4480              ORL     A,#080H
+0038 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 969
+0039 1C                DEC     R4
+                                           ; SOURCE LINE # 970
+003A 80C9              SJMP    ?C0119
+                                           ; SOURCE LINE # 971
+003C         ?C0123:
+003C 22                RET     
+             ; FUNCTION _Out7SegLED (END)
+
+             ; FUNCTION Dark7SegLed (BEGIN)
+                                           ; SOURCE LINE # 976
+                                           ; SOURCE LINE # 977
+                                           ; SOURCE LINE # 978
+0000 7FFF              MOV     R7,#0FFH
+0002 120000      R     LCALL   _Out7SegLED
+                                           ; SOURCE LINE # 979
+0005 7FFF              MOV     R7,#0FFH
+0007 020000      R     LJMP    _Out7SegLED
+             ; FUNCTION Dark7SegLed (END)
+
+             ; FUNCTION _P80LedOut (BEGIN)
+                                           ; SOURCE LINE # 986
+;---- Variable 'bData' assigned to Register 'R2' ----
+0000 CA                XCH     A,R2
+0001 EF                MOV     A,R7
+0002 CA                XCH     A,R2
+                                           ; SOURCE LINE # 987
+                                           ; SOURCE LINE # 988
+                                           ; SOURCE LINE # 993
+;---- Variable 'data_pntr' assigned to Register 'R4/R5' ----
+0003 7D00        R     MOV     R5,#LOW SEG7_Table
+0005 7C00        R     MOV     R4,#HIGH SEG7_Table
+                                           ; SOURCE LINE # 994
+0007 EA                MOV     A,R2
+0008 54F0              ANL     A,#0F0H
+000A C4                SWAP    A
+                                           ; SOURCE LINE # 996
+000B 120000      R     LCALL   L?0167
+000E 9022BA            MOV     DPTR,#022BAH
+0011 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 997
+0012 120000      R     LCALL   _Out7SegLED
+                                           ; SOURCE LINE # 1000
+0015 7C00        R     MOV     R4,#HIGH SEG7_Table
+0017 7D00        R     MOV     R5,#LOW SEG7_Table
+                                           ; SOURCE LINE # 1001
+0019 EA                MOV     A,R2
+                                           ; SOURCE LINE # 1003
+001A 120000      R     LCALL   L?0167
+001D 9022BB            MOV     DPTR,#022BBH
+0020 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1005
+0021 020000      R     LJMP    _Out7SegLED
+             ; FUNCTION _P80LedOut (END)
+
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 46  
+
+             ; FUNCTION PollingBIOS80Port (BEGIN)
+                                           ; SOURCE LINE # 1013
+                                           ; SOURCE LINE # 1014
+                                           ; SOURCE LINE # 1015
+0000 120000      R     LCALL   L?0170
+0003 6010              JZ      ?C0126
+                                           ; SOURCE LINE # 1016
+                                           ; SOURCE LINE # 1017
+0005 900000      E     MOV     DPTR,#GPCRC7
+0008 7480              MOV     A,#080H
+000A F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1018
+000B 900000      E     MOV     DPTR,#GPCRE6
+000E F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1019
+000F E4                CLR     A
+0010 900000      E     MOV     DPTR,#UART_DB_RAM
+0013 F0                MOVX    @DPTR,A
+0014 22                RET     
+                                           ; SOURCE LINE # 1021
+0015         ?C0126:
+                                           ; SOURCE LINE # 1024
+0015 900000      E     MOV     DPTR,#UART_DB_RAM
+0018 E0                MOVX    A,@DPTR
+0019 20E72E            JB      ACC.7,?C0128
+001C E0                MOVX    A,@DPTR
+001D 20E32A            JB      ACC.3,?C0128
+                                           ; SOURCE LINE # 1025
+                                           ; SOURCE LINE # 1026
+0020 900000      E     MOV     DPTR,#GPDRE
+0023 E0                MOVX    A,@DPTR
+0024 30E611            JNB     ACC.6,?C0129
+                                           ; SOURCE LINE # 1027
+                                           ; SOURCE LINE # 1028
+0027 900000      E     MOV     DPTR,#GPCRE6
+002A 7440              MOV     A,#040H
+002C F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1029
+002D 900000      E     MOV     DPTR,#GPCRC7
+0030 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1031
+0031 900000      E     MOV     DPTR,#UART_DB_RAM
+0034 E0                MOVX    A,@DPTR
+0035 4480              ORL     A,#080H
+0037 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1032
+0038         ?C0129:
+                                           ; SOURCE LINE # 1034
+0038 900000      E     MOV     DPTR,#P80CMOSSts
+003B E0                MOVX    A,@DPTR
+003C 30E003            JNB     ACC.0,$ + 6H
+003F 020000      R     LJMP    ?C0127
+                                           ; SOURCE LINE # 1035
+                                           ; SOURCE LINE # 1036
+0042 900000      E     MOV     DPTR,#UART_DB_RAM
+0045 E0                MOVX    A,@DPTR
+0046 4408              ORL     A,#08H
+0048 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1037
+0049 22                RET     
+                                           ; SOURCE LINE # 1040
+004A         ?C0128:
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 47  
+
+                                           ; SOURCE LINE # 1043
+004A 9022BD            MOV     DPTR,#022BDH
+004D E0                MOVX    A,@DPTR
+004E 04                INC     A
+004F F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1044
+0050 A3                INC     DPTR
+0051 E0                MOVX    A,@DPTR
+0052 FF                MOV     R7,A
+0053 A3                INC     DPTR
+0054 E0                MOVX    A,@DPTR
+0055 6F                XRL     A,R7
+0056 601B              JZ      ?C0131
+                                           ; SOURCE LINE # 1045
+                                           ; SOURCE LINE # 1046
+0058 7BFF              MOV     R3,#0FFH
+005A 7A00        R     MOV     R2,#HIGH ?SC_0
+005C 7900        R     MOV     R1,#LOW ?SC_0
+005E E0                MOVX    A,@DPTR
+005F 900000      E     MOV     DPTR,#?_printf?BYTE+03H
+0062 F0                MOVX    @DPTR,A
+0063 120000      E     LCALL   _printf
+                                           ; SOURCE LINE # 1047
+0066 9022BF            MOV     DPTR,#022BFH
+0069 E0                MOVX    A,@DPTR
+006A 9022BE            MOV     DPTR,#022BEH
+006D F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1048
+006E 7F01              MOV     R7,#01H
+0070 020000      E     LJMP    _DelayXms
+                                           ; SOURCE LINE # 1058
+0073         ?C0131:
+                                           ; SOURCE LINE # 1060
+                                           ; SOURCE LINE # 1061
+0073 9022BC            MOV     DPTR,#022BCH
+0076 E0                MOVX    A,@DPTR
+0077 FF                MOV     R7,A
+0078 9022BF            MOV     DPTR,#022BFH
+007B E0                MOVX    A,@DPTR
+007C 6F                XRL     A,R7
+007D 605E              JZ      ?C0127
+                                           ; SOURCE LINE # 1062
+                                           ; SOURCE LINE # 1063
+007F E0                MOVX    A,@DPTR
+0080 9022BC            MOV     DPTR,#022BCH
+0083 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1065
+0084 900000      E     MOV     DPTR,#UART_DB_RAM
+0087 E0                MOVX    A,@DPTR
+0088 30E712            JNB     ACC.7,?C0134
+                                           ; SOURCE LINE # 1066
+                                           ; SOURCE LINE # 1067
+008B 900000      E     MOV     DPTR,#GPCRC7
+008E 7440              MOV     A,#040H
+0090 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1068
+0091 900000      E     MOV     DPTR,#GPCRE6
+0094 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1069
+0095 9022BF            MOV     DPTR,#022BFH
+0098 E0                MOVX    A,@DPTR
+0099 FF                MOV     R7,A
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 48  
+
+009A 120000      R     LCALL   _P80LedOut
+                                           ; SOURCE LINE # 1070
+009D         ?C0134:
+                                           ; SOURCE LINE # 1072
+009D 900000      E     MOV     DPTR,#P80Index
+00A0 E0                MOVX    A,@DPTR
+00A1 C3                CLR     C
+00A2 9407              SUBB    A,#07H
+00A4 5027              JNC     ?C0135
+00A6 900000      E     MOV     DPTR,#P80CMOSSts
+00A9 E0                MOVX    A,@DPTR
+00AA 20E020            JB      ACC.0,?C0135
+                                           ; SOURCE LINE # 1073
+                                           ; SOURCE LINE # 1074
+00AD 9022BF            MOV     DPTR,#022BFH
+00B0 E0                MOVX    A,@DPTR
+00B1 FF                MOV     R7,A
+00B2 900000      E     MOV     DPTR,#P80Index
+00B5 E0                MOVX    A,@DPTR
+00B6 2400        E     ADD     A,#LOW P80CMOS
+00B8 F582              MOV     DPL,A
+00BA E4                CLR     A
+00BB 3400        E     ADDC    A,#HIGH P80CMOS
+00BD F583              MOV     DPH,A
+00BF EF                MOV     A,R7
+00C0 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1075
+00C1 900000      E     MOV     DPTR,#P80Index
+00C4 E0                MOVX    A,@DPTR
+00C5 04                INC     A
+00C6 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1076
+00C7 E0                MOVX    A,@DPTR
+00C8 B40702            CJNE    A,#07H,?C0135
+                                           ; SOURCE LINE # 1077
+                                           ; SOURCE LINE # 1078
+00CB E4                CLR     A
+00CC F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1079
+                                           ; SOURCE LINE # 1080
+00CD         ?C0135:
+                                           ; SOURCE LINE # 1083
+00CD 900000      E     MOV     DPTR,#UART_DB_RAM
+00D0 E0                MOVX    A,@DPTR
+00D1 30E709            JNB     ACC.7,?C0127
+                                           ; SOURCE LINE # 1084
+                                           ; SOURCE LINE # 1085
+00D4 E4                CLR     A
+00D5 900000      E     MOV     DPTR,#GPCRC7
+00D8 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1086
+00D9 900000      E     MOV     DPTR,#GPCRE6
+00DC F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1087
+                                           ; SOURCE LINE # 1088
+                                           ; SOURCE LINE # 1089
+                                           ; SOURCE LINE # 1090
+00DD         ?C0127:
+00DD 22                RET     
+             ; FUNCTION PollingBIOS80Port (END)
+
+             ; FUNCTION _ProcessSID (BEGIN)
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 49  
+
+                                           ; SOURCE LINE # 1092
+;---- Variable 'SID' assigned to Register 'R7' ----
+                                           ; SOURCE LINE # 1093
+                                           ; SOURCE LINE # 1094
+0000 900000      E     MOV     DPTR,#pLastSID3
+0003 E0                MOVX    A,@DPTR
+0004 900000      E     MOV     DPTR,#pLastSID4
+0007 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1095
+0008 900000      E     MOV     DPTR,#pLastSID2
+000B E0                MOVX    A,@DPTR
+000C 900000      E     MOV     DPTR,#pLastSID3
+000F F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1096
+0010 900000      E     MOV     DPTR,#pLastSID
+0013 E0                MOVX    A,@DPTR
+0014 900000      E     MOV     DPTR,#pLastSID2
+0017 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1097
+0018 900000      E     MOV     DPTR,#pLastSID
+001B EF                MOV     A,R7
+001C F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1099
+001D 020000      E     LJMP    Update_16ByteEEPROM
+             ; FUNCTION _ProcessSID (END)
+
+             ; FUNCTION CheckDebugMode (BEGIN)
+                                           ; SOURCE LINE # 1107
+                                           ; SOURCE LINE # 1108
+                                           ; SOURCE LINE # 1110
+0000 900000      E     MOV     DPTR,#KSOL
+0003 E0                MOVX    A,@DPTR
+0004 FF                MOV     R7,A
+;---- Variable 'BKSOL' assigned to Register 'R7' ----
+                                           ; SOURCE LINE # 1111
+0005 900000      E     MOV     DPTR,#KSOH1
+0008 E0                MOVX    A,@DPTR
+0009 FE                MOV     R6,A
+;---- Variable 'BKSOH1' assigned to Register 'R6' ----
+                                           ; SOURCE LINE # 1112
+000A 900000      E     MOV     DPTR,#KSOH2
+000D E0                MOVX    A,@DPTR
+000E FD                MOV     R5,A
+;---- Variable 'BKSOH2' assigned to Register 'R5' ----
+                                           ; SOURCE LINE # 1114
+000F 900000      E     MOV     DPTR,#KSOL
+0012 74FF              MOV     A,#0FFH
+0014 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1115
+0015 74BF              MOV     A,#0BFH
+                                           ; SOURCE LINE # 1116
+0017 120000      R     LCALL   L?0168
+001A 74FF              MOV     A,#0FFH
+                                           ; SOURCE LINE # 1117
+                                           ; SOURCE LINE # 1118
+                                           ; SOURCE LINE # 1120
+001C 120000      R     LCALL   L?0169
+001F 30E40B            JNB     ACC.4,?C0139
+                                           ; SOURCE LINE # 1121
+                                           ; SOURCE LINE # 1122
+0022 900000      E     MOV     DPTR,#KSOH1
+0025 74FF              MOV     A,#0FFH
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 50  
+
+0027 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1123
+0028 900000      E     MOV     DPTR,#KSOL
+                                           ; SOURCE LINE # 1124
+                                           ; SOURCE LINE # 1125
+                                           ; SOURCE LINE # 1126
+002B 8017              SJMP    ?C0165
+                                           ; SOURCE LINE # 1127
+002D         ?C0139:
+                                           ; SOURCE LINE # 1128
+002D 900000      E     MOV     DPTR,#KSOL
+0030 74FD              MOV     A,#0FDH
+0032 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1129
+0033 74FF              MOV     A,#0FFH
+                                           ; SOURCE LINE # 1130
+0035 120000      R     LCALL   L?0168
+                                           ; SOURCE LINE # 1131
+                                           ; SOURCE LINE # 1132
+                                           ; SOURCE LINE # 1134
+0038 120000      R     LCALL   L?0169
+003B 900000      E     MOV     DPTR,#KSOL
+003E 30E411            JNB     ACC.4,?C0141
+                                           ; SOURCE LINE # 1135
+                                           ; SOURCE LINE # 1136
+0041 74FF              MOV     A,#0FFH
+0043 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1137
+0044         ?C0165:
+0044 EF                MOV     A,R7
+0045 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1138
+0046 900000      E     MOV     DPTR,#KSOH1
+0049 EE                MOV     A,R6
+004A F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1139
+004B 900000      E     MOV     DPTR,#KSOH2
+004E ED                MOV     A,R5
+004F F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1140
+0050 C3                CLR     C
+0051 22                RET     
+                                           ; SOURCE LINE # 1141
+0052         ?C0141:
+                                           ; SOURCE LINE # 1142
+0052 74FF              MOV     A,#0FFH
+0054 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1143
+0055 EF                MOV     A,R7
+0056 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1144
+0057 CF                XCH     A,R7
+0058 EE                MOV     A,R6
+0059 CF                XCH     A,R7
+005A 900000      E     MOV     DPTR,#KSOH1
+005D EE                MOV     A,R6
+005E F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1145
+005F CF                XCH     A,R7
+0060 ED                MOV     A,R5
+0061 CF                XCH     A,R7
+0062 900000      E     MOV     DPTR,#KSOH2
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 51  
+
+0065 ED                MOV     A,R5
+0066 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1147
+0067 D3                SETB    C
+                                           ; SOURCE LINE # 1148
+0068         ?C0140:
+0068 22                RET     
+             ; FUNCTION CheckDebugMode (END)
+
+             ; FUNCTION Workaround_For_HangBios (BEGIN)
+                                           ; SOURCE LINE # 1151
+                                           ; SOURCE LINE # 1152
+                                           ; SOURCE LINE # 1153
+0000 900000      E     MOV     DPTR,#Bioswatchdog
+0003 E0                MOVX    A,@DPTR
+0004 B40128            CJNE    A,#01H,?C0142
+                                           ; SOURCE LINE # 1154
+                                           ; SOURCE LINE # 1155
+0007 900000      E     MOV     DPTR,#Bioswatchdogtime
+000A E0                MOVX    A,@DPTR
+000B 04                INC     A
+000C F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1156
+000D E0                MOVX    A,@DPTR
+000E B43C23            CJNE    A,#03CH,?C0147
+                                           ; SOURCE LINE # 1157
+                                           ; SOURCE LINE # 1158
+0011 900000      E     MOV     DPTR,#BRAM+03FH
+0014 7455              MOV     A,#055H
+0016 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1159
+0017 900000      E     MOV     DPTR,#bios_count
+001A E0                MOVX    A,@DPTR
+001B 04                INC     A
+001C F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1160
+001D 900000      E     MOV     DPTR,#WinFlashMark
+0020 7453              MOV     A,#053H
+0022 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1161
+0023 900000      E     MOV     DPTR,#WinFlashMark2
+0026 7435              MOV     A,#035H
+0028 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1162
+0029 D2D8              SETB    WDTRST
+                                           ; SOURCE LINE # 1163
+002B D2D9              SETB    WDTEB
+002D         ?C0144:
+                                           ; SOURCE LINE # 1164
+002D 80FE              SJMP    ?C0144
+                                           ; SOURCE LINE # 1165
+                                           ; SOURCE LINE # 1166
+002F         ?C0142:
+                                           ; SOURCE LINE # 1168
+                                           ; SOURCE LINE # 1169
+002F E4                CLR     A
+0030 900000      E     MOV     DPTR,#Bioswatchdogtime
+0033 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1170
+                                           ; SOURCE LINE # 1171
+0034         ?C0147:
+0034 22                RET     
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 52  
+
+             ; FUNCTION Workaround_For_HangBios (END)
+
+             ; FUNCTION ACOutProchotRelease (BEGIN)
+                                           ; SOURCE LINE # 1175
+                                           ; SOURCE LINE # 1176
+                                           ; SOURCE LINE # 1177
+0000 900000      E     MOV     DPTR,#CPUProchotONCnt
+0003 E0                MOVX    A,@DPTR
+0004 D3                SETB    C
+0005 9400              SUBB    A,#00H
+0007 4003              JC      ?C0148
+                                           ; SOURCE LINE # 1178
+                                           ; SOURCE LINE # 1179
+0009 E0                MOVX    A,@DPTR
+000A 14                DEC     A
+000B F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1180
+000C         ?C0148:
+                                           ; SOURCE LINE # 1183
+000C 900000      E     MOV     DPTR,#GPUProchotONCnt
+000F E0                MOVX    A,@DPTR
+0010 D3                SETB    C
+0011 9400              SUBB    A,#00H
+0013 4003              JC      ?C0149
+                                           ; SOURCE LINE # 1184
+                                           ; SOURCE LINE # 1185
+0015 E0                MOVX    A,@DPTR
+0016 14                DEC     A
+0017 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1186
+0018         ?C0149:
+                                           ; SOURCE LINE # 1188
+0018 900000      E     MOV     DPTR,#BatteryOCPDelay
+001B E0                MOVX    A,@DPTR
+001C D3                SETB    C
+001D 9400              SUBB    A,#00H
+001F 4003              JC      ?C0151
+                                           ; SOURCE LINE # 1189
+                                           ; SOURCE LINE # 1190
+0021 E0                MOVX    A,@DPTR
+0022 14                DEC     A
+0023 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1191
+                                           ; SOURCE LINE # 1202
+0024         ?C0151:
+0024 22                RET     
+             ; FUNCTION ACOutProchotRelease (END)
+
+             ; FUNCTION GPUProchotOnControl (BEGIN)
+                                           ; SOURCE LINE # 1206
+                                           ; SOURCE LINE # 1207
+                                           ; SOURCE LINE # 1218
+0000 900000      E     MOV     DPTR,#SysPowState
+0003 E0                MOVX    A,@DPTR
+0004 B41117            CJNE    A,#011H,?C0152
+0007 900000      E     MOV     DPTR,#cGPUBattOTPThrottling
+000A E0                MOVX    A,@DPTR
+000B 6404              XRL     A,#04H
+000D 6007              JZ      ?C0153
+000F 900000      E     MOV     DPTR,#cGPUBattLowThrottling
+0012 E0                MOVX    A,@DPTR
+0013 B40408            CJNE    A,#04H,?C0152
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 53  
+
+0016         ?C0153:
+                                           ; SOURCE LINE # 1219
+0016 900000      E     MOV     DPTR,#GPUProchotDelay
+0019 E0                MOVX    A,@DPTR
+001A 04                INC     A
+001B F0                MOVX    @DPTR,A
+001C 8005              SJMP    ?C0154
+001E         ?C0152:
+                                           ; SOURCE LINE # 1221
+001E E4                CLR     A
+001F 900000      E     MOV     DPTR,#GPUProchotDelay
+0022 F0                MOVX    @DPTR,A
+0023         ?C0154:
+                                           ; SOURCE LINE # 1228
+0023 120000      R     LCALL   L?0171
+0026 6005              JZ      ?C0155
+                                           ; SOURCE LINE # 1229
+                                           ; SOURCE LINE # 1230
+0028 E4                CLR     A
+0029 900000      E     MOV     DPTR,#GPU_Prochot
+002C F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1237
+002D         ?C0155:
+                                           ; SOURCE LINE # 1240
+002D 900000      E     MOV     DPTR,#GPUProchotONCnt
+0030 E0                MOVX    A,@DPTR
+0031 701F              JNZ     ?C0156
+0033 900000      E     MOV     DPTR,#GPUProchotDelay
+0036 E0                MOVX    A,@DPTR
+0037 C3                CLR     C
+0038 9414              SUBB    A,#014H
+003A 5016              JNC     ?C0156
+003C 900000      E     MOV     DPTR,#GPU_Prochot
+003F E0                MOVX    A,@DPTR
+0040 543F              ANL     A,#03FH
+0042 700E              JNZ     ?C0156
+                                           ; SOURCE LINE # 1241
+                                           ; SOURCE LINE # 1242
+0044 900000      E     MOV     DPTR,#GPDRE
+0047 E0                MOVX    A,@DPTR
+0048 4401              ORL     A,#01H
+004A F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1243
+004B 900000      E     MOV     DPTR,#GPCRE0
+004E 7480              MOV     A,#080H
+0050 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1244
+0051 22                RET     
+0052         ?C0156:
+                                           ; SOURCE LINE # 1246
+                                           ; SOURCE LINE # 1247
+0052 900000      E     MOV     DPTR,#GPCRE0
+0055 7440              MOV     A,#040H
+0057 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1248
+0058 900000      E     MOV     DPTR,#GPDRE
+005B E0                MOVX    A,@DPTR
+005C 54FE              ANL     A,#0FEH
+005E F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1249
+005F 900000      E     MOV     DPTR,#GPUProchotDelay
+0062 7414              MOV     A,#014H
+C51 COMPILER V8.12   OEM_MAIN                                                              07/28/2018 12:03:43 PAGE 54  
+
+0064 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1250
+                                           ; SOURCE LINE # 1258
+0065         ?C0158:
+0065 22                RET     
+             ; FUNCTION GPUProchotOnControl (END)
+
+             ; FUNCTION CPUThrottlingDelay (BEGIN)
+                                           ; SOURCE LINE # 1262
+                                           ; SOURCE LINE # 1263
+                                           ; SOURCE LINE # 1264
+0000 900000      E     MOV     DPTR,#CPUThrottlingDelayTime
+0003 E0                MOVX    A,@DPTR
+0004 D3                SETB    C
+0005 9400              SUBB    A,#00H
+0007 4003              JC      ?C0160
+                                           ; SOURCE LINE # 1265
+0009 E0                MOVX    A,@DPTR
+000A 14                DEC     A
+000B F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1266
+000C         ?C0160:
+000C 22                RET     
+             ; FUNCTION CPUThrottlingDelay (END)
+
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2122    ----
+   CONSTANT SIZE    =     30    ----
+   XDATA SIZE       =   ----       1
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

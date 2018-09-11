@@ -1,0 +1,147 @@
+++++++++++++++++++++++++++++++++++++++++++++++++++
+product name:                    G330_ICH_EG530
+project name (TDMS):             Cairo E          
+PLM code:                        DG421,DG521,DG721,DG422,
+EC chip /charger IC:             ITE8586 / BQ24780S
+temperature:                     SMBUS(thermistor) 
+base on:                         Ideapad 320-14IKB/320-15IKB  
+++++++++++++++++++++++++++++++++++++++++++++++++++ 
+
+========================================================================================
+7ZEC27WW: Release 27 version EC.
+========================================================================================
+========================================================================================
+7ZEC26WW: Release 26 version EC.
+========================================================================================
+1)COKEYXU051:enable WDT_Support.
+========================================================================================
+7ZEC25WW: Release 25 version EC.
+========================================================================================
+1)COKEYXU050: When AC mode,set chargeIC register 0x3D to 0x5139.
+========================================================================================
+7ZEC24WW: Release 24 version EC.
+========================================================================================
+6)COKEYXU049:Modify battery LTP function,when battery cell temp < 20,set 0x3D 4608mA.
+5)COKEYXU048:clear cGPUBattLTPThrottling.
+4)COKEYXU047:Optimize Battery low temperature condition protect function.
+3)COKEYXU046:Add disable CPU turbo when low battery temp below 20бу,set GPU to D3, if battery temp below 5бу,set GPU to D5.
+2)add back when system consumption > 82W disable CPU turbo.
+1)COKEYXU045:only DC mode to check Battery LTP.
+========================================================================================
+7ZEC23WW: Release 23 version EC.
+========================================================================================
+1)COKEYXU044:add disable CPU turbo for 90s function.
+========================================================================================
+7ZEC19WW: Release 19 version EC.
+========================================================================================
+5)COKEYXU043:RSOC change back to <=10% when check power consumption > 132W.
+4)COKEYXU042:For 90W adapter,set unsuit adapter.
+3)COKEYXU041:Change for apply 135W adapter.
+2)COKEYXU040:When 65W adapter attached in S0,not setAC in state.
+1)COKEYXU039:Add Battery Low Temperature Protect.
+========================================================================================
+7ZEC18WW: Release 18 version EC.
+========================================================================================
+========================================================================================
+3)COKEYXU038:Remove COKEYXU036.
+2)COKEYXU037:Modify to when system consumption > 78W disable CPU turbo.Remove COKEYXU034/COKEYXU035.
+1)COKEYXU036:DC mode limit CPU/GPU consumption when Battery Cell temp is lower than 15бу.
+========================================================================================
+7ZEC17WW: Release 17 version EC.
+========================================================================================
+2)COKEYXU035: remove battery RSOC check when ECprochot88W action AC+DC mode as Battery turbo boost is disabled.
+1)COKEYXU034: disable battery turbo boost.
+========================================================================================
+7ZEC16WW: Release 16 version EC.
+========================================================================================
+1)COKEYXU033: When Battery Cell temp < 5,Set CPU and GPU prochot as OTP.
+========================================================================================
+7ZEC15WW: Release 15 version EC.
+========================================================================================
+1)COKEYXU029:Disable CPU turbo when system start for 90s and when fan1 speed < 500 to cover EE noise issue.
+2)COKEYXU030:Disable CPU turbo when system consumption > 82W as W/A for 90W adapter cannot charge battery RSOC up.
+3)COKEYXU031:Update Fan table to V05 and trigger temp points set to >= or <=.
+4)COKEYXU032:Enable charge for 65W and 45W Adapter when S3/S5.
+========================================================================================
+7ZEC14WW: Release 14 version EC.
+========================================================================================
+1)COKEYXU027:GPU temp 60/65 to enable/disable CPU turbo.
+2)COKEYXU028:Adjust the solution for tool not show 0 fan rpm after fan stop. 
+========================================================================================
+7ZEC13WW: Release 13 version EC.
+========================================================================================
+========================================================================================
+7ZEC12WW: Release 12 version EC.
+========================================================================================
+1)COKEYXU026:fix EC tool not show 0 fan rpm after fan stop.
+========================================================================================
+7ZEC11WW: Release 11 version EC.
+========================================================================================
+1)COKEYXU025:Modify charge time setting to 8h when charge current <500mA.
+2)Update fan table to V03.
+========================================================================================
+7ZEC10WW: Release 10 version EC.
+========================================================================================
+1)COKEYXU021:Remove Check_heavy_loading_500ms(); for 8% RSOC change to 5% suddenly.
+2)COKEYXU022:Move Battery_Expresscharge function from OEM_MAIN to OEM_Battery.
+3)COKEYXU023:Set 0x3C to 4E54 when Battery RSOC<=12% instead of 10% for safety test.
+4)COKEYXU024:Support quick charge only when S5.
+========================================================================================
+7ZEC09WW: Release 09 version EC.
+========================================================================================
+1)COKEYXU014:Update power IC congig refer to G330 ICH I+N EC Parameter V02 20180117.
+2)COKEYXU015:Fix code bug,fail to set 0x3C to 4E54 after plug in AC.
+3)COKEYXU016:nBattGasgauge to <=10% for issue Battery turbo charge RSOC not stop at 10%.
+4)COKEYXU017:Enable SHA1_Support. 
+5)COKEYXU018:Modify for unsuit 65W adapter and 45W un-support adapter.
+6)COKEYXU019:Check Battery FCC time from 5min to 10s for RSOC drop from 100% to 85% issue.
+7)COKEYXU020:Modify Charge IC 0x3D from 0x7139 to 0x5139.
+========================================================================================
+7ZEC08WW: Release 08 version EC.
+========================================================================================
+1)COKEYXU013:Reorganize ladder fan relative regs.
+========================================================================================
+7ZEC07WW: Release 07 version EC.
+========================================================================================
+1)COKEYXU010:Modify KB BKL to just on/off and remove 2s delay to update Keyboard backlight state.
+2)COKEYXU011:Add express charge method.
+3)COKEYXU012:Modify for AC cannot power on system after enter shipmode.
+========================================================================================
+7ZEC06WW: Release 06 version EC.
+========================================================================================
+1)COKEYXU003:Update power IC congig refer to G330 ICH I+N EC Parameter V02 20171212.
+2)COKEYXU004:remove psys_throttle(); 
+3)COKEYXU005:Modify some power IC config.
+4)COKEYXU006:Modify Thermal setting refer to Fan_table_V02_1220.
+5)COKEYXU007:Enable SYSTEM_S5_DSX.
+6)COKEYXU008:enable psys_throttle(10ms check) and remove Chkpsys(100ms check).
+7)COKEYXU009:move Fan relative reg from OEMRAM6 to OEMRAME
+========================================================================================
+7ZEC05WW: Release 05 version EC.
+========================================================================================
+1)COKEYXU001:Modify codes for S3 cannot wake from PS2 KBD.
+2)COKEYXU002:Remove SYSTEM_S5_DSX for keep DC ALW electricity
+========================================================================================
+7ZEC04WW: Release 04 version EC.
+========================================================================================
+1)JERRYCH003:Enable SMI for hang debug.
+2)JERRYCH004:Enable keyboard backlight.
+3)JERRYCH005:Add cpu turbo enable/disable event.
+========================================================================================
+7ZEC03WW: Release 03 version EC.
+========================================================================================
+1)JERRYCH002:Enable EC sleep feature.
+========================================================================================
+7ZEC02WW: Release 02 version EC.
+========================================================================================
+1)JERRYCH000:Modify the fan control from linear to the ladder.
+2)JERRYCH001:Modify power charge IC setting for battery current.
+========================================================================================
+7ZEC01WW: Release 01 version EC.
+========================================================================================
+1) ELMERZH001: Add PWM control Keyboard backlight,transplant code from 720s.
+2) ELMERZH002: Modify charger IC config. FAN 2 running at full speed.
+========================================================================================
+========================================================================================
+7ZEC00WW: First version for SMT.
+========================================================================================

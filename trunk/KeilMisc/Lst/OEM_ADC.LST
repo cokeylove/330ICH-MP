@@ -1,0 +1,2939 @@
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 1   
+
+
+C51 COMPILER V8.12, COMPILATION OF MODULE OEM_ADC
+OBJECT MODULE PLACED IN Code\OEM\OEM_ADC.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE Code\OEM\OEM_ADC.C LA WL(1) CD OT(9,SIZE) NOAREGS OR INCDIR(.\Code\CORE\INC
+                    -LUDE\;.\Code\OEM\INCLUDE\;.\Code\CHIP\INCLUDE\)
+
+line level    source
+
+   1          /*-----------------------------------------------------------------------------
+   2           * TITLE: OEM_ADC.C
+   3           *
+   4           * Author : Dino
+   5           *
+   6           * Note : These functions are reference only.
+   7           *        Please follow your project software specification to do some modification.
+   8           *---------------------------------------------------------------------------*/
+   9          
+  10          #include <CORE_INCLUDE.H>
+  11          #include <OEM_INCLUDE.H>
+  12          
+  13          //----------------------------------------------------------------------------
+  14          // The function of disabling ADC channel
+  15          //----------------------------------------------------------------------------
+  16          /* //ANGELAS073:remove start
+  17          void DisableADCChannel(void)
+  18          {
+  19                VCH0CTL=0x1F;   // NTC_V1
+  20                  VCH1CTL=0x1F;   // NTC_V2
+  21                  VCH2CTL=0x1F;   // BATT_TEMP
+  22                  VCH3CTL=0x00;   // SD_PWR_EN#
+  23                  VCH4CTL=0x00;   //CPU_VR_READY
+  24                  VCH5CTL=0x00;   // ADP_I
+  25                  VCH6CTL=0x00;   // B+_Track
+  26                  VCH7CTL=0x00;   // ADAPTER_ID
+  27                  CLEAR_MASK(ADCCFG, BIT0);       // Disable ADC module
+  28          }
+  29          
+  30          //----------------------------------------------------------------------------
+  31          // The function of Enabling ADC channel
+  32          //----------------------------------------------------------------------------
+  33          void EnableADCChannel(void)
+  34          {
+  35                  SET_MASK(ADCCFG, BIT0);         // Enable ADC module
+  36          }
+  37          */ //ANGELAS073:remove end
+  38          //----------------------------------------------------------------------------
+  39          // The function of scaning ADC channel
+  40          //----------------------------------------------------------------------------
+  41          void ScanADCFixChannel(void)
+  42          {
+  43   1              BYTE i; //ANGELAG046: add
+  44   1              LWORD Psys_SUM = 0; //ANGELAG046: add
+  45   1              /*  
+  46   1              if(IS_MASK_SET(VCH0CTL, BIT7))
+  47   1              {
+  48   1                      VCH0CTL |= 0x80;        // write clear data vaild flag
+  49   1                      FixData0 = ((WORD)VCH0DATM << 8) + VCH0DATL;
+  50   1              }
+  51   1              */   
+  52   1              if(IS_MASK_SET(VCH5CTL, BIT7))
+  53   1          {
+  54   2              VCH5CTL |= 0x80;        // write clear data vaild flag
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 2   
+
+  55   2                      ADP_I= ((WORD)VCH5DATM << 8) + VCH5DATL;
+  56   2          }
+  57   1          /* Read ADC value change to read level
+  58   1              if(IS_MASK_SET(VCH4CTL, BIT7))
+  59   1          {
+  60   1              VCH4CTL |= 0x80;        // write clear data vaild flag
+  61   1                      Read_VR_CPU_PWROK= ((WORD)VCH4DATM << 8) + VCH4DATL;
+  62   1          }
+  63   1          */
+  64   1              /*
+  65   1              if(IS_MASK_SET(VCH6CTL, BIT7))
+  66   1              {
+  67   1                      VCH6CTL |= 0x80;        // write clear data vaild flag
+  68   1                      API_ID= ((WORD)VCH6DATM << 8) + VCH6DATL;
+  69   1              }
+  70   1              */
+  71   1          // read API_ID.
+  72   1              if(IS_MASK_SET(VCH6CTL, BIT7))
+  73   1              {
+  74   2              VCH6CTL |= 0x80;        // write clear data vaild flag  //COKEYXU001:VCH7CTL->VCH6CTL
+  75   2                  API_ID = ((WORD)VCH6DATM << 8) + VCH6DATL; //COKEYXU001:VCH7DATM->VCH6DATM,VCH7DATL->VCH6DATL
+  76   2              }
+  77   1              
+  78   1              //ANGELAG019: add start
+  79   1              if(IS_MASK_SET(VCH7CTL, BIT7))
+  80   1          {
+  81   2              VCH7CTL |= 0x80;        // write clear data vaild flag
+  82   2                      Psys= ((WORD)VCH7DATM << 8) + VCH7DATL;
+  83   2          }
+  84   1                      //ANGELAG019: add end
+  85   1                      //ANGELAG028: add start
+  86   1      /*      if ((SystemIsS0) && (!Read_AC_IN())) //ANGELAG046: remove start
+  87   1              {
+  88   1                      if((IS_MASK_SET(SEL_STATE0,PRESENT_A)) && (IS_MASK_CLEAR(BATTUPDATEFW,BIT0)))
+  89   1                      {
+  90   1                              if (nBattGasgauge > 10)
+  91   1                              {
+  92   1                                      if (Psys >= 368) //1.08V, 56W
+  93   1                                      {
+  94   1                                              SET_MASK(GPU_Prochot, b1_Psys);
+  95   1                                              SET_MASK(Thro_Status2, b7ProCH_Psys);
+  96   1                                      }
+  97   1                                      else
+  98   1                                      {
+  99   1                                              CLR_MASK(GPU_Prochot, b1_Psys);
+ 100   1                                              CLR_MASK(Thro_Status2, b7ProCH_Psys);
+ 101   1                                      }
+ 102   1                              }
+ 103   1                              else
+ 104   1                              {
+ 105   1                                      if (Psys >= 191) //0.56V, 28W
+ 106   1                                      {
+ 107   1                                              SET_MASK(GPU_Prochot, b1_Psys);
+ 108   1                                              SET_MASK(Thro_Status2, b7ProCH_Psys);
+ 109   1                                      }
+ 110   1                                      else
+ 111   1                                      {
+ 112   1                                              CLR_MASK(GPU_Prochot, b1_Psys);
+ 113   1                                              CLR_MASK(Thro_Status2, b7ProCH_Psys);
+ 114   1                                      }
+ 115   1                              }
+ 116   1                      }
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 3   
+
+ 117   1                      
+ 118   1              }
+ 119   1              else
+ 120   1              {
+ 121   1                      CLR_MASK(GPU_Prochot, b1_Psys);
+ 122   1                      CLR_MASK(Thro_Status2, b7ProCH_Psys);
+ 123   1              }
+ 124   1              //ANGELAG028: add end
+ 125   1              */ ////ANGELAG046: remove end
+ 126   1              //ANGELAG046: add start
+ 127   1              for (i=3; i>0; i--) 
+ 128   1              {
+ 129   2                      Psys_Data[i] = Psys_Data[i-1];
+ 130   2                      Psys_SUM += Psys_Data[i];
+ 131   2              }
+ 132   1              Psys_Data[0] = Psys;
+ 133   1              Psys_SUM += Psys_Data[0];
+ 134   1              Psys_AvgData = Psys_SUM / 4; //calculate 4 times average value
+ 135   1      
+ 136   1              psys_throttle(); //COKEYXU008: Add
+ 137   1              //ANGELAG046: add end
+ 138   1      }
+ 139          
+ 140          void ScanADCDyChannel1(void)
+ 141          {
+ 142   1              BYTE i;
+ 143   1              LWORD ADP_I_SUM = 0;
+ 144   1              /*  
+ 145   1              if( IS_MASK_SET(VCH1CTL,BIT7) )
+ 146   1              {
+ 147   1                      VCH1CTL |= 0x80;        // write clear data vaild flag
+ 148   1                      // CMW 20121022 +
+ 149   1                      if( VCH1CTL == (ADCChannel_0&0x0F) )
+ 150   1                      {
+ 151   1                              DyData0 = ((WORD)VCH1DATM << 8) + VCH1DATL;
+ 152   1                              VCH1CTL = ADCChannel_1;
+ 153   1                      }
+ 154   1                      else
+ 155   1                      {
+ 156   1                              TURBO_V = ((WORD)VCH1DATM << 8) + VCH1DATL;
+ 157   1                              VCH1CTL = ADCChannel_0;
+ 158   1                      }
+ 159   1                      // CMW 20121022 -
+ 160   1              }
+ 161   1              if( IS_MASK_SET(VCH2CTL, BIT7) )
+ 162   1              {
+ 163   1                   VCH2CTL |= 0x80;        // write clear data vaild flag
+ 164   1                      DyData1 = ((WORD)VCH2DATM << 8) + VCH2DATL;
+ 165   1              }
+ 166   1      
+ 167   1              if(IS_MASK_SET(VCH3CTL, BIT7))
+ 168   1              {
+ 169   1                      VCH3CTL |= 0x80;        // write clear data vaild flag
+ 170   1                      if( VCH3CTL == (ADCChannel_2&0x0F) )
+ 171   1                      {
+ 172   1                              DyData2 = ((WORD)VCH3DATM << 8) + VCH3DATL;
+ 173   1                              VCH3CTL = ADCChannel_6;
+ 174   1                      }
+ 175   1                      else
+ 176   1                      {
+ 177   1                              API_ID = ((WORD)VCH3DATM << 8) + VCH3DATL;
+ 178   1                              VCH3CTL = ADCChannel_2;
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 4   
+
+ 179   1                      }
+ 180   1              }
+ 181   1              if( IS_MASK_SET(VCH5CTL, BIT7) )
+ 182   1              {
+ 183   1                    VCH5CTL |= 0x80;        // write clear data vaild flag
+ 184   1                      DyData1 = ((WORD)VCH5DATM << 8) + VCH5DATL;
+ 185   1              }
+ 186   1              */  
+ 187   1          if(IS_MASK_SET(VCH0CTL, BIT7))
+ 188   1          {
+ 189   2              VCH0CTL |= 0x80;        // write clear data vaild flag
+ 190   2                      NTC_V1= ((WORD)VCH0DATM << 8) + VCH0DATL;
+ 191   2          }
+ 192   1          if(IS_MASK_SET(VCH1CTL, BIT7))
+ 193   1          {
+ 194   2              VCH1CTL |= 0x80;        // write clear data vaild flag
+ 195   2                      NTC_V2= ((WORD)VCH1DATM << 8) + VCH1DATL;
+ 196   2          }
+ 197   1              //ANGELAS078:remove start
+ 198   1          //if(IS_MASK_SET(VCH2CTL, BIT7))
+ 199   1          //{
+ 200   1              //VCH2CTL |= 0x80;        // write clear data vaild flag
+ 201   1                      //BATTEMP= ((WORD)VCH2DATM << 8) + VCH2DATL;
+ 202   1          //}
+ 203   1              //ANGELAS078:remove end
+ 204   1      
+ 205   1              //MEILING001:S- remove EC_SD_PWR_EN
+ 206   1          /*if(IS_MASK_SET(VCH3CTL, BIT7))
+ 207   1              {
+ 208   1                      VCH3CTL |= 0x80;        // write clear data vaild flag
+ 209   1                      SD_PWR_EN= ((WORD)VCH3DATM << 8) + VCH3DATL;
+ 210   1              }*/
+ 211   1          //MEILING001:E-
+ 212   1          
+ 213   1          if (SysPowState == SYSTEM_S0&& Read_AC_IN())//MEILING001:add ACIN condition.
+ 214   1          {
+ 215   2                      //Chk_ACOP();
+ 216   2                      ADPI2Sec++;
+ 217   2                      for (i=3; i>0; i--)
+ 218   2                      {
+ 219   3                              ADPI_Data[i] = ADPI_Data[i-1];
+ 220   3                              ADP_I_SUM += ADPI_Data[i];
+ 221   3                      }
+ 222   2                      ADPI_Data[0] = ADP_I;
+ 223   2                      ADP_I_SUM += ADPI_Data[0];
+ 224   2                      ADPI_AvgData = ADP_I_SUM / 4;
+ 225   2         //ANGELAG019: remove start
+ 226   2           /*   if (!(ADPI2Sec%10))
+ 227   2              {
+ 228   2                  //if(AdapterID==AdapterID_65W) // add protect poin for 65w and 45w adpter //ANGELA075:ADD  //M
+             -EILING001:remove
+ 229   2                  if(uMBGPU == 0x02) //juged by uMBGPU(0x01:UMA(45W), 0x02:DIS(65W)).  //MEILING001:add.
+ 230   2                  {
+ 231   2                      if(ADPI_AvgData>ECprochot_65W)
+ 232   2                      {
+ 233   2                          SET_MASK(Thro_Status2, b7ProCH_ADP);
+ 234   2                      }
+ 235   2                                      else 
+ 236   2                                  {
+ 237   2                                      if(IS_MASK_SET(Thro_Status2, b7ProCH_ADP))
+ 238   2                                      {
+ 239   2                                              CLR_MASK(Thro_Status2, b7ProCH_ADP);
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 5   
+
+ 240   2                                      }
+ 241   2                                  }
+ 242   2                  }
+ 243   2                              //else if(AdapterID==AdapterID_45W) //// add protect poin for 65w and 45w adpter //ANGELAS075:ADD //MEI
+             -LING001:remove.
+ 244   2                              else if(uMBGPU == 0x01)//MEILING001:add.
+ 245   2                              {
+ 246   2                      if(ADPI_AvgData>ECprochot_45W) //ANGELAS075: add
+ 247   2                      {
+ 248   2                          SET_MASK(Thro_Status2, b7ProCH_ADP);
+ 249   2                      }
+ 250   2                                      else 
+ 251   2                                  {
+ 252   2                                      if(IS_MASK_SET(Thro_Status2, b7ProCH_ADP))
+ 253   2                                      {
+ 254   2                                              CLR_MASK(Thro_Status2, b7ProCH_ADP);
+ 255   2                                      }
+ 256   2                                  }
+ 257   2                              }
+ 258   2              }*/ //ANGELAG019: remove end
+ 259   2              //ANGELAG046: add start
+ 260   2              
+ 261   2              if(IS_MASK_CLEAR(SEL_STATE0, PRESENT_A) || (IS_MASK_SET(SEL_STATE0, PRESENT_A) && (nBattGasgauge <
+             -= 10))) //COKEYXU043: AC or AC+DC(RSOC<10%)
+ 262   2              {                                                                                                 
+             -        
+ 263   3                  if(uMBGPU == 0x02) //juged by uMBGPU(0x01:UMA(NA), 0x02:DIS(135W)).
+ 264   3                  {
+ 265   4                              if(ADPI_AvgData>ECprochot_132W)    //COKEYXU041: change to ECprochot_132W because change 
+             -AC adapter to 135W.
+ 266   4                              {
+ 267   5                                                      SET_MASK(GPU_Prochot, b5_adapter);
+ 268   5                                  SET_MASK(Thro_Status4, b0ProCH_ADP);
+ 269   5                              }
+ 270   4                                              else 
+ 271   4                                              {
+ 272   5                                                      CLR_MASK(GPU_Prochot, b5_adapter);
+ 273   5                                              CLR_MASK(Thro_Status4, b0ProCH_ADP);
+ 274   5                                      }
+ 275   4                                              
+ 276   4                  }
+ 277   3                              else if(uMBGPU == 0x01)
+ 278   3                              {
+ 279   4                      if(ADPI_AvgData>ECprochot_45W)
+ 280   4                      {
+ 281   5                                              SET_MASK(GPU_Prochot, b5_adapter);
+ 282   5                          SET_MASK(Thro_Status4, b0ProCH_ADP);
+ 283   5                      }
+ 284   4                                      else 
+ 285   4                                  {
+ 286   5                                              CLR_MASK(GPU_Prochot, b5_adapter);
+ 287   5                                      CLR_MASK(Thro_Status4, b0ProCH_ADP);
+ 288   5                                  }
+ 289   4                              }
+ 290   3              }
+ 291   2                      else
+ 292   2                      {
+ 293   3                              CLR_MASK(GPU_Prochot, b5_adapter);
+ 294   3                              CLR_MASK(Thro_Status4, b0ProCH_ADP);
+ 295   3      
+ 296   3                              if(uMBGPU == 0x02) //COKEYXU030: add when system consumption > 82W disable CPU turbo.
+ 297   3                              {
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 6   
+
+ 298   4                                      if(ADPI_AvgData>ECprochot_82W)   
+ 299   4                                      {
+ 300   5                                              SET_MASK(Adapter90WWA,b1_DisCPUturbo);
+ 301   5                                      }
+ 302   4                                      else if(ADPI_AvgData<ECprochot_78W)
+ 303   4                                      {
+ 304   5                                              CLEAR_MASK(Adapter90WWA,b1_DisCPUturbo);
+ 305   5                                      }
+ 306   4                              }       
+ 307   3                      }
+ 308   2                      //ANGELAG046: add end
+ 309   2                      
+ 310   2                      if (ADPI2Sec > 200)
+ 311   2                      {
+ 312   3                              if (IS_MASK_SET(SEL_STATE0, PRESENT_A))
+ 313   3                              {
+ 314   4                                      //Chk_Hybrid_STPP();  //ANGELAS047:remove
+ 315   4                                      Chk_HybridFORBQ24780_STPP(); //ANGELAS047:add
+ 316   4                              }
+ 317   3                              else
+ 318   3                              {
+ 319   4                                      //Chk_AC_STPP(); //ANGELAG019: remove
+ 320   4                              }
+ 321   3                              ADPI2Sec=0;
+ 322   3                      }
+ 323   2              }
+ 324   1      }
+ 325          
+ 326          //----------------------------------------------------------------------------
+ 327          // Init ADC module
+ 328          //----------------------------------------------------------------------------
+ 329          void Init_ADC(void)
+ 330          {
+ 331   1              VCH0CTL=ADCChannel_0;   // NTC_V1
+ 332   1              VCH1CTL=ADCChannel_1;   // NTC_V2
+ 333   1              //VCH2CTL=ADCChannel_2;   // BATT_TEMP //ANGELAS078:remove
+ 334   1              //VCH3CTL=0x90;   // SD_PWR_EN#  //MEILING001:remove.
+ 335   1              //VCH4CTL=0x90; //CPU_VR_READY
+ 336   1              VCH5CTL=0x90;   // ADP_I (enable voltage channel for channel 5)
+ 337   1              VCH6CTL=0x90;   // ADAPTER_ID_R
+ 338   1              //VCH7CTL=0x90;   // ADAPTER_ID  //MEILING001:remove.
+ 339   1              VCH7CTL=0x90;   //ANGELAG019: add
+ 340   1      }
+ 341          
+ 342          // CMW 20121022 +
+ 343          //---------------------------------------------------------------------------
+ 344          // Init Voltage Compare Function
+ 345          // Input: 1 Group. choice the init VC channel  0: VC0 1: VC1 2:VC2 3:All VC Channel
+ 346          //---------------------------------------------------------------------------
+ 347          void Init_VC(BYTE Group)
+ 348          {
+ 349   1              int tGroup = (Group&0x03);
+ 350   1              /*//ANGELAS073:remove start
+ 351   1              #if Support_VC0_Function
+ 352   1              // Set the CPU Thermal VC Setting
+ 353   1              if( (tGroup == 0x00) || (tGroup == 0x03) )
+ 354   1              {
+ 355   1                      VCMP0CTL &= 0x3F;       // Disable VC0 & Interrupt.
+ 356   1                      CMP0THRDATM = (VC0TriggerValue>>8);             // threshold value buffer
+ 357   1                      CMP0THRDATL = VC0TriggerValue;
+ 358   1                      VCMP0CTL &= 0xF8;       // Clear ADC Channel & set to Channel 0.
+ 359   1                      VCMP0CTL &= 0xDF;       // Set the Less Then Voltage trigger.
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 7   
+
+ 360   1                      VCMP0CTL &= 0xF7;       // Set Active-Low. //T18 change Active Low to Active high
+ 361   1                      GCR15 |= 0x01;          // Enable GPJ3 to be VC1 GPO.
+ 362   1                      GPCRJ3 = 0x00;
+ 363   1                      VCMP0CTL |= 0x40;       // Enable Interrupt.
+ 364   1                      VCMP0CTL |= 0x80;
+ 365   1              }
+ 366   1              #endif
+ 367   1      
+ 368   1              #if Support_VC1_Function
+ 369   1              // Set the ADP_I VC setting
+ 370   1              if( (tGroup == 0x01) || (tGroup == 0x03) )
+ 371   1              {
+ 372   1                      VCMP1CTL &= 0x3F;       // Disable VC1 & Interrupt.
+ 373   1                      //CMP1THRDATM = (VC1TriggerValue>>8);   // threshold value buffer
+ 374   1                      //CMP1THRDATL = VC1TriggerValue;
+ 375   1                      SetTurbo_V_Thro();      // Set Turbo_V trigger point.
+ 376   1                      VCMP1CTL &= 0xF8;       // Clear ADC Channel
+ 377   1                      VCMP1CTL |= 0x05;        //T051A change 0x01 to 0x05   // Connect to ADC Channel 1.  
+ 378   1                      VCMP1CTL |= 0x20;       // Set the Over Voltage trigger.
+ 379   1                      VCMP1CTL &= 0xF7;       // Set Active-High.
+ 380   1                      GCR15 |= 0x02;          // Enable GPJ4 to be VC1 GPO.
+ 381   1                      //GPCRJ4 = 0x00;    
+ 382   1                      VCMP1CTL |= 0x40;       // Enable Interrupt.
+ 383   1                      VCMP1CTL |= 0x80;       // Enable VC1
+ 384   1              }
+ 385   1              #endif
+ 386   1      
+ 387   1              #if Support_VC2_Function
+ 388   1              // Set the xxx VC setting.
+ 389   1              if( (tGroup == 0x02) || (tGroup == 0x03) )
+ 390   1              {
+ 391   1              }
+ 392   1              #endif
+ 393   1              *///ANGELAS073:remove start
+ 394   1              if( (VCMP0CTL&0x80) || (VCMP1CTL&0x80) || (VCMP2CTL&0x80) )
+ 395   1              {
+ 396   2                      IER18 |= 0x80;
+ 397   2              }
+ 398   1      }
+ 399          // CMW 20121022 -
+ 400          
+ 401          /*****************************************************************************/
+ 402          // Procedure: Lenovo_CPU_auto_mode                                                              TimeDiv: 1Sec
+ 403          // Description: CPU current less than 7A in 20 seconds,
+ 404          //                               set the max CPU processor rate to 70.
+ 405          // GPIO:
+ 406          // Referrals: Lenovo CPU auto mode start from here
+ 407          //                              1.23V / 3.00V = 41%
+ 408          //                              1023 * 41% = 419.43 => 0x01A3
+ 409          //                              (7A/76A)*419 = 38.5 => 0x27
+ 410          //                              (3.5A/76A)*419=19.2 => 0x13
+ 411          //                              Readlly test result voltage: 7A=>0x26 3.5A=>0x13
+ 412          /*****************************************************************************/
+ 413          /* //ANGELAS073:remove start
+ 414          void Lenovo_CPU_auto_mode(void)
+ 415          {
+ 416                  #if Support_CPU_Auto
+ 417                  if ( SystemNotS0 )      { return; }
+ 418          
+ 419                  ITempB01 = Auto_mode_EnPtr & 0x1F;                      // mask enable bit => counter
+ 420                  // 1. read ADC data
+ 421                  //Auto_mode[ITempB01] = DyData2;
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 8   
+
+ 422                  //Mos: Get CPU IMon
+ 423                  Auto_mode[ITempB01] = DyData1;
+ 424          
+ 425                  if (ITempB01 == 19)
+ 426                  {
+ 427                          // 2. avg
+ 428                          ITempW01 = 0;
+ 429                          for( ITempB02=0; ITempB02<20; ITempB02++)
+ 430                          { ITempW01 += Auto_mode[ITempB02]; }
+ 431                          Auto_mode_AVG = ITempW01/20;
+ 432          
+ 433                          if( IS_MASK_SET(LENOVOBATT,CPU_AUTO_MODE) && !Read_AC_IN() &&
+ 434                                  (IS_MASK_SET(SYS_MISC1, ACPI_OS)) )     // check function enable
+ 435                          {
+ 436                                  // 3. check statuse
+ 437                                  if( Auto_mode_AVG <= 0x002E )   // Imon < 7A
+ 438                                  {       // Set 70%.
+ 439                                          if ( IS_MASK_CLEAR(StatusKeeper, b3CPU_Auto) )
+ 440                                          {
+ 441                                                  SET_MASK(StatusKeeper,b3CPU_Auto);
+ 442                                                  SET_MASK(StatusKeeper,b2CPU_Auto70);
+ 443                                                  CLR_MASK(Auto_mode_EnPtr,BIT6);
+ 444                                                  //ECQEvent(AUTO_MODE_ON_EVENT);         // notify host on
+ 445                                          SET_MASK(LENOVOPMFW_Temp,Auto_Mode_Off);
+ 446                                                 SET_MASK(LENOVOPMFW_Temp,Auto_Mode_Change);
+ 447                                                  uVPCeventSource = General;
+ 448                                                  uVPCeventSource2 = 0;
+ 449                                                  ECSMI_SCIEvent(SDV_VPC_notify);
+ 450                                          }
+ 451                                          else
+ 452                                          {
+ 453                                                  if ( Auto_mode_AVG > 0x0016 )   // Imon > 3.5A
+ 454                                                  {
+ 455                                                          if ( IS_MASK_SET(Auto_mode_EnPtr,BIT6) )
+ 456                                                          {
+ 457                                                                  CLR_MASK(StatusKeeper,b3CPU_Auto);
+ 458                                                                  CLR_MASK(StatusKeeper,b2CPU_Auto70);
+ 459                                                          }
+ 460                                                  }
+ 461                                                  else
+ 462                                                  {
+ 463                                                          if ( IS_MASK_CLEAR(StatusKeeper,b2CPU_Auto70) )
+ 464                                                          {
+ 465                                                                  SET_MASK(StatusKeeper,b3CPU_Auto);
+ 466                                                                  SET_MASK(StatusKeeper,b2CPU_Auto70);
+ 467                                                                  CLR_MASK(Auto_mode_EnPtr,BIT6);
+ 468                                                                  //ECQEvent(AUTO_MODE_OFF_EVENT);                // send ad disable for host
+ 469                                                      SET_MASK(LENOVOPMFW_Temp,Auto_Mode_Off);
+ 470                                                                  SET_MASK(LENOVOPMFW_Temp,Auto_Mode_Change);
+ 471                                                              uVPCeventSource = General;
+ 472                                                              uVPCeventSource2 = 0;
+ 473                                                              ECSMI_SCIEvent(SDV_VPC_notify);
+ 474                                                          }
+ 475                                                  }
+ 476                                          }
+ 477                                  }
+ 478                                  else
+ 479                                  {       // Set 100%
+ 480                                          if ( IS_MASK_CLEAR(Auto_mode_EnPtr,BIT6) )
+ 481                                          {
+ 482                                                  SET_MASK(StatusKeeper,b3CPU_Auto);
+ 483                                                  CLR_MASK(StatusKeeper,b2CPU_Auto70);
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 9   
+
+ 484                                                  SET_MASK(Auto_mode_EnPtr,BIT6);
+ 485                                                  //ECQEvent(AUTO_MODE_OFF_EVENT);        // notify host off
+ 486                                          CLR_MASK(LENOVOPMFW_Temp,Auto_Mode_Off);
+ 487                                          SET_MASK(LENOVOPMFW_Temp,Auto_Mode_Change);
+ 488                                                  uVPCeventSource = General;
+ 489                                                  uVPCeventSource2 = 0;
+ 490                                                  ECSMI_SCIEvent(SDV_VPC_notify);
+ 491                                          }
+ 492                                  }
+ 493                          }
+ 494                          else
+ 495                          {       // check function disable
+ 496                                  if( (IS_MASK_SET(Auto_mode_EnPtr, BIT6)) || (IS_MASK_SET(LENOVOPMFW_Temp,Auto_Mode_Off)) )      // check bef
+             -ore disable CPU auto mode already On event
+ 497                                  {
+ 498                                          CLR_MASK(StatusKeeper,b3CPU_Auto);
+ 499                                          CLR_MASK(StatusKeeper,b2CPU_Auto70);
+ 500                                          CLR_MASK(Auto_mode_EnPtr,BIT6);
+ 501                                          //ECQEvent(AUTO_MODE_OFF_EVENT);                // send ad disable for host
+ 502                              CLR_MASK(LENOVOPMFW_Temp,Auto_Mode_Off);
+ 503                                          SET_MASK(LENOVOPMFW_Temp,Auto_Mode_Change);
+ 504                                      uVPCeventSource = General;
+ 505                                      uVPCeventSource2 = 0;
+ 506                                      ECSMI_SCIEvent(SDV_VPC_notify);
+ 507                                  }
+ 508                          }
+ 509                  }
+ 510          
+ 511                  // 4. check counter 20 seconds
+ 512                  ITempB01++;
+ 513                  if( ITempB01 >= 20 )
+ 514                  { ITempB01=0;  }
+ 515                  Auto_mode_EnPtr = (Auto_mode_EnPtr&0xE0) | ITempB01;
+ 516                  #endif  // Support_CPU_Auto
+ 517          }
+ 518          
+ 519          void Chk_Wrong_ADP(void)
+ 520          {
+ 521                  if( SysPowState == SYSTEM_S0 )
+ 522                  {
+ 523          
+ 524                          if((ACIN_FallINT_Count > 0) && (Chk_Wrong_ADP_Status == 0))
+ 525                          {
+ 526                                  Chk_Wrong_ADP_Status = Chk_Wrong_ADP_Status_wait_2sec;
+ 527                          }
+ 528          
+ 529                          switch(Chk_Wrong_ADP_Status)
+ 530                          {
+ 531                          case Chk_Wrong_ADP_Status_wait_2sec:
+ 532                                  Chk_Wrong_10ms_Count++;
+ 533                                  if (Chk_Wrong_10ms_Count  > 200)
+ 534                                  {
+ 535                                          CLEAR_MASK(ACOFF_SOURCE, ADPOVP);
+ 536                                          //ACOFF_LOW();//JERRYCRZ030?那oremove AC_OFF function follow charge IC bq24780. 
+ 537                                  BATT_LEN_OFF();//JERRYCRZ030?那o
+ 538                                          cBattFlag0.fbit.cCmdAcOff=0;                    //Resume Charger
+ 539                                          //CHGIC_ptr = 2;                                                //reminder: call to write to SmartChg
+ 540                                          //WriteSmartChgIC();
+ 541                                          Chk_Wrong_10ms_Count = 0;               //
+ 542                                          ACIN_FallINT_Count = 0;
+ 543                                          Chk_Wrong_ADP_Status = Chk_Wrong_ADP_Status_wait_10sec;
+ 544                                  }
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 10  
+
+ 545                                  else
+ 546                                  {
+ 547                                          cBattFlag0.fbit.cCmdAcOff=1;                    //Stop charger
+ 548                                          //CHGIC_ptr = 2;                                                //reminder: call to write to SmartChg
+ 549                                          //WriteSmartChgIC();
+ 550                                          SET_MASK(ACOFF_SOURCE, ADPOVP);
+ 551                                          //ACOFF_HI();
+ 552                                          BATT_LEN_ON();//JERRYCRZ030:+remove AC_OFF function follow charge IC bq24780. 
+ 553                                  }
+ 554                                  break;
+ 555                          case Chk_Wrong_ADP_Status_wait_10sec:
+ 556                                  if (Chk_Wrong_10ms_Count > 1000)        //Over 10s not detect 5 times ACIN drop.
+ 557                                  {
+ 558                                          Chk_Wrong_10ms_Count = 0;               //Reset all counter
+ 559                                          ACIN_FallINT_Count = 0;
+ 560                                          Chk_Wrong_ADP_Status=0;                         //Reset Status
+ 561                                  }
+ 562                                  else
+ 563                                  {
+ 564                                          if (ACIN_FallINT_Count >= 5)                    //falling 5 times
+ 565                                          {
+ 566                                                  Chk_Wrong_ADP_Status = Chk_Wrong_ADP_Status_ACOFF_Lock;
+ 567                                                  ACIN_FallINT_Count = 0;
+ 568                                                  Chk_Wrong_10ms_Count = 0;
+ 569                                                  cBattFlag0.fbit.cCmdAcOff=1;            //Stop charger 
+ 570                                                  //CHGIC_ptr = 2;                                        //reminder: call to write to SmartChg
+ 571                                                  //WriteSmartChgIC();
+ 572                                                  SET_MASK(ACOFF_SOURCE, ADPOVP);
+ 573                                                  //ACOFF_HI();   //JERRYCRZ030?那oremove AC_OFF function follow charge IC bq24780. 
+ 574                                                  BATT_LEN_ON();//JERRYCRZ030+remove AC_OFF function follow charge IC bq24780. 
+ 575          
+ 576                                          }
+ 577                                          Chk_Wrong_10ms_Count++;
+ 578                                  }
+ 579                                  break;
+ 580                          case Chk_Wrong_ADP_Status_ACOFF_Lock:
+ 581                                  //Reset AC OFF Lock after Plug out ACIN 20ms
+ 582                                  if (!Read_AC_IN())
+ 583                                  {
+ 584                                          if (Chk_Wrong_10ms_Count >2)
+ 585                                          {
+ 586                                                  Chk_Wrong_ADP_Status = 0;                       //Reset Status and counter
+ 587                                                  Chk_Wrong_10ms_Count = 0;
+ 588                                                  ACIN_FallINT_Count =0;
+ 589                                                  CLEAR_MASK(ACOFF_SOURCE, ADPOVP);
+ 590                                                  //ACOFF_LOW();//JERRYCRZ030?那oremove AC_OFF function follow charge IC bq24780. 
+ 591                                  BATT_LEN_OFF();//JERRYCRZ030?那o
+ 592                                                  cBattFlag0.fbit.cCmdAcOff=0;                    //Resume Charger
+ 593                                                  //CHGIC_ptr = 2;                                                //reminder: call to write to SmartChg
+ 594                                                  //WriteSmartChgIC();
+ 595                                          }
+ 596                                          Chk_Wrong_10ms_Count ++;
+ 597                                  }
+ 598                                  break;
+ 599                          default:
+ 600                                  Chk_Wrong_ADP_Status = 0;
+ 601                                  Chk_Wrong_10ms_Count = 0;
+ 602                                  ACIN_FallINT_Count = 0;
+ 603                                  break;
+ 604                          }
+ 605                  }
+ 606                  else
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 11  
+
+ 607                  {
+ 608                          Chk_Wrong_ADP_Status = 0;
+ 609                          Chk_Wrong_10ms_Count = 0;
+ 610                          ACIN_FallINT_Count = 0;
+ 611                  }
+ 612          }
+ 613          */ //ANGELAS073:remove end
+ 614          /* Mos: The memory used in Chk_ACOP function.
+ 615          typedef enum
+ 616          {
+ 617                  Chk_ACOP_Status_wait_10sec,
+ 618                  Chk_ACOP_Status_ACOFF_Lock,
+ 619          }Chk_ACOP_Status_Type;
+ 620          extern XBYTE    Chk_ACOP_Status;                                        //_at_(ECRAM1+0x94);
+ 621          extern XWORD Chk_ACOP_10ms_Count;                               //_at_(ECRAM1+0x95);*/
+ 622          /* //ANGELAS073:remove start
+ 623          void Chk_ACOP(void)
+ 624          {
+ 625                  //Mos: Does not check ACOP when TurboBoost enable
+ 626                  if (IS_MASK_SET(CHGIC_ReadCmd0x37L, TurboBoost)) //ANGELAS016:Modify charge IC option setting. 12 to 37
+ 627                  {
+ 628                          return;
+ 629                  }
+ 630          
+ 631                  if (IS_MASK_SET(nNowCurrentH, BIT7))
+ 632                  {
+ 633                          Chk_ACOP_Bat_Chg_Current = 0xFFFF - (WORD)((nNowCurrentH << 8) + nNowCurrentL);//mA
+ 634                  }
+ 635                  else
+ 636                  {
+ 637                          Chk_ACOP_Bat_Chg_Current = 0;
+ 638                  }
+ 639          
+ 640                  //Mos: When AC_IN and Battery is discharging, the current > 25mA
+ 641                  if (IS_MASK_SET(nNowCurrentH, BIT7)) //Mos: Battery is discharging
+ 642                  {
+ 643                          if(Read_AC_IN() && (Chk_ACOP_Status == 0) && Chk_ACOP_Bat_Chg_Current > 25)
+ 644                          {
+ 645                                  Chk_ACOP_Status = Chk_ACOP_Status_wait_10sec;
+ 646                          }
+ 647                  }
+ 648          
+ 649                  switch(Chk_ACOP_Status)
+ 650                  {
+ 651                          case Chk_ACOP_Status_wait_10sec:
+ 652                                  Chk_ACOP_10ms_Count++;
+ 653                                  if (Chk_ACOP_10ms_Count >= 1000)                                //ACOP over 10s
+ 654                                  {
+ 655                                          Chk_ACOP_Status = Chk_ACOP_Status_ACOFF_Lock;
+ 656                                          Chk_ACOP_10ms_Count = 0;
+ 657                                  }
+ 658                                  else
+ 659                                  {
+ 660                                          if (!(Read_AC_IN() && (Chk_ACOP_Bat_Chg_Current < 25)))
+ 661                                          {
+ 662                                                  Chk_ACOP_Status = 0;
+ 663                                          }
+ 664                                  }
+ 665                                  break;
+ 666                          case Chk_ACOP_Status_ACOFF_Lock:
+ 667                                  if (!Read_AC_IN())
+ 668                                  {
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 12  
+
+ 669                                          Chk_ACOP_10ms_Count++;
+ 670                                          if (Chk_ACOP_10ms_Count >= 20)                                  //ACOP over 200ms
+ 671                                          {
+ 672                                                  Chk_ACOP_Status = Chk_ACOP_Status_Null;
+ 673                                                  Chk_ACOP_10ms_Count = 0;
+ 674                                                  CLEAR_MASK(ACOFF_SOURCE, ACOP);
+ 675                                                  //ACOFF_LOW();//JERRYCRZ030?那oremove AC_OFF function follow charge IC bq24780. 
+ 676                                  BATT_LEN_OFF();//JERRYCRZ030?那o
+ 677                                          }
+ 678                                  }
+ 679                                  else
+ 680                                  {
+ 681                                          SET_MASK(ACOFF_SOURCE, ACOP);
+ 682                                          //ACOFF_HI();//JERRYCRZ030?那oremove AC_OFF function follow charge IC bq24780. 
+ 683                                          BATT_LEN_ON();//JERRYCRZ030+remove AC_OFF function follow charge IC bq24780. 
+ 684                                  }
+ 685                                  break;
+ 686                          default:
+ 687                                  Chk_ACOP_Status = 0;
+ 688                                  Chk_ACOP_10ms_Count = 0;
+ 689                                  break;
+ 690                  }
+ 691          }
+ 692          
+ 693          void Chk_Hybrid_STPP(void)
+ 694          {
+ 695                  LWORD BattPresentVolt;
+ 696                  LWORD BattNowCurrent;
+ 697                  //LWORD Batt_Output_Power;   //T069-
+ 698                 BYTE  Batt_Output_Power;   // (unit: W)
+ 699                  //if(Read_AC_IN() && (nBattGasgauge > Chk_Hybrid_STPP_min_BattGasgauge))  //Check Battery over 20%
+ 700                 if(Read_AC_IN() && (nBattGasgauge >= Chk_Hybrid_STPP_min_BattGasgauge))    
+ 701                 
+ 702                  {
+ 703                  SET_MASK(CHGIC_WriteCmd0x37L, TurboBoost); //ANGELAS016:Modify charge IC option setting. CHGIC_ReadCmd0x1
+             -2L to CHGIC_WriteCmd0x37L
+ 704                          switch(Chk_Hybrid_STPP_Status)
+ 705                          {
+ 706                                  case Chk_Hybrid_STPP_Status_CP:
+ 707                                          if (ADPI_AvgData > TurboBoostCP)
+ 708                                          {
+ 709                                                  //Mos: Stop charger
+ 710                                                  SET_MASK(nStopChgStat3H, HybridModeStopChg);
+ 711                                                  cBattFlag0.fbit.cCmdAcOff=1;                    //Stop Charger
+ 712                                                  SET_MASK(nStopChgStat3H, ENADPTHROTTLING);
+ 713                                           if(nBattGasgauge >(Chk_Hybrid_STPP_min_BattGasgauge-5))    
+ 714                                          { 
+ 715                                                  Chk_Hybrid_STPP_Status = Chk_Hybrid_STPP_Status_Charger_Turbo;
+ 716                                          }
+ 717                                          else
+ 718                                          {
+ 719                                                          //Mos: Clean all flag and status
+ 720                                                      Chk_Hybrid_STPP_Status = Chk_Hybrid_STPP_Status_CP;
+ 721                                                      CLEAR_MASK(nStopChgStat3H, HybridModeStopChg);
+ 722                                                      cBattFlag0.fbit.cCmdAcOff=0;                        //Resume Charger
+ 723                                                      CLEAR_MASK(nStopChgStat3H, ENADPTHROTTLING);
+ 724                                                      //CLEAR_MASK(CHGIC_ReadCmd0x37L, TurboBoost); //REMOVE DISABLE TURBOBOOST CO
+             -NTROL POINT
+ 725                                                      //Mos: Consider Battery gasguage less then 20%
+ 726                                                      if (ADPI_AvgData > ACModeSTPPEn)
+ 727                                                      {
+ 728                                                          SET_MASK(BatteryAlarm,HybridSTPP);
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 13  
+
+ 729                                                          UpBatteryPState();
+ 730                                                      }
+ 731                                                      if (ADPI_AvgData < ACModeSTPPDis)
+ 732                                                      {
+ 733                                                          CLR_MASK(BatteryAlarm,HybridSTPP);
+ 734                                                      }
+ 735                                              
+ 736                                          }                             
+ 737                                          }
+ 738                                          //else 
+ 739                                          else if(IS_MASK_CLEAR(LENOVOPMFW,BATTERY_MAIN_CAL))  
+ 740                                          {
+ 741                                                  CLEAR_MASK(nStopChgStat3H, HybridModeStopChg);
+ 742                                                  cBattFlag0.fbit.cCmdAcOff=0;                    //Resume Charger
+ 743                                                  CLEAR_MASK(nStopChgStat3H, ENADPTHROTTLING);
+ 744                                                  //CLEAR_MASK(CHGIC_ReadCmd0x37L, TurboBoost);//G39:REMOVE DISABLE TURBOBOOST CONTROL POINT
+ 745                                          }
+ 746                                          break;
+ 747                                  case Chk_Hybrid_STPP_Status_Charger_Turbo:
+ 748                                          if (ADPI_AvgData > TurboBoostEn)
+ 749                                          {
+ 750                                                  //Mos: TurboBoost enable
+ 751                                                  SET_MASK(CHGIC_WriteCmd0x37L, TurboBoost); //ANGELAS016:Modify charge IC option setting. CHGIC_ReadCm
+             -d0x12L to CHGIC_WriteCmd0x37L
+ 752                                                  Chk_Hybrid_STPP_Status = Chk_Hybrid_STPP_Status_Disable_CPUTurbo;
+ 753                                                  BattPresentVolt = (WORD)((nPresentVoltH << 8) + nPresentVoltL);
+ 754                                                  //Mos: Assume battrey discharge voltage is 10v, limit to 20W output, so limit current at 2A
+ 755                                                  Chk_Hybrid_STPP_Turboboost_Battery_Current_limit = 0x0800;//2048mA
+ 756                                          }
+ 757                                          //else if (ADPI_AvgData < TurboBoostDis) 
+ 758                                          else if((ADPI_AvgData < TurboBoostDis)||(nBattGasgauge < (Chk_Hybrid_STPP_min_BattGasgauge-9)))  //T05
+             -1A+//G32:change disableTurboBoost capacity from 40 to 36
+ 759                                          {
+ 760                                                  //Mos: TurboBoost disable
+ 761                                                  //CLEAR_MASK(CHGIC_ReadCmd0x37L, TurboBoost); //G39:REMOVE DISABLE TURBOBOOST CONTROL POINT
+ 762                                                  //Mos: Charger resume
+ 763                                                  CLEAR_MASK(nStopChgStat3H, HybridModeStopChg);
+ 764                                                  cBattFlag0.fbit.cCmdAcOff=0;
+ 765                                                  CLEAR_MASK(nStopChgStat3H, ENADPTHROTTLING);
+ 766                                                  Chk_Hybrid_STPP_Status = Chk_Hybrid_STPP_Status_CP;
+ 767                                                  //Mos: Set PL2 != PL1, enable CPU turbo.
+ 768                                                  PECI_SETPL2Watts(2);
+ 769                                          }
+ 770                                          break;
+ 771                                  case Chk_Hybrid_STPP_Status_Disable_CPUTurbo:
+ 772                                          BattPresentVolt = (WORD)((nPresentVoltH << 8) + nPresentVoltL);//mV
+ 773                                          if (IS_MASK_SET(nNowCurrentH, BIT7))
+ 774                                          {
+ 775                                                  BattNowCurrent = 0xFFFF - (WORD)((nNowCurrentH << 8) + nNowCurrentL);//mA
+ 776                                          }
+ 777                                          else
+ 778                                          {
+ 779                                                  BattNowCurrent = 0;//(WORD)((nNowCurrentH << 8) + nNowCurrentL);//mA
+ 780                                          }
+ 781                                          Batt_Output_Power = (BattPresentVolt * BattNowCurrent);
+ 782                                          //Batt_Output_Power / 1000000 / 20 / IOUT / (3 / 1024)
+ 783                                          // = Batt_Output_Power / 292968.75
+ 784                                          Batt_Output_Power=(BYTE) ((BattPresentVolt*0.1/100) *( BattNowCurrent*0.1/100)); 
+ 785                                          //Chk_Hybrid_STPP_Batt_Output_Power = Batt_Output_Power / 292968;                   
+ 786                                          Chk_Hybrid_STPP_Batt_Output_Power =(LWORD)( Batt_Output_Power*1000000 /292968.75);  
+ 787          
+ 788                                          //If enable TurboBoost, But Power consumption still reach TurboBoostEn point.
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 14  
+
+ 789                                          //if (ADPI_AvgData > TurboBoostEn)
+ 790                                          if ((TurboBoostCP + Chk_Hybrid_STPP_Batt_Output_Power)
+ 791                                                  > (TurboBoostEn + Chk_Hybrid_STPP_Batt_Output_Power_Limit))
+ 792                                          {
+ 793                                                  //Mos: Set PL2 = PL1, disable CPU turbo.
+ 794                                                  PECI_SETPL2Watts(1);
+ 795                                             SET_MASK(Thro_Status, b3Turbo_CPU);
+ 796                                              cTHERMThrottling &= 0xF0;   // Clear thermal throttling status.
+ 797                                               cTHERMThrottling |= 0x01;  // Set P-State level                
+ 798                                                  Chk_Hybrid_STPP_Status = Chk_Hybrid_STPP_Status_CPU_throttling;
+ 799                                          }
+ 800                                          //else if (ADPI_AvgData < TurboBoostDis) 
+ 801                                          else if((ADPI_AvgData < TurboBoostDis)||(nBattGasgauge < (Chk_Hybrid_STPP_min_BattGasgauge-5)))  //T05
+             -1A+
+ 802                                          {
+ 803                                                  //Mos: TurboBoost disable
+ 804                                                  //CLEAR_MASK(CHGIC_ReadCmd0x37L, TurboBoost);//REMOVE DISABLE TURBOBOOST CONTROL POINT
+ 805                                                  //Mos: Charger resume
+ 806                                                  CLEAR_MASK(nStopChgStat3H, HybridModeStopChg);
+ 807                                                  cBattFlag0.fbit.cCmdAcOff=0;
+ 808                                                  CLEAR_MASK(nStopChgStat3H, ENADPTHROTTLING);
+ 809                                                  Chk_Hybrid_STPP_Status = Chk_Hybrid_STPP_Status_CP;
+ 810                                                  //Mos: Set PL2 != PL1, enable CPU turbo.
+ 811                                                  PECI_SETPL2Watts(2);
+ 812                                             //T051B- SET_MASK(Thro_Status, b3Turbo_CPU);
+ 813                                             CLEAR_MASK(Thro_Status, b3Turbo_CPU); //T051B+
+ 814                                              cTHERMThrottling &= 0xF0;   // Clear thermal throttling status.
+ 815                                               // cTHERMThrottling |= 0x01;       // Set P-State level                      
+ 816                                          }
+ 817                                          break;
+ 818                                  case Chk_Hybrid_STPP_Status_CPU_throttling:
+ 819                                          BattPresentVolt = (WORD)((nPresentVoltH << 8) + nPresentVoltL);//mV
+ 820                                          if (IS_MASK_SET(nNowCurrentH, BIT7))
+ 821                                          {
+ 822                                                  BattNowCurrent = 0xFFFF - (WORD)((nNowCurrentH << 8) + nNowCurrentL);//mA
+ 823                                          }
+ 824                                          else
+ 825                                          {
+ 826                                                  BattNowCurrent = 0;//(WORD)((nNowCurrentH << 8) + nNowCurrentL);//mA
+ 827                                          }
+ 828                                          Batt_Output_Power = (BattPresentVolt * BattNowCurrent);
+ 829                                          //Batt_Output_Power / 1000000 / 20 / IOUT / (3 / 1024)
+ 830                                          // = Batt_Output_Power / 292968.75
+ 831                                          Batt_Output_Power=(BYTE) ((BattPresentVolt*0.1/100) *( BattNowCurrent*0.1/100));  
+ 832                                          //Chk_Hybrid_STPP_Batt_Output_Power = Batt_Output_Power / 292968;                    
+ 833                                          Chk_Hybrid_STPP_Batt_Output_Power =(LWORD)( Batt_Output_Power*1000000 /292968.75);  
+ 834          
+ 835                                          //If enable TurboBoost, But Power consumption still reach TurboBoostEn point.
+ 836                                          //if (ADPI_AvgData > TurboBoostEn)
+ 837                                          if ((TurboBoostCP + Chk_Hybrid_STPP_Batt_Output_Power)
+ 838                                                  > (TurboBoostthrottlEn + Chk_Hybrid_STPP_Batt_Output_Power_Limit))
+ 839                                          {
+ 840                                                  //Mos: CPU throttling to decrease power consumption
+ 841                                                  SET_MASK(BatteryAlarm, HybridSTPP);
+ 842                                                  UpBatteryPState();
+ 843                                          }
+ 844                                          //else if (ADPI_AvgData < TurboBoostthrottlDis)
+ 845                                          //else if ((TurboBoostCP + Chk_Hybrid_STPP_Batt_Output_Power) < TurboBoostthrottlDis)
+ 846                                          else if((BattNowCurrent == 0) && (ADPI_AvgData < TurboBoostthrottlDis))
+ 847                                          {
+ 848                                                  CLEAR_MASK(BatteryAlarm, HybridSTPP);
+ 849                                                  //Mos: Keep DownBatteryPState in Battery1Sec();
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 15  
+
+ 850                                                  //DownBatteryPState();
+ 851                                                  if (cBATTThrottling == 0)
+ 852                                                  {
+ 853                                                          Chk_Hybrid_STPP_Status = Chk_Hybrid_STPP_Status_Disable_CPUTurbo;
+ 854                                                  }
+ 855                                          }
+ 856                                          break;
+ 857                                  case Chk_Hybrid_STPP_Status_Recover_CPU_throttling:
+ 858                                          break;
+ 859                                  case Chk_Hybrid_STPP_Status_Recover_Charger_Turbo:
+ 860                                          break;
+ 861                                  default:
+ 862                                          Chk_Hybrid_STPP_Status = Chk_Hybrid_STPP_Status_CP;
+ 863                                          //CLEAR_MASK(CHGIC_ReadCmd0x37L, TurboBoost);// REMOVE DISABLE TURBOBOOST CONTROL POINT
+ 864                          }
+ 865                  }
+ 866                  else
+ 867                  {
+ 868                          //Mos: Clean all flag and status
+ 869                          Chk_Hybrid_STPP_Status = Chk_Hybrid_STPP_Status_CP;
+ 870                          CLEAR_MASK(nStopChgStat3H, HybridModeStopChg);
+ 871                          cBattFlag0.fbit.cCmdAcOff=0;                    //Resume Charger
+ 872                          CLEAR_MASK(nStopChgStat3H, ENADPTHROTTLING);
+ 873                          if(nBattGasgauge <= (Chk_Hybrid_STPP_min_BattGasgauge-5))//change disableTurboBoost capacity from 40 to 
+             -36//G82:Change battery capacity from 39 to 40 for disable TurboBoost follow SPEC.
+ 874                                  {
+ 875                                          CLEAR_MASK(CHGIC_WriteCmd0x37L, TurboBoost); //ANGELAS016:Modify charge IC option setting. CHGIC_ReadC
+             -md0x12L to CHGIC_WriteCmd0x37L
+ 876                                  }
+ 877                          //Mos: Consider Battery gasguage less then 20%
+ 878                          //if (ADPI_AvgData > ACModeSTPPEn)
+ 879                          {
+ 880                                  //SET_MASK(BatteryAlarm,HybridSTPP);
+ 881                                  //UpBatteryPState();
+ 882                          }
+ 883                          //if (ADPI_AvgData < ACModeSTPPDis)
+ 884                          {
+ 885                          //      CLR_MASK(BatteryAlarm,HybridSTPP);
+ 886                          } //Remove battery mode power on CPU keep MAX P_state. 
+ 887                          // Add plug in AC and Battery capacity less then 40%,at the same time system power is higher than set va
+             -lue,let CPU keep MAX P_state.
+ 888                          if(Read_AC_IN() && (ACModeSTPPEn!=0) && (nBattGasgauge <= (Chk_Hybrid_STPP_min_BattGasgauge-5)))
+ 889                          {
+ 890                                  if (ADPI_AvgData > ACModeSTPPEn)
+ 891                                  {
+ 892                                  SET_MASK(BatteryAlarm,HybridSTPP);
+ 893                                  UpBatteryPState();
+ 894                                  }
+ 895                                  if (ADPI_AvgData < ACModeSTPPDis)
+ 896                                  {
+ 897                                  CLR_MASK(BatteryAlarm,HybridSTPP);
+ 898                                  }
+ 899                          }
+ 900                          else
+ 901                                  {
+ 902                                  CLR_MASK(BatteryAlarm,HybridSTPP);
+ 903                                  }
+ 904                  }
+ 905          }
+ 906          */ //ANGELAS073:remove end
+ 907          
+ 908          //ANGELAS047:add start
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 16  
+
+ 909          void Chk_HybridFORBQ24780_STPP(void)
+ 910          {
+ 911   1              if(Read_AC_IN() && (nBattGasgauge > Chk_Hybrid_STPP_min_BattGasgauge))   //COKEYXU016:>=10%,change to >1
+             -0%.   
+ 912   1              {
+ 913   2                      SET_MASK(CHGIC_WriteCmd0x37L, TurboBoost);
+ 914   2                      if(IS_MASK_CLEAR(LENOVOPMFW,BATTERY_MAIN_CAL))  
+ 915   2                      {
+ 916   3                              cBattFlag0.fbit.cCmdAcOff=0;                    //Resume Charger
+ 917   3                      }
+ 918   2                      //MEILING022:S- Remove MEILING012.
+ 919   2                      //MEILING012:S+ Add adapter current protect function.
+ 920   2                      /*if (ADPI_AvgData > TurboBoostCP)
+ 921   2                      {
+ 922   2                              SET_MASK(nStopChgStat3H, HybridModeStopChg);
+ 923   2                              cBattFlag0.fbit.cCmdAcOff=1;                    //Stop Charger
+ 924   2                              SET_MASK(nStopChgStat3H, ENADPTHROTTLING);
+ 925   2                      }
+ 926   2                      else
+ 927   2                      {
+ 928   2                          CLEAR_MASK(nStopChgStat3H, HybridModeStopChg);
+ 929   2                          cBattFlag0.fbit.cCmdAcOff=0;                        //Resume Charger
+ 930   2                          CLEAR_MASK(nStopChgStat3H, ENADPTHROTTLING);                       
+ 931   2                      }*/
+ 932   2                      //MEILING012:E+ Add adapter current protect function.
+ 933   2                      //MEILING022:E-.
+ 934   2              }
+ 935   1              else
+ 936   1              {
+ 937   2                      if(IS_MASK_CLEAR(LENOVOPMFW,BATTERY_MAIN_CAL))   
+ 938   2                      {
+ 939   3                              cBattFlag0.fbit.cCmdAcOff=0;    
+ 940   3                      }
+ 941   2                      
+ 942   2                      if(nBattGasgauge <= Chk_Hybrid_STPP_min_BattGasgauge)//G32:change disableTurboBoost capacity from 40 to
+             - 36//G82:Change battery capacity from 39 to 40 for disable TurboBoost follow SPEC.
+ 943   2                      {                                                                                                        //COKEYXU016:Modify nBattGasgauge to <=10% for issue Battery turbo charge RSOC not stop a
+             -t 10%
+ 944   3                              CLEAR_MASK(CHGIC_WriteCmd0x37L, TurboBoost);
+ 945   3                      }
+ 946   2                      if(Read_AC_IN() && (ACModeSTPPEn!=0) && (nBattGasgauge <= Chk_Hybrid_STPP_min_BattGasgauge))//COKEYXU01
+             -5:Modify to <=10%
+ 947   2                      {
+ 948   3                              if (ADPI_AvgData > ACModeSTPPEn)
+ 949   3                              {
+ 950   4                                      SET_MASK(BatteryAlarm,HybridSTPP);
+ 951   4                                      //UpBatteryPState();  //MEILING048:remove.//MEILING051:-Add cpu P_STATE function.
+ 952   4                              }
+ 953   3                              if (ADPI_AvgData < ACModeSTPPDis)
+ 954   3                              {
+ 955   4                                      CLR_MASK(BatteryAlarm,HybridSTPP);
+ 956   4                              }
+ 957   3                      }
+ 958   2                      else
+ 959   2                      {
+ 960   3                              CLR_MASK(BatteryAlarm,HybridSTPP);
+ 961   3                      }
+ 962   2              }
+ 963   1      }
+ 964          //ANGELAS047:add end
+ 965          //ANGELAG019: remove start
+ 966          /*void Chk_AC_STPP(void)
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 17  
+
+ 967          {
+ 968                  if (Read_AC_IN())
+ 969                  {
+ 970                          if (1)
+ 971                          {
+ 972                                  if (ADPI_AvgData > ACModeSTPPEn)
+ 973                                  {
+ 974                                          SET_MASK(BatteryAlarm,ACSTPP);
+ 975                                          //UpBatteryPState();  //MEILING048:remove.//MEILING051:-Add cpu P_STATE function.
+ 976                                  }
+ 977                                  if (ADPI_AvgData < ACModeSTPPDis)
+ 978                                  {
+ 979                                          CLR_MASK(BatteryAlarm,ACSTPP);
+ 980                                  }
+ 981                          }
+ 982                  }
+ 983          }
+ 984          */ //ANGELAG019: remove end
+ 985          
+ 986          /* 
+ 987          void SetPowerBatteryparameter(void)
+ 988          {
+ 989              //for EM9 adapter detection and protection    //0.0029296875
+ 990              if((API_ID > 0x2DE) && (API_ID <= 0x374))  // >2.149  <=2.590
+ 991              {
+ 992                  AdapterID = AdapterID_170W;
+ 993              }
+ 994              else if((API_ID > 0x238) && (API_ID <= 0x2D0))  // 1.663(0x238) 2.109(0x2D0)  1.663x1024/3=0x238
+ 995              {
+ 996                  AdapterID = AdapterID_135W;
+ 997              }
+ 998              else if((API_ID > 0x190) && (API_ID <= 0x228)) //should change to >1.172(0x190) <=1.618(0x228) for 90W
+             -  ">0.693(0xEC) <=1.134(0x183) for 65W ",  //0.0029296875
+ 999              {
+1000                  AdapterID = AdapterID_90W;
+1001              }
+1002              else if ((API_ID > 0xEC) && (API_ID <= 0x183))//0.693<API_ID<1.134
+1003              {
+1004                  AdapterID = AdapterID_65W;
+1005              }
+1006              else if ((API_ID > 0x50) && (API_ID <= 0xE2))//0.234<API_ID<0.663
+1007              {
+1008                  AdapterID = AdapterID_45W;
+1009              }
+1010              else if((API_ID > 0x380) || (API_ID <= 0x46)) // >2.626 or <0.207
+1011              {
+1012                  AdapterID = AdapterID_NON_SUPPORT;
+1013              }
+1014              //if(IS_MASK_SET(pProject0,b4VGAType))
+1015              if(uMBGPU & 0x02)
+1016              {
+1017                  if(AdapterID == AdapterID_65W || AdapterID == AdapterID_90W || AdapterID == AdapterID_135W || Adap
+             -terID == AdapterID_170W)
+1018                  {
+1019                      CLEAR_MASK(SYS_STATUS, b5UnSuitAdpPow);
+1020                      CLEAR_MASK(SYS_STATUS, b4IllegalAdp);
+1021                      //ANGELAS075 remove start
+1022                      TurboBoostCP = A65WCP;
+1023                      TurboBoostEn = A65Wchargerturbo;
+1024                      TurboBoostthrottlEn = A65Wthrottling;
+1025                      TurboBoostthrottlDis = A65Wthrottlingrecove;
+1026                      TurboBoostDis = A65Wturborecover;
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 18  
+
+1027          
+1028                      ACModeSTPPEn = A65Wthrottling; //62w
+1029                      ACModeSTPPDis = A65Wthrottlingrecove;  // 58W //55w
+1030                      //ANGELAS075 remove end
+1031                      Chk_Hybrid_STPP_min_BattGasgauge = 45;  //T051A: 20 to 45
+1032                      //Chk_Hybrid_STPP_Batt_Output_Power_Limit = 68; // 20W / 20 / IOUT /( 3/1024) //ANGELAS075 rem
+             -ove
+1033          
+1034                      //Chk_Trickle_Current_Now_Current = 700;//700mA  //ANGELAS075 remove
+1035                      //Chk_Trickle_Current_Chg_Current = 500;//500mA  //ANGELAS075 remove
+1036                  }
+1037                  else if(AdapterID == AdapterID_45W)                 //120W -> 102w
+1038                  {
+1039                      SET_MASK(SYS_STATUS, b5UnSuitAdpPow); //Modify pop up Adapter has limited support when plug in
+             - 45W adapter to 65W supported units for ME.
+1040                      //CLEAR_MASK(SYS_STATUS,b5UnSuitAdpPow);
+1041                      CLEAR_MASK(SYS_STATUS, b4IllegalAdp);
+1042                      //ANGELAS075 remove start
+1043                      TurboBoostCP = A45WCP;
+1044                      TurboBoostEn = A45Wchargerturbo;
+1045                      TurboBoostthrottlEn = A45Wthrottling;
+1046                      TurboBoostthrottlDis = A45Wthrottlingrecove;
+1047                      TurboBoostDis = A45Wturborecover;
+1048          
+1049                      ACModeSTPPEn = A45Wthrottling;
+1050                      ACModeSTPPDis = A45Wthrottlingrecove;
+1051                      //ANGELAS075 remove end
+1052                      Chk_Hybrid_STPP_min_BattGasgauge = 45;  //20 to 45
+1053                      //Chk_Hybrid_STPP_Batt_Output_Power_Limit = 68; // 20W / 20 / IOUT /( 3/1024)  //ANGELAS075 re
+             -move
+1054          
+1055                      //Chk_Trickle_Current_Now_Current = 700;//700mA  //ANGELAS075 remove
+1056                      //Chk_Trickle_Current_Chg_Current = 500;//500mA  //ANGELAS075 remove
+1057                  }
+1058                  else if(AdapterID == AdapterID_NON_SUPPORT)
+1059                  {
+1060                      SET_MASK(SYS_STATUS, b4IllegalAdp);
+1061                      CLEAR_MASK(SYS_STATUS, b5UnSuitAdpPow);
+1062          
+1063                      if(SystemIsS0)
+1064                      {
+1065                          // CLEAR_MASK(SYS_STATUS,AC_ADP);   //Clear AC in  flag
+1066                          // ACOFF_HI();
+1067                          //ADPIDON10MS_NUM=0xFF;                    //     change From 0x0A to 0xFF
+1068                          // ACOFF_HI();         //T078+
+1069                          BATT_LEN_ON();//JERRYCRZ030+remove AC_OFF function follow charge IC bq24780.
+1070                          //ECSMI_SCIEvent(ACPI_ACOUT_SCI);
+1071                      }
+1072          
+1073                      // Chk_Trickle_Current_Now_Current = 700;//700mA  //ANGELAS075 remove
+1074                      // Chk_Trickle_Current_Chg_Current = 500;//500mA  //ANGELAS075 remove
+1075                  }
+1076          
+1077              }
+1078              // if(IS_MASK_CLEAR(pProject0,b4VGAType))
+1079              if(uMBGPU & 0x01)
+1080              {
+1081                  if(AdapterID == AdapterID_65W || AdapterID == AdapterID_90W || AdapterID == AdapterID_135W || Adap
+             -terID == AdapterID_170W)
+1082                  {
+1083                      CLEAR_MASK(SYS_STATUS, b5UnSuitAdpPow);
+1084                      CLEAR_MASK(SYS_STATUS, b4IllegalAdp);
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 19  
+
+1085                      //ANGELAS075 remove start
+1086                      TurboBoostCP = A65WCP;
+1087                      TurboBoostEn = A65Wchargerturbo;
+1088                      TurboBoostthrottlEn = A65Wthrottling;
+1089                      TurboBoostthrottlDis = A65Wthrottlingrecove;
+1090                      TurboBoostDis = A65Wturborecover;
+1091          
+1092                      ACModeSTPPEn = A65Wthrottling; //62w
+1093                      ACModeSTPPDis = A65Wthrottlingrecove;  // 58W //55w
+1094                      //ANGELAS075 remove
+1095                      Chk_Hybrid_STPP_min_BattGasgauge = 45;  // 20 to 45
+1096                      //Chk_Hybrid_STPP_Batt_Output_Power_Limit = 68; // 20W / 20 / IOUT /( 3/1024)  //ANGELAS075 re
+             -move
+1097          
+1098                      //Chk_Trickle_Current_Now_Current = 700;//700mA  //ANGELAS075 remove
+1099                      //Chk_Trickle_Current_Chg_Current = 500;//500mA  //ANGELAS075 remove
+1100                  }
+1101                  else if(AdapterID == AdapterID_45W)                 //120W -> 102w
+1102                  {
+1103                      //SET_MASK(SYS_STATUS,b5UnSuitAdpPow);// Adapter power is  suitable for ME.
+1104                      CLEAR_MASK(SYS_STATUS, b5UnSuitAdpPow);
+1105                      CLEAR_MASK(SYS_STATUS, b4IllegalAdp);
+1106                      //ANGELAS075 remove start
+1107                      TurboBoostCP = A45WCP;
+1108                      TurboBoostEn = A45Wchargerturbo;
+1109                      TurboBoostthrottlEn = A45Wthrottling;
+1110                      TurboBoostthrottlDis = A45Wthrottlingrecove;
+1111                      TurboBoostDis = A45Wturborecover;
+1112          
+1113                      ACModeSTPPEn = A45Wthrottling;
+1114                      ACModeSTPPDis = A45Wthrottlingrecove;
+1115                      //ANGELAS075 remove end
+1116                      Chk_Hybrid_STPP_min_BattGasgauge = 45;  // 20 to 45
+1117                      //Chk_Hybrid_STPP_Batt_Output_Power_Limit = 68; // 20W / 20 / IOUT /( 3/1024)  //ANGELAS075 re
+             -move
+1118          
+1119                      // Chk_Trickle_Current_Now_Current = 700;//700mA  //ANGELAS075 remove
+1120                      // Chk_Trickle_Current_Chg_Current = 500;//500mA  //ANGELAS075 remove
+1121                  }
+1122                  else if(AdapterID == AdapterID_NON_SUPPORT)
+1123                  {
+1124                      SET_MASK(SYS_STATUS, b4IllegalAdp);
+1125                      CLEAR_MASK(SYS_STATUS, b5UnSuitAdpPow);
+1126          
+1127                      if(SystemIsS0)
+1128                      {
+1129                          // CLEAR_MASK(SYS_STATUS,AC_ADP);   //Clear AC in  flag
+1130                          // ACOFF_HI();
+1131                          //ADPIDON10MS_NUM=0xFF;                              //  change From 0x0A to 0xFF
+1132                          // ACOFF_HI();
+1133                          BATT_LEN_ON();//JERRYCRZ030+remove AC_OFF function follow charge IC bq24780.
+1134                          //ECSMI_SCIEvent(ACPI_ACOUT_SCI);
+1135                      }
+1136          
+1137                      //Chk_Trickle_Current_Now_Current = 700;//700mA  //ANGELAS075 remove
+1138                      // Chk_Trickle_Current_Chg_Current = 500;//500mA  //ANGELAS075 remove
+1139                  }
+1140              }
+1141          
+1142              //SetTurbo_V_Thro();
+1143              //
+1144              if(IS_MASK_CLEAR(SYS_STATUS, b4IllegalAdp))
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 20  
+
+1145              {
+1146                  ACOFF_LOW();
+1147              }
+1148              //
+1149              //for EM9 adapter detection and protection
+1150          
+1151          
+1152              //
+1153              if ( SLI_Status == 0x44 )
+1154              {
+1155                  AdapterID = AdapterID_170W;
+1156              }
+1157              else
+1158              {
+1159                  if (API_ID >=  0x2FF) //martin0205 should change to >1.172 <=1.618 for 90W  ">0.693 <=1.134 for 65
+             -W ",
+1160                  {
+1161                      AdapterID = AdapterID_90W;
+1162                  }
+1163                  else if ((API_ID > 0xFF) && (API_ID < 0x2FF))
+1164                  {
+1165                      AdapterID = AdapterID_120W;
+1166                  }
+1167                  else if (API_ID < 0x7F && API_ID > 0x00)
+1168                  {
+1169                      AdapterID = AdapterID_170W;
+1170                  }
+1171                  else
+1172                  {
+1173                      AdapterID = AdapterID_NON_SUPPORT;
+1174                  }
+1175              }
+1176          
+1177              if (AdapterID == AdapterID_90W || AdapterID == AdapterID_NON_SUPPORT)                       //95W -> 7
+             -5w
+1178              {
+1179                  TurboBoostCP = A90WCP;
+1180                  TurboBoostEn = A90Wchargerturbo;
+1181                  TurboBoostthrottlEn = A90Wthrottling;
+1182                  TurboBoostthrottlDis = A90Wthrottlingrecove;
+1183                  TurboBoostDis = A90Wturborecover;
+1184          
+1185                  ACModeSTPPEn = A90WACmodethrottling;
+1186                  ACModeSTPPDis = A90WACmodethrottlingrecove;
+1187                  Chk_Hybrid_STPP_min_BattGasgauge = 20;
+1188                  Chk_Hybrid_STPP_Batt_Output_Power_Limit = 68; // 20W / 20 / IOUT /( 3/1024)
+1189          
+1190                  Chk_Trickle_Current_Now_Current = 700;//700mA
+1191                  Chk_Trickle_Current_Chg_Current = 500;//500mA
+1192              }
+1193              else if (AdapterID == AdapterID_120W)                   //120W -> 102w
+1194              {
+1195                  TurboBoostCP = A120WCP;
+1196                  TurboBoostEn = A120Wchargerturbo;
+1197                  TurboBoostthrottlEn = A120Wthrottling;
+1198                  TurboBoostthrottlDis = A120Wthrottlingrecove;
+1199                  TurboBoostDis = A120Wturborecover;
+1200          
+1201                  ACModeSTPPEn = A120WACmodethrottling;
+1202                  ACModeSTPPDis = A120WACmodethrottlingrecove;
+1203                  Chk_Hybrid_STPP_min_BattGasgauge = 20;
+1204                  Chk_Hybrid_STPP_Batt_Output_Power_Limit = 68; // 20W / 20 / IOUT /( 3/1024)
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 21  
+
+1205          
+1206                  Chk_Trickle_Current_Now_Current = 700;//700mA
+1207                  Chk_Trickle_Current_Chg_Current = 500;//500mA
+1208              }
+1209              else if (AdapterID == AdapterID_170W)                   //170W -> 145w
+1210              {
+1211                  AdpID170WAmode();
+1212              }
+1213          }
+1214          */
+1215          
+1216          
+1217          /*//ANGELAS073:remove start
+1218          void AdpID170WAmode(void)
+1219          {
+1220                  TurboBoostCP = A170WCP;
+1221                  TurboBoostEn = A170Wchargerturbo;
+1222                  TurboBoostthrottlEn = A170Wthrottling;
+1223                  TurboBoostthrottlDis =A170Wthrottlingrecove;
+1224                  TurboBoostDis = A170Wturborecover;
+1225          
+1226                  ACModeSTPPEn = A170WACmodethrottling;
+1227                  ACModeSTPPDis = A170WACmodethrottlingrecove;
+1228                  Chk_Hybrid_STPP_min_BattGasgauge = 20;
+1229                  Chk_Hybrid_STPP_Batt_Output_Power_Limit = 68; // 20W / 20 / IOUT /( 3/1024)
+1230          
+1231                  Chk_Trickle_Current_Now_Current = 700;//700mA
+1232                  Chk_Trickle_Current_Chg_Current = 500;//500mA
+1233          }
+1234          
+1235          void RestoreTurbo_V_Thro(void)
+1236          {
+1237                  if (AdapterID==AdapterID_65W || AdapterID==AdapterID_NON_SUPPORT)       
+1238                  {
+1239                                 CMP1THRDATM = (VC1RestoreValue_65W>>8);  // threshold value buffer
+1240                                  CMP1THRDATL = VC1RestoreValue_65W;
+1241                   }
+1242                    else if (AdapterID==AdapterID_90W)                    
+1243                             {
+1244                                         CMP1THRDATM = (VC1RestoreValue_90W>>8);          // threshold value buffer
+1245                                          CMP1THRDATL = VC1RestoreValue_90W;
+1246                              }
+1247          } 
+1248          
+1249          void SetTurbo_V_Thro(void)
+1250          {
+1251          
+1252                  if (AdapterID==AdapterID_65W || AdapterID==AdapterID_NON_SUPPORT)       
+1253                  {
+1254                                 CMP1THRDATM = (VC1TriggerValue_65W>>8);  // threshold value buffer
+1255                                  CMP1THRDATL = VC1TriggerValue_65W;
+1256                   }
+1257                    else if (AdapterID==AdapterID_90W)                    
+1258                             {
+1259                                         CMP1THRDATM = (VC1TriggerValue_90W>>8);          // threshold value buffer
+1260                                          CMP1THRDATL = VC1TriggerValue_90W;
+1261                              }
+1262          
+1263          
+1264                  //if (AdapterID==AdapterID_90W || AdapterID==AdapterID_NON_SUPPORT)     //90W
+1265                          {
+1266                  //             CMP1THRDATM = (VC1TriggerValue_90W>>8);  // threshold value buffer
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 22  
+
+1267                  //              CMP1THRDATL = VC1TriggerValue_90W;
+1268                          }
+1269                  //      else if (AdapterID==AdapterID_120W)                     //120W
+1270                                   {
+1271                    //            CMP1THRDATM = (VC1TriggerValue_120W>>8);                // threshold value buffer
+1272                  //                      CMP1THRDATL = VC1TriggerValue_120W;
+1273                                   }
+1274                  //               else if (AdapterID==AdapterID_170W)    //170W
+1275                                            {
+1276                      //                  CMP1THRDATM = (VC1TriggerValue_170W>>8);        // threshold value buffer
+1277                          //                      CMP1THRDATL = VC1TriggerValue_170W;
+1278                                            }
+1279                                    
+1280          }
+1281          */ //ANGELAS073:remove end
+1282          
+1283          //MEILING001:S+ define another function for SetPowerBatteryparameter().
+1284          void SetPowerBatteryparameter2(void)
+1285          {
+1286   1              Chk_Hybrid_STPP_min_BattGasgauge = 10;  //COKEYXU005:45 to 10
+1287   1              CLEAR_MASK(SYS_STATUS,b5UnSuitAdpPow);
+1288   1              CLEAR_MASK(SYS_STATUS,b4IllegalAdp);
+1289   1              if((API_ID > 0x2DE) && (API_ID <= 0x374))  // >2.149  <=2.590
+1290   1          {
+1291   2              AdapterID = AdapterID_170W;
+1292   2          }
+1293   1          else if((API_ID > 0x238) && (API_ID <= 0x2D0))  // 1.663(0x238) 2.109(0x2D0)  1.663x1024/3=0x238
+1294   1          {
+1295   2              AdapterID = AdapterID_135W;
+1296   2          }
+1297   1          else if((API_ID > 0x190) && (API_ID <= 0x228)) //should change to >1.172(0x190) <=1.618(0x228) for 90W
+             -  ">0.693(0xEC) <=1.134(0x183) for 65W ",  //0.0029296875
+1298   1          {
+1299   2              AdapterID = AdapterID_90W;
+1300   2          }
+1301   1          else if ((API_ID > 0xEC) && (API_ID <= 0x183))//0.693<API_ID<1.134
+1302   1          {
+1303   2              AdapterID = AdapterID_65W;
+1304   2          }
+1305   1          else if ((API_ID > 0x50) && (API_ID <= 0xE2))//0.234<API_ID<0.663
+1306   1          {
+1307   2              AdapterID = AdapterID_45W;
+1308   2          }
+1309   1          else if((API_ID > 0x380) || (API_ID <= 0x46)) // >2.626 or <0.207
+1310   1          {
+1311   2              AdapterID = AdapterID_NON_SUPPORT;
+1312   2          }
+1313   1      
+1314   1              if(AdapterID == AdapterID_135W || AdapterID == AdapterID_170W)
+1315   1          {
+1316   2              CLEAR_MASK(SYS_STATUS, b5UnSuitAdpPow);
+1317   2              CLEAR_MASK(SYS_STATUS, b4IllegalAdp);
+1318   2                      //COKEYXU018:S+ if suit Adapter,clear stop charge flag  
+1319   2                      CLEAR_MASK(ACOFF_SOURCE,BATTLEARN);
+1320   2                      CLEAR_MASK(CHGIC_WriteCmd0x12L,BatLearnEnable); //REJERRY051:Modify read addr to write.
+1321   2                      if (!bRWSMBus(SMbusChB, SMbusWW, Charger_Addr, C_ChargerMode, &CHGIC_WriteCmd0x12L,SMBus_NoPEC)) //REJER
+             -RY051:Modify read addr to write.
+1322   2                      {
+1323   3                              CHGIC_SMbusFailCnt++;
+1324   3                              RamDebug(0x14);  
+1325   3                      }
+1326   2                      //COKEYXU018:E+ 
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 23  
+
+1327   2              }
+1328   1              else if(AdapterID == AdapterID_90W)  //COKEYXU042: For 90W adapter,set unsuit adapter.
+1329   1              {
+1330   2                      SET_MASK(SYS_STATUS, b5UnSuitAdpPow);
+1331   2              CLEAR_MASK(SYS_STATUS, b4IllegalAdp);
+1332   2              }
+1333   1              else if(AdapterID == AdapterID_45W || AdapterID == AdapterID_65W )    //COKEYXU018: add 60W unsuit Adapte
+             -r
+1334   1          {
+1335   2              SET_MASK(SYS_STATUS, b5UnSuitAdpPow); 
+1336   2              CLEAR_MASK(SYS_STATUS, b4IllegalAdp);
+1337   2                      
+1338   2                      //COKEYXU018:S+ if unsuit Adapter,stop charge when S0.
+1339   2                      if(SystemIsS0)
+1340   2                      {
+1341   3                              
+1342   3                              CLEAR_MASK(SYS_STATUS,AC_ADP); //COKEYXU040: For 65W and 45W adapter,will not show AC in state when S0.
+             -        
+1343   3                              SET_MASK(ACOFF_SOURCE,BATTLEARN);//JERRYCR087: Modify non-support adapter can't charge under s3/s4/s4 a
+             -nd non-support adapter show charge under S0.
+1344   3                              SET_MASK(CHGIC_WriteCmd0x12L,BatLearnEnable); //REJERRY051:Modify read addr to write.
+1345   3                              if (!bRWSMBus(SMbusChB, SMbusWW, Charger_Addr, C_ChargerMode, &CHGIC_WriteCmd0x12L,SMBus_NoPEC)) //REJE
+             -RRY051:Modify read addr to write.
+1346   3                              {       
+1347   4                                      CHGIC_SMbusFailCnt++;
+1348   4                                      RamDebug(0x14);
+1349   4                              }
+1350   3                      }
+1351   2              //COKEYXU018:E+
+1352   2              }
+1353   1          else if(AdapterID == AdapterID_NON_SUPPORT)
+1354   1          {
+1355   2              SET_MASK(SYS_STATUS, b4IllegalAdp);
+1356   2              CLEAR_MASK(SYS_STATUS, b5UnSuitAdpPow);
+1357   2              }
+1358   1              
+1359   1      }
+1360          //MEILING001:E+
+1361          
+1362          //ANGELAG046: add start
+1363          
+1364          void psys_throttle() //COKEYXU008: modify as chkpsys
+1365          {
+1366   1              if ((SystemIsS0) && (!Read_AC_IN()))
+1367   1              {
+1368   2                      if((IS_MASK_SET(SEL_STATE0,PRESENT_A)) && (IS_MASK_CLEAR(BATTUPDATEFW,BIT0)))
+1369   2                      {
+1370   3                              if (nBattGasgauge > 25)
+1371   3                              {
+1372   4                                      if (Psys_AvgData >= 546) //COKEYXU003:Modify to 80W(1.6V)
+1373   4                                      {
+1374   5                                              SET_MASK(GPU_Prochot, b1_Psys);
+1375   5                                              SET_MASK(Thro_Status2, b7ProCH_Psys);
+1376   5                                      }
+1377   4                                      else if ((Psys_AvgData >= 409) && (Psys_AvgData < 546))//COKEYXU014:60~80W, cancel prochot, and NV SKU
+             - set D2
+1378   4                                      {
+1379   5                                              cGPUBattPsysThrottling = 1; //only for NV//COKEYXU014:change to D2.
+1380   5                                              CLR_MASK(GPU_Prochot, b1_Psys);
+1381   5                                              CLR_MASK(Thro_Status2, b7ProCH_Psys);
+1382   5                                      }
+1383   4                                      else if (Psys_AvgData < 409) //COKEYXU003: <60W, cancel prochot, and NV SKU set D2
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 24  
+
+1384   4                                      {
+1385   5                                              cGPUBattPsysThrottling = 1; //only for NV
+1386   5                                              CLR_MASK(GPU_Prochot, b1_Psys);
+1387   5                                              CLR_MASK(Thro_Status2, b7ProCH_Psys);
+1388   5                                      }
+1389   4                              }
+1390   3                              else if (nBattGasgauge > 7) //battery capacity is 7-10 //COKEYXU047: RSOC is 7~25, power consumption > 
+             -30W,pull CPU/GPU prochot.
+1391   3                              {
+1392   4                                      if (Psys_AvgData >= 204) //COKEYXU003:Modify to 30W(0.6V)
+1393   4                                      {
+1394   5                                              SET_MASK(GPU_Prochot, b1_Psys);
+1395   5                                              SET_MASK(Thro_Status2, b7ProCH_Psys);
+1396   5                                      }
+1397   4                                      else if (Psys_AvgData < 204) //COKEYXU003:Modify to 30W(0.6V)
+1398   4                                      {
+1399   5                                              cGPUBattPsysThrottling = 3; //D4
+1400   5                                              CLR_MASK(GPU_Prochot, b1_Psys);
+1401   5                                              CLR_MASK(Thro_Status2, b7ProCH_Psys);
+1402   5                                      }
+1403   4                              }
+1404   3                              else // battery capacity is 0-7
+1405   3                              {
+1406   4                                      SET_MASK(GPU_Prochot, b1_Psys);
+1407   4                                      SET_MASK(Thro_Status2, b7ProCH_Psys);
+1408   4                              }
+1409   3                      }
+1410   2      
+1411   2                      //COKEYXU038:remove
+1412   2              /*      if(nBattAverTemp <= 15)   //COKEYXU036: DC mode limit GPU consumption
+1413   2                      {
+1414   2                              cGPUBattPsysThrottling = 4; //D5
+1415   2                      } 
+1416   2              */      
+1417   2              }
+1418   1              else
+1419   1              {
+1420   2                      cGPUBattPsysThrottling = 0;
+1421   2                      CLR_MASK(GPU_Prochot, b1_Psys);
+1422   2                      CLR_MASK(Thro_Status2, b7ProCH_Psys);
+1423   2              }
+1424   1      }
+1425          //ANGELAG046: add end
+1426          
+1427          
+1428          
+1429          //MEILING001:S-
+1430          /*void Set_SD_PWR_EN(void)
+1431          {
+1432                  //if(SD_PWR_EN < 0x199)              // 1.2V
+1433                  if((SystemIsS0) && (SD_PWR_EN < 0x266))   // 1.2V //ANGELAS013:Modify SD power function.//ANGELAS098:Modi
+             -fy SD_POWER voltage value.chang1.2v to 1.8v
+1434                  {
+1435                          EC_SD_PWR_EN_OUTPUT;
+1436                          EC_SD_PWR_EN_LOW();
+1437                  }
+1438                  else
+1439                  {
+1440                          EC_SD_PWR_EN_HI();
+1441                          EC_SD_PWR_EN_INPUT;
+1442                  }
+1443          }*/
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 25  
+
+1444          //MEILING001:E-
+1445          
+1446          //ANGELAG056: add start
+1447          void Check_heavy_loading_500ms(void)
+1448          {
+1449   1      
+1450   1              if(((!Read_AC_IN()) || (IS_MASK_SET(CHGIC_ReadCmd0x12L,BatLearnEnable))) 
+1451   1                      && (nBattGasgauge <= 7) && (nBattGasgauge >= 6)
+1452   1                      && (IS_MASK_CLEAR(BATTUPDATEFW,BIT0)) && (IS_MASK_SET(SEL_STATE0,PRESENT_A)))
+1453   1              {
+1454   2                      Psys_SUM_500ms_Cnt++;
+1455   2                      if(Psys_SUM_500ms_Cnt >= 5) //delay 200ms
+1456   2                      {
+1457   3                              Psys_SUM_500ms += Psys;
+1458   3                      }
+1459   2                      if(Psys_SUM_500ms_Cnt == 14)
+1460   2                      {
+1461   3                              Psys_SUM_500ms_Cnt = 4;
+1462   3                              Psys_SUM_500ms /= 10;
+1463   3                              if(Psys_SUM_500ms >= 191) //28W, 0.56V
+1464   3                              {
+1465   4                                      SET_MASK(System_Status,b0_System_Is_Heavy_Loading);
+1466   4                              }
+1467   3                              Psys_SUM_500ms = 0;
+1468   3                      }
+1469   2              }
+1470   1              else
+1471   1              {
+1472   2                      Psys_SUM_500ms = 0;
+1473   2                      Psys_SUM_500ms_Cnt = 0;
+1474   2                      CLR_MASK(System_Status,b0_System_Is_Heavy_Loading);
+1475   2              }
+1476   1      }
+1477          //ANGELAG056: add end
+1478          
+1479          
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 26  
+
+ASSEMBLY LISTING OF GENERATED OBJECT CODE
+
+
+             ; FUNCTION Com006C (BEGIN)
+0000         L?0109:
+0000 7C00              MOV     R4,#00H
+0002 2400              ADD     A,#00H
+0004 FF                MOV     R7,A
+0005 EC                MOV     A,R4
+0006 3E                ADDC    A,R6
+0007 F0                MOVX    @DPTR,A
+0008 A3                INC     DPTR
+0009 EF                MOV     A,R7
+000A F0                MOVX    @DPTR,A
+000B 22                RET     
+000C         L?0111:
+000C F583              MOV     DPH,A
+000E         L?0112:
+000E E0                MOVX    A,@DPTR
+000F FE                MOV     R6,A
+0010 A3                INC     DPTR
+0011 E0                MOVX    A,@DPTR
+0012 FF                MOV     R7,A
+0013 E4                CLR     A
+0014 FC                MOV     R4,A
+0015 FD                MOV     R5,A
+0016 020000      E     LJMP    ?C?LADD
+0019         L?0113:
+0019 7C00              MOV     R4,#00H
+001B 2400              ADD     A,#00H
+001D FF                MOV     R7,A
+001E EC                MOV     A,R4
+001F 3E                ADDC    A,R6
+0020 F0                MOVX    @DPTR,A
+0021 A3                INC     DPTR
+0022 EF                MOV     A,R7
+0023 F0                MOVX    @DPTR,A
+0024 22                RET     
+0025         L?0114:
+0025         L?0115:
+0025 900000      E     MOV     DPTR,#Chk_Hybrid_STPP_min_BattGasgauge
+0028 E0                MOVX    A,@DPTR
+0029 FF                MOV     R7,A
+002A 900000      E     MOV     DPTR,#nBattGasgauge
+002D E0                MOVX    A,@DPTR
+002E D3                SETB    C
+002F 9F                SUBB    A,R7
+0030 22                RET     
+0031         L?0116:
+0031 C3                CLR     C
+0032 900000      E     MOV     DPTR,#Psys_AvgData+01H
+0035 E0                MOVX    A,@DPTR
+0036 9499              SUBB    A,#099H
+0038 900000      E     MOV     DPTR,#Psys_AvgData
+003B E0                MOVX    A,@DPTR
+003C 9401              SUBB    A,#01H
+003E 22                RET     
+003F         L?0117:
+003F E4                CLR     A
+0040 7B04              MOV     R3,#04H
+0042 FA                MOV     R2,A
+0043 F9                MOV     R1,A
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 27  
+
+0044 F8                MOV     R0,A
+0045 120000      E     LCALL   ?C?LLDXDATA
+0048 020000      E     LJMP    ?C?ULDIV
+004B         L?0118:
+004B         L?0119:
+004B 900000      E     MOV     DPTR,#API_ID
+004E E0                MOVX    A,@DPTR
+004F 9402              SUBB    A,#02H
+0051 22                RET     
+0052         L?0120:
+0052         L?0121:
+0052 900000      E     MOV     DPTR,#API_ID
+0055 E0                MOVX    A,@DPTR
+0056 9400              SUBB    A,#00H
+0058 22                RET     
+0059         L?0122:
+0059 900000      E     MOV     DPTR,#Psys_AvgData+01H
+005C E0                MOVX    A,@DPTR
+005D 94CC              SUBB    A,#0CCH
+005F 900000      E     MOV     DPTR,#Psys_AvgData
+0062 E0                MOVX    A,@DPTR
+0063 9400              SUBB    A,#00H
+0065 22                RET     
+0066         L?0123:
+0066 900000      E     MOV     DPTR,#SYS_STATUS
+0069 E0                MOVX    A,@DPTR
+006A 54DF              ANL     A,#0DFH
+006C F0                MOVX    @DPTR,A
+006D E0                MOVX    A,@DPTR
+006E 54EF              ANL     A,#0EFH
+0070 F0                MOVX    @DPTR,A
+0071 22                RET     
+0072         L?0124:
+0072 900000      E     MOV     DPTR,#SYS_STATUS
+0075 E0                MOVX    A,@DPTR
+0076 4420              ORL     A,#020H
+0078 F0                MOVX    @DPTR,A
+0079 E0                MOVX    A,@DPTR
+007A 54EF              ANL     A,#0EFH
+007C F0                MOVX    @DPTR,A
+007D 22                RET     
+007E         L?0125:
+007E F583              MOV     DPH,A
+0080 E0                MOVX    A,@DPTR
+0081 FC                MOV     R4,A
+0082 A3                INC     DPTR
+0083 E0                MOVX    A,@DPTR
+0084 FD                MOV     R5,A
+0085 EF                MOV     A,R7
+0086 25E0              ADD     A,ACC
+0088 22                RET     
+0089         L?0126:
+0089 54DF              ANL     A,#0DFH
+008B F0                MOVX    @DPTR,A
+008C 900000      E     MOV     DPTR,#Thro_Status4
+008F E0                MOVX    A,@DPTR
+0090 54FE              ANL     A,#0FEH
+0092 F0                MOVX    @DPTR,A
+0093 22                RET     
+0094         L?0127:
+0094 900000      E     MOV     DPTR,#ADPI_AvgData+01H
+0097 E0                MOVX    A,@DPTR
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 28  
+
+0098 9F                SUBB    A,R7
+0099 900000      E     MOV     DPTR,#ADPI_AvgData
+009C E0                MOVX    A,@DPTR
+009D 9E                SUBB    A,R6
+009E 22                RET     
+009F         L?0128:
+009F         L?0129:
+009F 900000      E     MOV     DPTR,#SysPowState
+00A2 E0                MOVX    A,@DPTR
+00A3 6411              XRL     A,#011H
+00A5 22                RET     
+00A6         L?0130:
+00A6 E0                MOVX    A,@DPTR
+00A7 9422              SUBB    A,#022H
+00A9 900000      E     MOV     DPTR,#Psys_AvgData
+00AC E0                MOVX    A,@DPTR
+00AD 9402              SUBB    A,#02H
+00AF 22                RET     
+             ; FUNCTION Com006C (END)
+
+             ; FUNCTION ScanADCFixChannel (BEGIN)
+                                           ; SOURCE LINE # 41
+                                           ; SOURCE LINE # 42
+                                           ; SOURCE LINE # 44
+0000 900000      R     MOV     DPTR,#Psys_SUM
+0003 120000      E     LCALL   ?C?LSTKXDATA
+0006 00                DB      00H
+0007 00                DB      00H
+0008 00                DB      00H
+0009 00                DB      00H
+                                           ; SOURCE LINE # 52
+000A 900000      E     MOV     DPTR,#VCH5CTL
+000D E0                MOVX    A,@DPTR
+000E 30E713            JNB     ACC.7,?C0001
+                                           ; SOURCE LINE # 53
+                                           ; SOURCE LINE # 54
+0011 E0                MOVX    A,@DPTR
+0012 4480              ORL     A,#080H
+0014 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 55
+0015 900000      E     MOV     DPTR,#VCH5DATM
+0018 E0                MOVX    A,@DPTR
+0019 FE                MOV     R6,A
+001A 900000      E     MOV     DPTR,#VCH5DATL
+001D E0                MOVX    A,@DPTR
+001E 900000      E     MOV     DPTR,#ADP_I
+0021 120000      R     LCALL   L?0109
+                                           ; SOURCE LINE # 56
+0024         ?C0001:
+                                           ; SOURCE LINE # 72
+0024 900000      E     MOV     DPTR,#VCH6CTL
+0027 E0                MOVX    A,@DPTR
+0028 30E713            JNB     ACC.7,?C0002
+                                           ; SOURCE LINE # 73
+                                           ; SOURCE LINE # 74
+002B E0                MOVX    A,@DPTR
+002C 4480              ORL     A,#080H
+002E F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 75
+002F 900000      E     MOV     DPTR,#VCH6DATM
+0032 E0                MOVX    A,@DPTR
+0033 FE                MOV     R6,A
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 29  
+
+0034 900000      E     MOV     DPTR,#VCH6DATL
+0037 E0                MOVX    A,@DPTR
+0038 900000      E     MOV     DPTR,#API_ID
+003B 120000      R     LCALL   L?0109
+                                           ; SOURCE LINE # 76
+003E         ?C0002:
+                                           ; SOURCE LINE # 79
+003E 900000      E     MOV     DPTR,#VCH7CTL
+0041 E0                MOVX    A,@DPTR
+0042 30E713            JNB     ACC.7,?C0003
+                                           ; SOURCE LINE # 80
+                                           ; SOURCE LINE # 81
+0045 E0                MOVX    A,@DPTR
+0046 4480              ORL     A,#080H
+0048 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 82
+0049 900000      E     MOV     DPTR,#VCH7DATM
+004C E0                MOVX    A,@DPTR
+004D FE                MOV     R6,A
+004E 900000      E     MOV     DPTR,#VCH7DATL
+0051 E0                MOVX    A,@DPTR
+0052 900000      E     MOV     DPTR,#Psys
+0055 120000      R     LCALL   L?0113
+                                           ; SOURCE LINE # 83
+0058         ?C0003:
+                                           ; SOURCE LINE # 127
+0058 900000      R     MOV     DPTR,#i
+005B 7403              MOV     A,#03H
+005D F0                MOVX    @DPTR,A
+005E         ?C0004:
+                                           ; SOURCE LINE # 128
+                                           ; SOURCE LINE # 129
+005E 900000      R     MOV     DPTR,#i
+0061 E0                MOVX    A,@DPTR
+0062 FF                MOV     R7,A
+0063 25E0              ADD     A,ACC
+0065 2400        E     ADD     A,#LOW Psys_Data+0FFFEH
+0067 F582              MOV     DPL,A
+0069 E4                CLR     A
+006A 3400        E     ADDC    A,#HIGH Psys_Data+0FFFEH
+006C 120000      R     LCALL   L?0125
+006F 2400        E     ADD     A,#LOW Psys_Data
+0071 F582              MOV     DPL,A
+0073 E4                CLR     A
+0074 3400        E     ADDC    A,#HIGH Psys_Data
+0076 F583              MOV     DPH,A
+0078 EC                MOV     A,R4
+0079 F0                MOVX    @DPTR,A
+007A A3                INC     DPTR
+007B ED                MOV     A,R5
+007C F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 130
+007D 900000      R     MOV     DPTR,#Psys_SUM
+0080 120000      E     LCALL   ?C?LLDXDATA0
+0083 900000      R     MOV     DPTR,#i
+0086 E0                MOVX    A,@DPTR
+0087 25E0              ADD     A,ACC
+0089 2400        E     ADD     A,#LOW Psys_Data
+008B F582              MOV     DPL,A
+008D E4                CLR     A
+008E 3400        E     ADDC    A,#HIGH Psys_Data
+0090 120000      R     LCALL   L?0111
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 30  
+
+0093 900000      R     MOV     DPTR,#Psys_SUM
+0096 120000      E     LCALL   ?C?LSTXDATA
+                                           ; SOURCE LINE # 131
+0099 900000      R     MOV     DPTR,#i
+009C E0                MOVX    A,@DPTR
+009D 14                DEC     A
+009E F0                MOVX    @DPTR,A
+009F E0                MOVX    A,@DPTR
+00A0 70BC              JNZ     ?C0004
+00A2         ?C0005:
+                                           ; SOURCE LINE # 132
+00A2 900000      E     MOV     DPTR,#Psys
+00A5 E0                MOVX    A,@DPTR
+00A6 FF                MOV     R7,A
+00A7 A3                INC     DPTR
+00A8 E0                MOVX    A,@DPTR
+00A9 900000      E     MOV     DPTR,#Psys_Data
+00AC CF                XCH     A,R7
+00AD F0                MOVX    @DPTR,A
+00AE A3                INC     DPTR
+00AF EF                MOV     A,R7
+00B0 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 133
+00B1 900000      R     MOV     DPTR,#Psys_SUM
+00B4 120000      E     LCALL   ?C?LLDXDATA0
+00B7 900000      E     MOV     DPTR,#Psys_Data
+00BA 120000      R     LCALL   L?0112
+00BD 900000      R     MOV     DPTR,#Psys_SUM
+00C0 120000      E     LCALL   ?C?LSTXDATA
+                                           ; SOURCE LINE # 134
+00C3 900000      R     MOV     DPTR,#Psys_SUM
+00C6 120000      R     LCALL   L?0117
+00C9 900000      E     MOV     DPTR,#Psys_AvgData
+00CC EE                MOV     A,R6
+00CD F0                MOVX    @DPTR,A
+00CE A3                INC     DPTR
+00CF EF                MOV     A,R7
+00D0 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 136
+00D1 020000      R     LJMP    psys_throttle
+             ; FUNCTION ScanADCFixChannel (END)
+
+             ; FUNCTION ScanADCDyChannel1 (BEGIN)
+                                           ; SOURCE LINE # 140
+                                           ; SOURCE LINE # 141
+                                           ; SOURCE LINE # 143
+0000 900000      R     MOV     DPTR,#ADP_I_SUM
+0003 120000      E     LCALL   ?C?LSTKXDATA
+0006 00                DB      00H
+0007 00                DB      00H
+0008 00                DB      00H
+0009 00                DB      00H
+                                           ; SOURCE LINE # 187
+000A 900000      E     MOV     DPTR,#VCH0CTL
+000D E0                MOVX    A,@DPTR
+000E 30E713            JNB     ACC.7,?C0008
+                                           ; SOURCE LINE # 188
+                                           ; SOURCE LINE # 189
+0011 E0                MOVX    A,@DPTR
+0012 4480              ORL     A,#080H
+0014 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 190
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 31  
+
+0015 900000      E     MOV     DPTR,#VCH0DATM
+0018 E0                MOVX    A,@DPTR
+0019 FE                MOV     R6,A
+001A 900000      E     MOV     DPTR,#VCH0DATL
+001D E0                MOVX    A,@DPTR
+001E 900000      E     MOV     DPTR,#NTC_V1
+0021 120000      R     LCALL   L?0113
+                                           ; SOURCE LINE # 191
+0024         ?C0008:
+                                           ; SOURCE LINE # 192
+0024 900000      E     MOV     DPTR,#VCH1CTL
+0027 E0                MOVX    A,@DPTR
+0028 30E71B            JNB     ACC.7,?C0009
+                                           ; SOURCE LINE # 193
+                                           ; SOURCE LINE # 194
+002B E0                MOVX    A,@DPTR
+002C 4480              ORL     A,#080H
+002E F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 195
+002F 900000      E     MOV     DPTR,#VCH1DATM
+0032 E0                MOVX    A,@DPTR
+0033 FE                MOV     R6,A
+0034 900000      E     MOV     DPTR,#VCH1DATL
+0037 E0                MOVX    A,@DPTR
+0038 7C00              MOV     R4,#00H
+003A 2400              ADD     A,#00H
+003C FF                MOV     R7,A
+003D EC                MOV     A,R4
+003E 3E                ADDC    A,R6
+003F 900000      E     MOV     DPTR,#NTC_V2
+0042 F0                MOVX    @DPTR,A
+0043 A3                INC     DPTR
+0044 EF                MOV     A,R7
+0045 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 196
+0046         ?C0009:
+                                           ; SOURCE LINE # 213
+0046 120000      R     LCALL   L?0128
+0049 6003              JZ      $ + 5H
+004B 020000      R     LJMP    ?C0031
+004E 900000      E     MOV     DPTR,#GPDRB
+0051 E0                MOVX    A,@DPTR
+0052 20E003            JB      ACC.0,$ + 6H
+0055 020000      R     LJMP    ?C0031
+                                           ; SOURCE LINE # 214
+                                           ; SOURCE LINE # 216
+0058 900000      E     MOV     DPTR,#ADPI2Sec
+005B E0                MOVX    A,@DPTR
+005C 04                INC     A
+005D F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 217
+005E 900000      R     MOV     DPTR,#i
+0061 7403              MOV     A,#03H
+0063 F0                MOVX    @DPTR,A
+0064         ?C0011:
+                                           ; SOURCE LINE # 218
+                                           ; SOURCE LINE # 219
+0064 900000      R     MOV     DPTR,#i
+0067 E0                MOVX    A,@DPTR
+0068 FF                MOV     R7,A
+0069 25E0              ADD     A,ACC
+006B 2400        E     ADD     A,#LOW ADPI_Data+0FFFEH
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 32  
+
+006D F582              MOV     DPL,A
+006F E4                CLR     A
+0070 3400        E     ADDC    A,#HIGH ADPI_Data+0FFFEH
+0072 120000      R     LCALL   L?0125
+0075 2400        E     ADD     A,#LOW ADPI_Data
+0077 F582              MOV     DPL,A
+0079 E4                CLR     A
+007A 3400        E     ADDC    A,#HIGH ADPI_Data
+007C F583              MOV     DPH,A
+007E EC                MOV     A,R4
+007F F0                MOVX    @DPTR,A
+0080 A3                INC     DPTR
+0081 ED                MOV     A,R5
+0082 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 220
+0083 900000      R     MOV     DPTR,#ADP_I_SUM
+0086 120000      E     LCALL   ?C?LLDXDATA0
+0089 900000      R     MOV     DPTR,#i
+008C E0                MOVX    A,@DPTR
+008D 25E0              ADD     A,ACC
+008F 2400        E     ADD     A,#LOW ADPI_Data
+0091 F582              MOV     DPL,A
+0093 E4                CLR     A
+0094 3400        E     ADDC    A,#HIGH ADPI_Data
+0096 120000      R     LCALL   L?0111
+0099 900000      R     MOV     DPTR,#ADP_I_SUM
+009C 120000      E     LCALL   ?C?LSTXDATA
+                                           ; SOURCE LINE # 221
+009F 900000      R     MOV     DPTR,#i
+00A2 E0                MOVX    A,@DPTR
+00A3 14                DEC     A
+00A4 F0                MOVX    @DPTR,A
+00A5 E0                MOVX    A,@DPTR
+00A6 70BC              JNZ     ?C0011
+00A8         ?C0012:
+                                           ; SOURCE LINE # 222
+00A8 900000      E     MOV     DPTR,#ADP_I
+00AB E0                MOVX    A,@DPTR
+00AC FF                MOV     R7,A
+00AD A3                INC     DPTR
+00AE E0                MOVX    A,@DPTR
+00AF 900000      E     MOV     DPTR,#ADPI_Data
+00B2 CF                XCH     A,R7
+00B3 F0                MOVX    @DPTR,A
+00B4 A3                INC     DPTR
+00B5 EF                MOV     A,R7
+00B6 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 223
+00B7 900000      R     MOV     DPTR,#ADP_I_SUM
+00BA 120000      E     LCALL   ?C?LLDXDATA0
+00BD 900000      E     MOV     DPTR,#ADPI_Data
+00C0 120000      R     LCALL   L?0112
+00C3 900000      R     MOV     DPTR,#ADP_I_SUM
+00C6 120000      E     LCALL   ?C?LSTXDATA
+                                           ; SOURCE LINE # 224
+00C9 900000      R     MOV     DPTR,#ADP_I_SUM
+00CC 120000      R     LCALL   L?0117
+00CF 900000      E     MOV     DPTR,#ADPI_AvgData
+00D2 EE                MOV     A,R6
+00D3 F0                MOVX    @DPTR,A
+00D4 A3                INC     DPTR
+00D5 EF                MOV     A,R7
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 33  
+
+00D6 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 261
+00D7 900000      E     MOV     DPTR,#SEL_STATE0
+00DA E0                MOVX    A,@DPTR
+00DB 30E00D            JNB     ACC.0,?C0015
+00DE E0                MOVX    A,@DPTR
+00DF 30E052            JNB     ACC.0,?C0014
+00E2 900000      E     MOV     DPTR,#nBattGasgauge
+00E5 E0                MOVX    A,@DPTR
+00E6 D3                SETB    C
+00E7 940A              SUBB    A,#0AH
+00E9 5049              JNC     ?C0014
+00EB         ?C0015:
+                                           ; SOURCE LINE # 262
+                                           ; SOURCE LINE # 263
+00EB 900000      E     MOV     DPTR,#uMBGPU
+00EE E0                MOVX    A,@DPTR
+00EF 6402              XRL     A,#02H
+00F1 7015              JNZ     ?C0016
+                                           ; SOURCE LINE # 264
+                                           ; SOURCE LINE # 265
+00F3 D3                SETB    C
+00F4 900000      E     MOV     DPTR,#ADPI_AvgData+01H
+00F7 E0                MOVX    A,@DPTR
+00F8 9485              SUBB    A,#085H
+00FA 900000      E     MOV     DPTR,#ADPI_AvgData
+00FD E0                MOVX    A,@DPTR
+00FE 9403              SUBB    A,#03H
+0100 900000      E     MOV     DPTR,#GPU_Prochot
+0103 E0                MOVX    A,@DPTR
+0104 4029              JC      ?C0100
+                                           ; SOURCE LINE # 266
+                                           ; SOURCE LINE # 267
+                                           ; SOURCE LINE # 268
+                                           ; SOURCE LINE # 269
+0106 801B              SJMP    ?C0099
+0108         ?C0016:
+                                           ; SOURCE LINE # 277
+0108 900000      E     MOV     DPTR,#uMBGPU
+010B E0                MOVX    A,@DPTR
+010C 6401              XRL     A,#01H
+010E 7060              JNZ     ?C0023
+                                           ; SOURCE LINE # 278
+                                           ; SOURCE LINE # 279
+0110 D3                SETB    C
+0111 900000      E     MOV     DPTR,#ADPI_AvgData+01H
+0114 E0                MOVX    A,@DPTR
+0115 942C              SUBB    A,#02CH
+0117 900000      E     MOV     DPTR,#ADPI_AvgData
+011A E0                MOVX    A,@DPTR
+011B 9401              SUBB    A,#01H
+011D 900000      E     MOV     DPTR,#GPU_Prochot
+0120 E0                MOVX    A,@DPTR
+0121 400C              JC      ?C0021
+                                           ; SOURCE LINE # 280
+                                           ; SOURCE LINE # 281
+0123         ?C0099:
+0123 4420              ORL     A,#020H
+0125 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 282
+0126 900000      E     MOV     DPTR,#Thro_Status4
+0129 E0                MOVX    A,@DPTR
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 34  
+
+012A 4401              ORL     A,#01H
+012C F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 283
+012D 8041              SJMP    ?C0023
+012F         ?C0021:
+                                           ; SOURCE LINE # 285
+                                           ; SOURCE LINE # 286
+012F         ?C0100:
+                                           ; SOURCE LINE # 287
+012F 120000      R     LCALL   L?0126
+                                           ; SOURCE LINE # 288
+                                           ; SOURCE LINE # 289
+                                           ; SOURCE LINE # 290
+0132 803C              SJMP    ?C0023
+0134         ?C0014:
+                                           ; SOURCE LINE # 292
+                                           ; SOURCE LINE # 293
+0134 900000      E     MOV     DPTR,#GPU_Prochot
+0137 E0                MOVX    A,@DPTR
+                                           ; SOURCE LINE # 294
+0138 120000      R     LCALL   L?0126
+                                           ; SOURCE LINE # 296
+013B 900000      E     MOV     DPTR,#uMBGPU
+013E E0                MOVX    A,@DPTR
+013F B4022E            CJNE    A,#02H,?C0023
+                                           ; SOURCE LINE # 297
+                                           ; SOURCE LINE # 298
+0142 D3                SETB    C
+0143 900000      E     MOV     DPTR,#ADPI_AvgData+01H
+0146 E0                MOVX    A,@DPTR
+0147 9430              SUBB    A,#030H
+0149 900000      E     MOV     DPTR,#ADPI_AvgData
+014C E0                MOVX    A,@DPTR
+014D 9402              SUBB    A,#02H
+014F 4009              JC      ?C0025
+                                           ; SOURCE LINE # 299
+                                           ; SOURCE LINE # 300
+0151 900000      E     MOV     DPTR,#Adapter90WWA
+0154 E0                MOVX    A,@DPTR
+0155 4402              ORL     A,#02H
+0157 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 301
+0158 8016              SJMP    ?C0023
+015A         ?C0025:
+                                           ; SOURCE LINE # 302
+015A C3                CLR     C
+015B 900000      E     MOV     DPTR,#ADPI_AvgData+01H
+015E E0                MOVX    A,@DPTR
+015F 9414              SUBB    A,#014H
+0161 900000      E     MOV     DPTR,#ADPI_AvgData
+0164 E0                MOVX    A,@DPTR
+0165 9402              SUBB    A,#02H
+0167 5007              JNC     ?C0023
+                                           ; SOURCE LINE # 303
+                                           ; SOURCE LINE # 304
+0169 900000      E     MOV     DPTR,#Adapter90WWA
+016C E0                MOVX    A,@DPTR
+016D 54FD              ANL     A,#0FDH
+016F F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 305
+                                           ; SOURCE LINE # 306
+                                           ; SOURCE LINE # 307
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 35  
+
+0170         ?C0023:
+                                           ; SOURCE LINE # 310
+0170 900000      E     MOV     DPTR,#ADPI2Sec
+0173 E0                MOVX    A,@DPTR
+0174 D3                SETB    C
+0175 94C8              SUBB    A,#0C8H
+0177 400F              JC      ?C0031
+                                           ; SOURCE LINE # 311
+                                           ; SOURCE LINE # 312
+0179 900000      E     MOV     DPTR,#SEL_STATE0
+017C E0                MOVX    A,@DPTR
+017D 30E003            JNB     ACC.0,?C0030
+                                           ; SOURCE LINE # 313
+                                           ; SOURCE LINE # 315
+0180 120000      R     LCALL   Chk_HybridFORBQ24780_STPP
+                                           ; SOURCE LINE # 316
+                                           ; SOURCE LINE # 318
+                                           ; SOURCE LINE # 320
+0183         ?C0030:
+                                           ; SOURCE LINE # 321
+0183 E4                CLR     A
+0184 900000      E     MOV     DPTR,#ADPI2Sec
+0187 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 322
+                                           ; SOURCE LINE # 323
+                                           ; SOURCE LINE # 324
+0188         ?C0031:
+0188 22                RET     
+             ; FUNCTION ScanADCDyChannel1 (END)
+
+             ; FUNCTION Init_ADC (BEGIN)
+                                           ; SOURCE LINE # 329
+                                           ; SOURCE LINE # 330
+                                           ; SOURCE LINE # 331
+0000 900000      E     MOV     DPTR,#VCH0CTL
+0003 7480              MOV     A,#080H
+0005 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 332
+0006 900000      E     MOV     DPTR,#VCH1CTL
+0009 04                INC     A
+000A F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 336
+000B 900000      E     MOV     DPTR,#VCH5CTL
+000E 7490              MOV     A,#090H
+0010 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 337
+0011 900000      E     MOV     DPTR,#VCH6CTL
+0014 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 339
+0015 900000      E     MOV     DPTR,#VCH7CTL
+0018 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 340
+0019 22                RET     
+             ; FUNCTION Init_ADC (END)
+
+             ; FUNCTION _Init_VC (BEGIN)
+                                           ; SOURCE LINE # 347
+;---- Variable 'Group' assigned to Register 'R7' ----
+                                           ; SOURCE LINE # 348
+                                           ; SOURCE LINE # 349
+0000 EF                MOV     A,R7
+0001 5403              ANL     A,#03H
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 36  
+
+0003 FF                MOV     R7,A
+0004 900000      R     MOV     DPTR,#tGroup
+0007 E4                CLR     A
+0008 F0                MOVX    @DPTR,A
+0009 A3                INC     DPTR
+000A EF                MOV     A,R7
+000B F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 394
+000C 900000      E     MOV     DPTR,#VCMP0CTL
+000F E0                MOVX    A,@DPTR
+0010 20E70E            JB      ACC.7,?C0034
+0013 900000      E     MOV     DPTR,#VCMP1CTL
+0016 E0                MOVX    A,@DPTR
+0017 20E707            JB      ACC.7,?C0034
+001A 900000      E     MOV     DPTR,#VCMP2CTL
+001D E0                MOVX    A,@DPTR
+001E 30E707            JNB     ACC.7,?C0035
+0021         ?C0034:
+                                           ; SOURCE LINE # 395
+                                           ; SOURCE LINE # 396
+0021 900000      E     MOV     DPTR,#IER18
+0024 E0                MOVX    A,@DPTR
+0025 4480              ORL     A,#080H
+0027 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 397
+                                           ; SOURCE LINE # 398
+0028         ?C0035:
+0028 22                RET     
+             ; FUNCTION _Init_VC (END)
+
+             ; FUNCTION Chk_HybridFORBQ24780_STPP (BEGIN)
+                                           ; SOURCE LINE # 909
+                                           ; SOURCE LINE # 910
+                                           ; SOURCE LINE # 911
+0000 900000      E     MOV     DPTR,#GPDRB
+0003 E0                MOVX    A,@DPTR
+0004 30E01B            JNB     ACC.0,?C0036
+0007 120000      R     LCALL   L?0114
+000A 4016              JC      ?C0036
+                                           ; SOURCE LINE # 912
+                                           ; SOURCE LINE # 913
+000C 900000      E     MOV     DPTR,#CHGIC_WriteCmd0x37L
+000F E0                MOVX    A,@DPTR
+0010 4404              ORL     A,#04H
+0012 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 914
+0013 900000      E     MOV     DPTR,#LENOVOPMFW
+0016 E0                MOVX    A,@DPTR
+0017 20E263            JB      ACC.2,?C0045
+                                           ; SOURCE LINE # 915
+                                           ; SOURCE LINE # 916
+001A 900000      E     MOV     DPTR,#cBattFlag0
+001D E0                MOVX    A,@DPTR
+001E 547F              ANL     A,#07FH
+0020 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 917
+                                           ; SOURCE LINE # 934
+0021 22                RET     
+0022         ?C0036:
+                                           ; SOURCE LINE # 936
+                                           ; SOURCE LINE # 937
+0022 900000      E     MOV     DPTR,#LENOVOPMFW
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 37  
+
+0025 E0                MOVX    A,@DPTR
+0026 20E207            JB      ACC.2,?C0039
+                                           ; SOURCE LINE # 938
+                                           ; SOURCE LINE # 939
+0029 900000      E     MOV     DPTR,#cBattFlag0
+002C E0                MOVX    A,@DPTR
+002D 547F              ANL     A,#07FH
+002F F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 940
+0030         ?C0039:
+                                           ; SOURCE LINE # 942
+0030 120000      R     LCALL   L?0114
+0033 5007              JNC     ?C0040
+                                           ; SOURCE LINE # 943
+                                           ; SOURCE LINE # 944
+0035 900000      E     MOV     DPTR,#CHGIC_WriteCmd0x37L
+0038 E0                MOVX    A,@DPTR
+0039 54FB              ANL     A,#0FBH
+003B F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 945
+003C         ?C0040:
+                                           ; SOURCE LINE # 946
+003C 900000      E     MOV     DPTR,#GPDRB
+003F E0                MOVX    A,@DPTR
+0040 30E033            JNB     ACC.0,?C0041
+0043 900000      E     MOV     DPTR,#ACModeSTPPEn
+0046 E0                MOVX    A,@DPTR
+0047 7002              JNZ     ?C0098
+0049 A3                INC     DPTR
+004A E0                MOVX    A,@DPTR
+004B         ?C0098:
+004B 6029              JZ      ?C0041
+004D 120000      R     LCALL   L?0115
+0050 5024              JNC     ?C0041
+                                           ; SOURCE LINE # 947
+                                           ; SOURCE LINE # 948
+0052 900000      E     MOV     DPTR,#ACModeSTPPEn
+0055 E0                MOVX    A,@DPTR
+0056 FE                MOV     R6,A
+0057 A3                INC     DPTR
+0058 E0                MOVX    A,@DPTR
+0059 FF                MOV     R7,A
+005A 120000      R     LCALL   L?0127
+005D 4007              JC      ?C0042
+                                           ; SOURCE LINE # 949
+                                           ; SOURCE LINE # 950
+005F 900000      E     MOV     DPTR,#BatteryAlarm
+0062 E0                MOVX    A,@DPTR
+0063 4410              ORL     A,#010H
+0065 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 952
+0066         ?C0042:
+                                           ; SOURCE LINE # 953
+0066 900000      E     MOV     DPTR,#ACModeSTPPDis
+0069 E0                MOVX    A,@DPTR
+006A FE                MOV     R6,A
+006B A3                INC     DPTR
+006C E0                MOVX    A,@DPTR
+006D FF                MOV     R7,A
+006E C3                CLR     C
+006F 120000      R     LCALL   L?0127
+0072 5009              JNC     ?C0045
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 38  
+
+                                           ; SOURCE LINE # 954
+                                           ; SOURCE LINE # 955
+                                           ; SOURCE LINE # 956
+                                           ; SOURCE LINE # 957
+0074 8000              SJMP    ?C0101
+0076         ?C0041:
+                                           ; SOURCE LINE # 959
+                                           ; SOURCE LINE # 960
+0076         ?C0101:
+0076 900000      E     MOV     DPTR,#BatteryAlarm
+0079 E0                MOVX    A,@DPTR
+007A 54EF              ANL     A,#0EFH
+007C F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 961
+                                           ; SOURCE LINE # 962
+                                           ; SOURCE LINE # 963
+007D         ?C0045:
+007D 22                RET     
+             ; FUNCTION Chk_HybridFORBQ24780_STPP (END)
+
+             ; FUNCTION SetPowerBatteryparameter2 (BEGIN)
+                                           ; SOURCE LINE # 1284
+                                           ; SOURCE LINE # 1285
+                                           ; SOURCE LINE # 1286
+0000 900000      E     MOV     DPTR,#Chk_Hybrid_STPP_min_BattGasgauge
+0003 740A              MOV     A,#0AH
+0005 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1287
+                                           ; SOURCE LINE # 1288
+0006 120000      R     LCALL   L?0123
+                                           ; SOURCE LINE # 1289
+0009 D3                SETB    C
+000A 900000      E     MOV     DPTR,#API_ID+01H
+000D E0                MOVX    A,@DPTR
+000E 94DE              SUBB    A,#0DEH
+0010 120000      R     LCALL   L?0118
+0013 4016              JC      ?C0046
+0015 D3                SETB    C
+0016 A3                INC     DPTR
+0017 E0                MOVX    A,@DPTR
+0018 9474              SUBB    A,#074H
+001A 900000      E     MOV     DPTR,#API_ID
+001D E0                MOVX    A,@DPTR
+001E 9403              SUBB    A,#03H
+0020 5009              JNC     ?C0046
+                                           ; SOURCE LINE # 1290
+                                           ; SOURCE LINE # 1291
+0022 900000      E     MOV     DPTR,#AdapterID
+0025 7403              MOV     A,#03H
+0027 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1292
+0028 020000      R     LJMP    ?C0047
+002B         ?C0046:
+                                           ; SOURCE LINE # 1293
+002B D3                SETB    C
+002C 900000      E     MOV     DPTR,#API_ID+01H
+002F E0                MOVX    A,@DPTR
+0030 9438              SUBB    A,#038H
+0032 120000      R     LCALL   L?0118
+0035 4013              JC      ?C0048
+0037 D3                SETB    C
+0038 A3                INC     DPTR
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 39  
+
+0039 E0                MOVX    A,@DPTR
+003A 94D0              SUBB    A,#0D0H
+003C 120000      R     LCALL   L?0119
+003F 5009              JNC     ?C0048
+                                           ; SOURCE LINE # 1294
+                                           ; SOURCE LINE # 1295
+0041 900000      E     MOV     DPTR,#AdapterID
+0044 7404              MOV     A,#04H
+0046 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1296
+0047 020000      R     LJMP    ?C0047
+004A         ?C0048:
+                                           ; SOURCE LINE # 1297
+004A D3                SETB    C
+004B 900000      E     MOV     DPTR,#API_ID+01H
+004E E0                MOVX    A,@DPTR
+004F 9490              SUBB    A,#090H
+0051 900000      E     MOV     DPTR,#API_ID
+0054 E0                MOVX    A,@DPTR
+0055 9401              SUBB    A,#01H
+0057 4011              JC      ?C0050
+0059 D3                SETB    C
+005A A3                INC     DPTR
+005B E0                MOVX    A,@DPTR
+005C 9428              SUBB    A,#028H
+005E 120000      R     LCALL   L?0119
+0061 5007              JNC     ?C0050
+                                           ; SOURCE LINE # 1298
+                                           ; SOURCE LINE # 1299
+0063 E4                CLR     A
+0064 900000      E     MOV     DPTR,#AdapterID
+0067 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1300
+0068 805D              SJMP    ?C0047
+006A         ?C0050:
+                                           ; SOURCE LINE # 1301
+006A D3                SETB    C
+006B 900000      E     MOV     DPTR,#API_ID+01H
+006E E0                MOVX    A,@DPTR
+006F 94EC              SUBB    A,#0ECH
+0071 120000      R     LCALL   L?0120
+0074 4015              JC      ?C0052
+0076 D3                SETB    C
+0077 A3                INC     DPTR
+0078 E0                MOVX    A,@DPTR
+0079 9483              SUBB    A,#083H
+007B 900000      E     MOV     DPTR,#API_ID
+007E E0                MOVX    A,@DPTR
+007F 9401              SUBB    A,#01H
+0081 5008              JNC     ?C0052
+                                           ; SOURCE LINE # 1302
+                                           ; SOURCE LINE # 1303
+0083 900000      E     MOV     DPTR,#AdapterID
+0086 7402              MOV     A,#02H
+0088 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1304
+0089 803C              SJMP    ?C0047
+008B         ?C0052:
+                                           ; SOURCE LINE # 1305
+008B D3                SETB    C
+008C 900000      E     MOV     DPTR,#API_ID+01H
+008F E0                MOVX    A,@DPTR
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 40  
+
+0090 9450              SUBB    A,#050H
+0092 120000      R     LCALL   L?0120
+0095 4012              JC      ?C0054
+0097 D3                SETB    C
+0098 A3                INC     DPTR
+0099 E0                MOVX    A,@DPTR
+009A 94E2              SUBB    A,#0E2H
+009C 120000      R     LCALL   L?0121
+009F 5008              JNC     ?C0054
+                                           ; SOURCE LINE # 1306
+                                           ; SOURCE LINE # 1307
+00A1 900000      E     MOV     DPTR,#AdapterID
+00A4 7405              MOV     A,#05H
+00A6 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1308
+00A7 801E              SJMP    ?C0047
+00A9         ?C0054:
+                                           ; SOURCE LINE # 1309
+00A9 D3                SETB    C
+00AA 900000      E     MOV     DPTR,#API_ID+01H
+00AD E0                MOVX    A,@DPTR
+00AE 9480              SUBB    A,#080H
+00B0 900000      E     MOV     DPTR,#API_ID
+00B3 E0                MOVX    A,@DPTR
+00B4 9403              SUBB    A,#03H
+00B6 5009              JNC     ?C0057
+00B8 A3                INC     DPTR
+00B9 E0                MOVX    A,@DPTR
+00BA 9446              SUBB    A,#046H
+00BC 120000      R     LCALL   L?0121
+00BF 5006              JNC     ?C0047
+00C1         ?C0057:
+                                           ; SOURCE LINE # 1310
+                                           ; SOURCE LINE # 1311
+00C1 900000      E     MOV     DPTR,#AdapterID
+00C4 74FF              MOV     A,#0FFH
+00C6 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1312
+00C7         ?C0047:
+                                           ; SOURCE LINE # 1314
+00C7 900000      E     MOV     DPTR,#AdapterID
+00CA E0                MOVX    A,@DPTR
+00CB 6404              XRL     A,#04H
+00CD 6005              JZ      ?C0059
+00CF E0                MOVX    A,@DPTR
+00D0 6403              XRL     A,#03H
+00D2 7017              JNZ     ?C0058
+00D4         ?C0059:
+                                           ; SOURCE LINE # 1315
+                                           ; SOURCE LINE # 1316
+                                           ; SOURCE LINE # 1317
+00D4 120000      R     LCALL   L?0123
+                                           ; SOURCE LINE # 1319
+00D7 900000      E     MOV     DPTR,#ACOFF_SOURCE
+00DA E0                MOVX    A,@DPTR
+00DB 54FB              ANL     A,#0FBH
+00DD F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1320
+00DE 900000      E     MOV     DPTR,#CHGIC_WriteCmd0x12L
+00E1 E0                MOVX    A,@DPTR
+00E2 54DF              ANL     A,#0DFH
+                                           ; SOURCE LINE # 1321
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 41  
+
+00E4 120000      R     LCALL   L?0110
+00E7 7057              JNZ     ?C0070
+                                           ; SOURCE LINE # 1322
+                                           ; SOURCE LINE # 1323
+                                           ; SOURCE LINE # 1324
+                                           ; SOURCE LINE # 1325
+                                           ; SOURCE LINE # 1327
+00E9 8038              SJMP    ?C0102
+00EB         ?C0058:
+                                           ; SOURCE LINE # 1328
+00EB 900000      E     MOV     DPTR,#AdapterID
+00EE E0                MOVX    A,@DPTR
+00EF 7004              JNZ     ?C0062
+                                           ; SOURCE LINE # 1329
+                                           ; SOURCE LINE # 1330
+                                           ; SOURCE LINE # 1331
+00F1 120000      R     LCALL   L?0124
+                                           ; SOURCE LINE # 1332
+00F4 22                RET     
+00F5         ?C0062:
+                                           ; SOURCE LINE # 1333
+00F5 900000      E     MOV     DPTR,#AdapterID
+00F8 E0                MOVX    A,@DPTR
+00F9 6405              XRL     A,#05H
+00FB 6005              JZ      ?C0065
+00FD E0                MOVX    A,@DPTR
+00FE 6402              XRL     A,#02H
+0100 702C              JNZ     ?C0064
+0102         ?C0065:
+                                           ; SOURCE LINE # 1334
+                                           ; SOURCE LINE # 1335
+                                           ; SOURCE LINE # 1336
+0102 120000      R     LCALL   L?0124
+                                           ; SOURCE LINE # 1339
+0105 120000      R     LCALL   L?0128
+0108 7036              JNZ     ?C0070
+                                           ; SOURCE LINE # 1340
+                                           ; SOURCE LINE # 1342
+010A 900000      E     MOV     DPTR,#SYS_STATUS
+010D E0                MOVX    A,@DPTR
+010E 547F              ANL     A,#07FH
+0110 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1343
+0111 900000      E     MOV     DPTR,#ACOFF_SOURCE
+0114 E0                MOVX    A,@DPTR
+0115 4404              ORL     A,#04H
+0117 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1344
+0118 900000      E     MOV     DPTR,#CHGIC_WriteCmd0x12L
+011B E0                MOVX    A,@DPTR
+011C 4420              ORL     A,#020H
+                                           ; SOURCE LINE # 1345
+011E 120000      R     LCALL   L?0110
+0121 701D              JNZ     ?C0070
+                                           ; SOURCE LINE # 1346
+                                           ; SOURCE LINE # 1347
+0123         ?C0102:
+0123 900000      E     MOV     DPTR,#CHGIC_SMbusFailCnt
+0126 E0                MOVX    A,@DPTR
+0127 04                INC     A
+0128 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1348
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 42  
+
+0129 7F14              MOV     R7,#014H
+012B 020000      E     LJMP    _RamDebug
+                                           ; SOURCE LINE # 1349
+                                           ; SOURCE LINE # 1350
+                                           ; SOURCE LINE # 1352
+012E         ?C0064:
+                                           ; SOURCE LINE # 1353
+012E 900000      E     MOV     DPTR,#AdapterID
+0131 E0                MOVX    A,@DPTR
+0132 B4FF0B            CJNE    A,#0FFH,?C0070
+                                           ; SOURCE LINE # 1354
+                                           ; SOURCE LINE # 1355
+0135 900000      E     MOV     DPTR,#SYS_STATUS
+0138 E0                MOVX    A,@DPTR
+0139 4410              ORL     A,#010H
+013B F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1356
+013C E0                MOVX    A,@DPTR
+013D 54DF              ANL     A,#0DFH
+013F F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1357
+                                           ; SOURCE LINE # 1359
+0140         ?C0070:
+0140 22                RET     
+0141         L?0110:
+0141 F0                MOVX    @DPTR,A
+0142 900000      E     MOV     DPTR,#?_bRWSMBus?BYTE+03H
+0145 7412              MOV     A,#012H
+0147 F0                MOVX    @DPTR,A
+0148 7E00        E     MOV     R6,#HIGH CHGIC_WriteCmd0x12L
+014A A3                INC     DPTR
+014B 7400        E     MOV     A,#HIGH CHGIC_WriteCmd0x12L
+014D F0                MOVX    @DPTR,A
+014E A3                INC     DPTR
+014F 7400        E     MOV     A,#LOW CHGIC_WriteCmd0x12L
+0151 F0                MOVX    @DPTR,A
+0152 E4                CLR     A
+0153 A3                INC     DPTR
+0154 F0                MOVX    @DPTR,A
+0155 7B12              MOV     R3,#012H
+0157 7D8C              MOV     R5,#08CH
+0159 7F01              MOV     R7,#01H
+015B 120000      E     LCALL   _bRWSMBus
+015E EF                MOV     A,R7
+015F 22                RET     
+             ; FUNCTION SetPowerBatteryparameter2 (END)
+
+             ; FUNCTION psys_throttle (BEGIN)
+                                           ; SOURCE LINE # 1364
+                                           ; SOURCE LINE # 1365
+                                           ; SOURCE LINE # 1366
+0000 120000      R     LCALL   L?0129
+0003 7073              JNZ     ?C0071
+0005 900000      E     MOV     DPTR,#GPDRB
+0008 E0                MOVX    A,@DPTR
+0009 30E003            JNB     ACC.0,?C0072
+000C D3                SETB    C
+000D 8001              SJMP    ?C0073
+000F         ?C0072:
+000F C3                CLR     C
+0010         ?C0073:
+0010 4066              JC      ?C0071
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 43  
+
+                                           ; SOURCE LINE # 1367
+                                           ; SOURCE LINE # 1368
+0012 900000      E     MOV     DPTR,#SEL_STATE0
+0015 E0                MOVX    A,@DPTR
+0016 30E072            JNB     ACC.0,?C0088
+0019 900000      E     MOV     DPTR,#BATTUPDATEFW
+001C E0                MOVX    A,@DPTR
+001D 20E06B            JB      ACC.0,?C0088
+                                           ; SOURCE LINE # 1369
+                                           ; SOURCE LINE # 1370
+0020 900000      E     MOV     DPTR,#nBattGasgauge
+0023 E0                MOVX    A,@DPTR
+0024 D3                SETB    C
+0025 9419              SUBB    A,#019H
+0027 4023              JC      ?C0075
+                                           ; SOURCE LINE # 1371
+                                           ; SOURCE LINE # 1372
+0029 900000      E     MOV     DPTR,#Psys_AvgData+01H
+002C 120000      R     LCALL   L?0130
+002F 4002              JC      ?C0076
+                                           ; SOURCE LINE # 1373
+                                           ; SOURCE LINE # 1374
+                                           ; SOURCE LINE # 1375
+                                           ; SOURCE LINE # 1376
+0031 8036              SJMP    ?C0106
+0033         ?C0076:
+                                           ; SOURCE LINE # 1377
+0033 120000      R     LCALL   L?0116
+0036 4008              JC      ?C0078
+0038 A3                INC     DPTR
+0039 120000      R     LCALL   L?0130
+003C 5002              JNC     ?C0078
+                                           ; SOURCE LINE # 1378
+                                           ; SOURCE LINE # 1379
+                                           ; SOURCE LINE # 1380
+                                           ; SOURCE LINE # 1381
+                                           ; SOURCE LINE # 1382
+003E 8005              SJMP    ?C0104
+0040         ?C0078:
+                                           ; SOURCE LINE # 1383
+0040 120000      R     LCALL   L?0116
+0043 5046              JNC     ?C0088
+                                           ; SOURCE LINE # 1384
+                                           ; SOURCE LINE # 1385
+0045         ?C0104:
+0045 900000      E     MOV     DPTR,#cGPUBattPsysThrottling
+0048 7401              MOV     A,#01H
+                                           ; SOURCE LINE # 1386
+                                           ; SOURCE LINE # 1387
+                                           ; SOURCE LINE # 1388
+                                           ; SOURCE LINE # 1389
+004A 8030              SJMP    ?C0107
+004C         ?C0075:
+                                           ; SOURCE LINE # 1390
+004C 900000      E     MOV     DPTR,#nBattGasgauge
+004F E0                MOVX    A,@DPTR
+0050 D3                SETB    C
+0051 9407              SUBB    A,#07H
+0053 4014              JC      ?C0082
+                                           ; SOURCE LINE # 1391
+                                           ; SOURCE LINE # 1392
+0055 120000      R     LCALL   L?0122
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 44  
+
+0058 4002              JC      ?C0083
+                                           ; SOURCE LINE # 1393
+                                           ; SOURCE LINE # 1394
+005A         ?C0103:
+                                           ; SOURCE LINE # 1395
+                                           ; SOURCE LINE # 1396
+005A 800D              SJMP    ?C0106
+005C         ?C0083:
+                                           ; SOURCE LINE # 1397
+005C C3                CLR     C
+005D 120000      R     LCALL   L?0122
+0060 5029              JNC     ?C0088
+                                           ; SOURCE LINE # 1398
+                                           ; SOURCE LINE # 1399
+0062 900000      E     MOV     DPTR,#cGPUBattPsysThrottling
+0065 7403              MOV     A,#03H
+0067         ?C0105:
+                                           ; SOURCE LINE # 1400
+                                           ; SOURCE LINE # 1401
+                                           ; SOURCE LINE # 1402
+                                           ; SOURCE LINE # 1403
+0067 8013              SJMP    ?C0107
+0069         ?C0082:
+                                           ; SOURCE LINE # 1405
+                                           ; SOURCE LINE # 1406
+0069         ?C0106:
+0069 900000      E     MOV     DPTR,#GPU_Prochot
+006C E0                MOVX    A,@DPTR
+006D 4402              ORL     A,#02H
+006F F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1407
+0070 900000      E     MOV     DPTR,#Thro_Status2
+0073 E0                MOVX    A,@DPTR
+0074 4480              ORL     A,#080H
+0076 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1408
+                                           ; SOURCE LINE # 1409
+                                           ; SOURCE LINE # 1417
+0077 22                RET     
+0078         ?C0071:
+                                           ; SOURCE LINE # 1419
+                                           ; SOURCE LINE # 1420
+0078 E4                CLR     A
+0079 900000      E     MOV     DPTR,#cGPUBattPsysThrottling
+007C         ?C0107:
+007C F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1421
+007D 900000      E     MOV     DPTR,#GPU_Prochot
+0080 E0                MOVX    A,@DPTR
+0081 54FD              ANL     A,#0FDH
+0083 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1422
+0084 900000      E     MOV     DPTR,#Thro_Status2
+0087 E0                MOVX    A,@DPTR
+0088 547F              ANL     A,#07FH
+008A F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1423
+                                           ; SOURCE LINE # 1424
+008B         ?C0088:
+008B 22                RET     
+             ; FUNCTION psys_throttle (END)
+
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 45  
+
+             ; FUNCTION Check_heavy_loading_500ms (BEGIN)
+                                           ; SOURCE LINE # 1447
+                                           ; SOURCE LINE # 1448
+                                           ; SOURCE LINE # 1450
+0000 900000      E     MOV     DPTR,#GPDRB
+0003 E0                MOVX    A,@DPTR
+0004 30E003            JNB     ACC.0,?C0091
+0007 D3                SETB    C
+0008 8001              SJMP    ?C0092
+000A         ?C0091:
+000A C3                CLR     C
+000B         ?C0092:
+000B 5007              JNC     ?C0090
+000D 900000      E     MOV     DPTR,#CHGIC_ReadCmd0x12L
+0010 E0                MOVX    A,@DPTR
+0011 30E579            JNB     ACC.5,?C0089
+0014         ?C0090:
+0014 900000      E     MOV     DPTR,#nBattGasgauge
+0017 E0                MOVX    A,@DPTR
+0018 D3                SETB    C
+0019 9407              SUBB    A,#07H
+001B 5070              JNC     ?C0089
+001D E0                MOVX    A,@DPTR
+001E C3                CLR     C
+001F 9406              SUBB    A,#06H
+0021 406A              JC      ?C0089
+0023 900000      E     MOV     DPTR,#BATTUPDATEFW
+0026 E0                MOVX    A,@DPTR
+0027 20E063            JB      ACC.0,?C0089
+002A 900000      E     MOV     DPTR,#SEL_STATE0
+002D E0                MOVX    A,@DPTR
+002E 30E05C            JNB     ACC.0,?C0089
+                                           ; SOURCE LINE # 1453
+                                           ; SOURCE LINE # 1454
+0031 900000      E     MOV     DPTR,#Psys_SUM_500ms_Cnt
+0034 E0                MOVX    A,@DPTR
+0035 04                INC     A
+0036 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1455
+0037 E0                MOVX    A,@DPTR
+0038 9405              SUBB    A,#05H
+003A 4011              JC      ?C0093
+                                           ; SOURCE LINE # 1456
+                                           ; SOURCE LINE # 1457
+003C 900000      E     MOV     DPTR,#Psys
+003F E0                MOVX    A,@DPTR
+0040 FE                MOV     R6,A
+0041 A3                INC     DPTR
+0042 E0                MOVX    A,@DPTR
+0043 FF                MOV     R7,A
+0044 900000      E     MOV     DPTR,#Psys_SUM_500ms
+0047 EE                MOV     A,R6
+0048 8FF0              MOV     B,R7
+004A 120000      E     LCALL   ?C?IILDX
+                                           ; SOURCE LINE # 1458
+004D         ?C0093:
+                                           ; SOURCE LINE # 1459
+004D 900000      E     MOV     DPTR,#Psys_SUM_500ms_Cnt
+0050 E0                MOVX    A,@DPTR
+0051 640E              XRL     A,#0EH
+0053 704A              JNZ     ?C0097
+                                           ; SOURCE LINE # 1460
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 46  
+
+                                           ; SOURCE LINE # 1461
+0055 7404              MOV     A,#04H
+0057 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1462
+0058 900000      E     MOV     DPTR,#Psys_SUM_500ms
+005B E0                MOVX    A,@DPTR
+005C FE                MOV     R6,A
+005D A3                INC     DPTR
+005E E0                MOVX    A,@DPTR
+005F FF                MOV     R7,A
+0060 7C00              MOV     R4,#00H
+0062 7D0A              MOV     R5,#0AH
+0064 120000      E     LCALL   ?C?UIDIV
+0067 900000      E     MOV     DPTR,#Psys_SUM_500ms
+006A EE                MOV     A,R6
+006B F0                MOVX    @DPTR,A
+006C A3                INC     DPTR
+006D EF                MOV     A,R7
+006E F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1463
+006F C3                CLR     C
+0070 900000      E     MOV     DPTR,#Psys_SUM_500ms+01H
+0073 E0                MOVX    A,@DPTR
+0074 94BF              SUBB    A,#0BFH
+0076 900000      E     MOV     DPTR,#Psys_SUM_500ms
+0079 E0                MOVX    A,@DPTR
+007A 9400              SUBB    A,#00H
+007C 4007              JC      ?C0095
+                                           ; SOURCE LINE # 1464
+                                           ; SOURCE LINE # 1465
+007E 900000      E     MOV     DPTR,#System_Status
+0081 E0                MOVX    A,@DPTR
+0082 4401              ORL     A,#01H
+0084 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1466
+0085         ?C0095:
+                                           ; SOURCE LINE # 1467
+0085 E4                CLR     A
+0086 900000      E     MOV     DPTR,#Psys_SUM_500ms
+0089 F0                MOVX    @DPTR,A
+008A A3                INC     DPTR
+008B F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1468
+                                           ; SOURCE LINE # 1469
+008C 22                RET     
+008D         ?C0089:
+                                           ; SOURCE LINE # 1471
+                                           ; SOURCE LINE # 1472
+008D E4                CLR     A
+008E 900000      E     MOV     DPTR,#Psys_SUM_500ms
+0091 F0                MOVX    @DPTR,A
+0092 A3                INC     DPTR
+0093 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1473
+0094 900000      E     MOV     DPTR,#Psys_SUM_500ms_Cnt
+0097 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1474
+0098 900000      E     MOV     DPTR,#System_Status
+009B E0                MOVX    A,@DPTR
+009C 54FE              ANL     A,#0FEH
+009E F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 1475
+C51 COMPILER V8.12   OEM_ADC                                                               07/28/2018 12:03:47 PAGE 47  
+
+                                           ; SOURCE LINE # 1476
+009F         ?C0097:
+009F 22                RET     
+             ; FUNCTION Check_heavy_loading_500ms (END)
+
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1626    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      12
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

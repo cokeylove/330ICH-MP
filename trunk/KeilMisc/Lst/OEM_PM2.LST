@@ -1,0 +1,1420 @@
+C51 COMPILER V8.12   OEM_PM2                                                               07/28/2018 12:03:56 PAGE 1   
+
+
+C51 COMPILER V8.12, COMPILATION OF MODULE OEM_PM2
+OBJECT MODULE PLACED IN Code\Oem\OEM_PM2.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE Code\Oem\OEM_PM2.C LA WL(1) CD OT(9,SIZE) NOAREGS OR INCDIR(.\Code\CORE\INC
+                    -LUDE\;.\Code\OEM\INCLUDE\;.\Code\CHIP\INCLUDE\)
+
+line level    source
+
+   1          /*----------------------------------------------------------------------------
+   2           * Filename: OEM_PM2.C  For Chipset: ITE.IT85XX
+   3           *
+   4           * Copyright (c) 2010 - , ITE Tech. Inc. All Rights Reserved. 
+   5           *
+   6           * You may not present,reproduce,distribute,publish,display,modify,adapt,
+   7           * perform,transmit,broadcast,recite,release,license or otherwise exploit
+   8           * any part of this publication in any form,by any means,without the prior
+   9           * written permission of ITE Tech. Inc. 
+  10           *---------------------------------------------------------------------------*/
+  11          
+  12          #include <CORE_INCLUDE.H>
+  13          #include <OEM_INCLUDE.H>
+  14          
+  15          //ANGELAS064:add start
+  16          //----------------------------------------------------------------------------
+  17          // Read EC ram Space
+  18          //----------------------------------------------------------------------------
+  19          BYTE Hook_ReadLCFCECSpace(BYTE MapIndex)
+  20          {
+  21   1              BYTE  Temp;
+  22   1              Temp= *((XBYTE *)(DiagECRAM|MapIndex));
+  23   1              return(Temp);   
+  24   1      }
+  25          //----------------------------------------------------------------------------
+  26          // Write EC ram Space
+  27          //----------------------------------------------------------------------------
+  28          void Hook_WriteLCFCECSpace(BYTE MapIndex, BYTE data1)
+  29          {
+  30   1              *((XBYTE *)(DiagECRAM|MapIndex)) = data1;
+  31   1              Diag_interface();  
+  32   1      }
+  33          //----------------------------------------------------------------------------
+  34          // Handle the data of ACPI command 8x
+  35          //----------------------------------------------------------------------------
+  36          void PM2_Cmd_90Data(void)    
+  37          
+  38          {
+  39   1              if (PM2DataCount == 1)
+  40   1              {
+  41   2                      Data2Port(0x68,Hook_ReadLCFCECSpace(PM2Data));
+  42   2              }
+  43   1      }
+  44          void PM2_Cmd_91Data(void)  
+  45          {
+  46   1              if (PM2DataCount == 2)
+  47   1              {
+  48   2              PM2Data1=PM2Data;               
+  49   2              }
+  50   1              else if(PM2DataCount == 1)
+  51   1              {
+  52   2                      Hook_WriteLCFCECSpace(PM2Data1,PM2Data);
+  53   2                      Hook_ACPICommand(); 
+  54   2              }
+C51 COMPILER V8.12   OEM_PM2                                                               07/28/2018 12:03:56 PAGE 2   
+
+  55   1      }
+  56          //ANGELAS064:add end
+  57          
+  58          //----------------------------------------------------------------------------
+  59          // The function of debuging 68 port
+  60          //----------------------------------------------------------------------------
+  61          void Hook_68Port(BYTE PM2Cmd)
+  62          { //G686C add below info G59:Add 68/6C interface.
+  63   1          BYTE i;
+  64   1              
+  65   1              switch(PM2Cmd)
+  66   1              {
+  67   2              case 0x40:
+  68   2                      Cmd_40(PM2Data);
+  69   2                      break;
+  70   2              case 0x41:
+  71   2                      if(PM2Data==0xA1) 
+  72   2                              Cmd_41_A1(0x68);
+  73   2                      break;
+  74   2              case 0x42:
+  75   2                      Cmd_42(PM2Data);
+  76   2                      break;
+  77   2              case 0x43:
+  78   2                      Cmd_43(0x68,PM2Data);
+  79   2                      break;
+  80   2              case 0x45:
+  81   2                      Cmd_45(0x68,PM2Data);
+  82   2                      break;
+  83   2              case 0x46:
+  84   2                      Cmd_46(0x68,PM2Data);
+  85   2                      break;
+  86   2              case 0x47:
+  87   2                      Cmd_47(0x68,PM2Data);
+  88   2                      break;
+  89   2              case 0x49:
+  90   2                      break;
+  91   2              //MEILING009:S+ Add 8 sec reset test function.
+  92   2              case 0x4A:
+  93   2                      Cmd_4A(0x68,PM2Data);
+  94   2                      break;
+  95   2              //MEILING009:E+.
+  96   2              case 0x4B:
+  97   2                      if (PM2DataCount == 0x04)
+  98   2                      {
+  99   3                              i = PM2Data;
+ 100   3                              break;
+ 101   3                      }
+ 102   2                      if (PM2DataCount == 0x03)
+ 103   2                      {
+ 104   3                              eEEPROMAddrsss = PM2Data;
+ 105   3                              break;
+ 106   3                      }
+ 107   2                      if (PM2DataCount == 0x02)
+ 108   2                      {
+ 109   3                              eEEPROMBank = PM2Data;
+ 110   3                              break;
+ 111   3                      }
+ 112   2                      if (PM2DataCount == 0x01)
+ 113   2                      {
+ 114   3                              eEEPROMData = PM2Data;
+ 115   3                              SET_MASK(LENOVOPMFW_Temp,EEPROM_Token);
+ 116   3                              Update_EEPROMMark();
+C51 COMPILER V8.12   OEM_PM2                                                               07/28/2018 12:03:56 PAGE 3   
+
+ 117   3                              CLEAR_MASK(LENOVOPMFW_Temp,EEPROM_Token);
+ 118   3                              Data2PortDirect(0x68, 0x00);  
+ 119   3                      }
+ 120   2                      break;
+ 121   2              
+ 122   2              case 0x4C:
+ 123   2                      if (PM2DataCount == 0x03)
+ 124   2                      {
+ 125   3                              i = PM2Data;
+ 126   3                              break;
+ 127   3                      }
+ 128   2                      if (PM2DataCount == 0x02)
+ 129   2                      {
+ 130   3                              eEEPROMAddrsss = PM2Data;
+ 131   3                              break;
+ 132   3                      }
+ 133   2                      if (PM2DataCount == 0x01)
+ 134   2                      {
+ 135   3                              eEEPROMBank = PM2Data;
+ 136   3                              Cmd_4E(0x68,eEEPROMAddrsss);
+ 137   3                      }
+ 138   2                      break;
+ 139   2              
+ 140   2              case 0x4D:
+ 141   2                      if (PM2DataCount == 0x02)
+ 142   2                      {
+ 143   3                              eEEPROMAddrsss = PM2Data;
+ 144   3                              break;
+ 145   3                      }
+ 146   2                      if (PM2DataCount == 0x01)
+ 147   2                      {
+ 148   3                              eEEPROMData = PM2Data;
+ 149   3                              SET_MASK(LENOVOPMFW_Temp,EEPROM_Token);
+ 150   3                              Update_EEPROMMark();
+ 151   3                              CLEAR_MASK(LENOVOPMFW_Temp,EEPROM_Token);
+ 152   3                              Data2PortDirect(0x68, 0x00);  
+ 153   3                      }
+ 154   2                      break;
+ 155   2              
+ 156   2              case 0x4E:
+ 157   2                      eEEPROMAddrsss = PM2Data;
+ 158   2                      Cmd_4E(0x68,eEEPROMAddrsss);
+ 159   2                      break;
+ 160   2              
+ 161   2              case 0x51:
+ 162   2                      break;
+ 163   2              
+ 164   2              case 0x52:
+ 165   2                      if(PM2Data==0xA0) Cmd_52_A0(0x68);
+ 166   2                      if(PM2Data==0xA3) Cmd_52_A3(0x68);
+ 167   2                      if(PM2Data==0xA4) Cmd_52_A4(0x68);
+ 168   2                      if(PM2Data==0xA5) Cmd_52_A5(0x68);
+ 169   2                      if(PM2Data==0xA6) Cmd_52_A6(0x68); //LMLKBL0018:add.
+ 170   2                      if(PM2Data==0xA7) Cmd_52_A7(0x68); //LMLKBL0018:add.
+ 171   2                      break;
+ 172   2              
+ 173   2              case 0x53:
+ 174   2                      if (PM2DataCount == 0x01)
+ 175   2                      {
+ 176   3                              Cmd_53(0x68,PM2Data2,PM2Data1,PM2Data);
+ 177   3                      }
+ 178   2                      break;
+C51 COMPILER V8.12   OEM_PM2                                                               07/28/2018 12:03:56 PAGE 4   
+
+ 179   2              case 0x56:
+ 180   2                      break;
+ 181   2              case 0x58:
+ 182   2                      Cmd_58(PM2Data);
+ 183   2                      break;
+ 184   2              case 0x59:
+ 185   2                      Cmd_59(0x68,PM2Data,0);
+ 186   2                      break;
+ 187   2              case 0x5C:
+ 188   2                      Cmd_5C(0x68);
+ 189   2                      break;
+ 190   2              case 0x5D:
+ 191   2                      Cmd_5D(PM2Data);
+ 192   2                      break;
+ 193   2          case 0x71:
+ 194   2                      //LMLKBL0001:modify cmd 0x71 have one data.
+ 195   2              /*if (PM2DataCount == 0x01)
+ 196   2                      {
+ 197   2                              Cmd_71(PM2Data1,PM2Data);//:Add 60/64 71cmd follow new EC common SPEC. :Add 62/66 71cmd
+ 198   2                      }*/
+ 199   2              Cmd_71(PM2Data);
+ 200   2              //LMLKBL0001:modify cmd 0x71 have one data.
+ 201   2                      break;
+ 202   2              case 0x72:
+ 203   2                      Cmd_72(PM2Data);//:add flag for  tool to keep the battery at 60% //:Add 62/66 72cmd.
+ 204   2                      break;
+ 205   2              //ANGELAS033:Add start                  
+ 206   2              case 0x7A:
+ 207   2                      Cmd_7A(0x68,PM2Data);
+ 208   2                      break;
+ 209   2              case 0x7B:
+ 210   2                      if( PM2DataCount == 0x01 )
+ 211   2                      {
+ 212   3                              Cmd_7B(0x68,PM2Data1,PM2Data);;
+ 213   3                      }
+ 214   2                      break;                  
+ 215   2              //ANGELAS033:Add end
+ 216   2      
+ 217   2              //MEILING031: add start
+ 218   2              case 0x7E:
+ 219   2                      if (PM2DataCount == 0x01)
+ 220   2              {
+ 221   3                  Cmd_7E(0x68,PM2Data1,PM2Data);
+ 222   3                      }
+ 223   2                      break;
+ 224   2              //MEILING031: add end
+ 225   2      
+ 226   2              //ANGELAS064:Add start  
+ 227   2              case 0x90:
+ 228   2                      PM2_Cmd_90Data();
+ 229   2                      break;                                  
+ 230   2              case 0x91:
+ 231   2                      PM2_Cmd_91Data();
+ 232   2                      break;
+ 233   2              //ANGELAS064:Add end
+ 234   2                              
+ 235   2              case 0xB0:
+ 236   2                      Cmd_B0(0x68,PM2Data);
+ 237   2                      break;
+ 238   2              case 0xB3:
+ 239   2                      if (PM2DataCount == 0x01)
+ 240   2                      {
+C51 COMPILER V8.12   OEM_PM2                                                               07/28/2018 12:03:56 PAGE 5   
+
+ 241   3                              Cmd_B3(0x68,PM2Data1,PM2Data);
+ 242   3                      }
+ 243   2                      break;
+ 244   2              }
+ 245   1      }
+ 246          
+ 247          
+ 248          //----------------------------------------------------------------------------
+ 249          // The function of debuging 6C port
+ 250          //----------------------------------------------------------------------------
+ 251          void Hook_6CPort(BYTE PM2Cmd)
+ 252          {
+ 253   1          //G686C add below info :Add 68/6C interface.
+ 254   1              switch(PM2Cmd)
+ 255   1              {
+ 256   2              case 0x40:
+ 257   2                      PM2DataCount=0x01;
+ 258   2                      break;
+ 259   2              case 0x41:
+ 260   2                      PM2DataCount=0x01;
+ 261   2                      break;
+ 262   2              case 0x42:
+ 263   2                      PM2DataCount=0x01;
+ 264   2                      break;
+ 265   2              case 0x43:
+ 266   2                      PM2DataCount=0x01;
+ 267   2                      break;
+ 268   2              case 0x44:
+ 269   2                      Cmd_44(0x68);
+ 270   2                      break;
+ 271   2              case 0x45:
+ 272   2                      PM2DataCount=0x01;
+ 273   2                      break;
+ 274   2              case 0x46:
+ 275   2                      PM2DataCount=0x01;
+ 276   2                      break;
+ 277   2              case 0x47:
+ 278   2                      PM2DataCount=0x01;
+ 279   2                      break;
+ 280   2              case 0x49:
+ 281   2                      break;
+ 282   2              //MEILING009:S+ Add 8 sec reset test function.
+ 283   2              case 0x4A:
+ 284   2                      PM2DataCount=0x01; 
+ 285   2                      break;
+ 286   2              //MEILING009:E+.
+ 287   2              case 0x4B:
+ 288   2                      PM2DataCount=0x04;
+ 289   2                      break;
+ 290   2              case 0x4C:
+ 291   2                      PM2DataCount=0x03;
+ 292   2                      break;
+ 293   2              case 0x4D:
+ 294   2                      PM2DataCount=0x02;
+ 295   2                      break;
+ 296   2              case 0x4E:
+ 297   2                      PM2DataCount=0x01;
+ 298   2                      break;
+ 299   2              case 0x4F:
+ 300   2                      Erase_EEPROMAll();
+ 301   2                      break;
+ 302   2              //REJERRY093: Add CMD 0X50 for osAging S4 keep EC power.
+C51 COMPILER V8.12   OEM_PM2                                                               07/28/2018 12:03:56 PAGE 6   
+
+ 303   2                      case 0x50:
+ 304   2                              SET_MASK(ACPI_HOTKEY, b6Cmd_NoShut);//for osAging s4 keep EC power
+ 305   2                              break;
+ 306   2              //REJERRY093: Add CMD 0X50 for osAging S4 keep EC power.
+ 307   2              case 0x51:
+ 308   2                      Cmd_51(0x68);
+ 309   2                      break;
+ 310   2              case 0x52:
+ 311   2                      PM2DataCount=0x01;
+ 312   2                      break;
+ 313   2              case 0x53:
+ 314   2                      PM2DataCount=0x03;
+ 315   2                      break;
+ 316   2              case 0x56:
+ 317   2                      break;
+ 318   2              case 0x58:
+ 319   2                      PM2DataCount=0x01;
+ 320   2                      break;
+ 321   2              case 0x59:
+ 322   2                      PM2DataCount=0x01;
+ 323   2                      break;
+ 324   2              case 0x5C:
+ 325   2                      break;
+ 326   2              case 0x5D:
+ 327   2                      PM2DataCount=0x01;
+ 328   2                      break;
+ 329   2              //ANGELAS032: s+ add
+ 330   2              case 0x5E:                      // UNLOCK SHIP MODE 
+ 331   2              #if shipmodesupport             //add ship mode judge
+ 332   2                      Unlock_ShipMode();
+ 333   2              #endif
+ 334   2                      break;
+ 335   2              case 0x5F:      
+ 336   2                      #if shipmodesupport             //add ship mode judge// LOCK SHIP MODE 
+ 337   2                      ShipModeEn=0xA5;  
+ 338   2                      Data2PortDirect(0x68, 0x5A);
+ 339   2              RamDebug(0xA5);
+ 340   2                      #endif
+ 341   2                      break;
+ 342   2              //ANGELAS032: e+ add
+ 343   2          case 0x71:
+ 344   2                      PM2DataCount=0x02;//:Add 62/66 71cmd
+ 345   2                      break;
+ 346   2          case 0x72:
+ 347   2                      PM2DataCount=0x01;//:Add 62/66 72cmd.
+ 348   2                      break;
+ 349   2              //ANGELAG012:S+.
+ 350   2              case 0x75:
+ 351   2                      Cmd_75();
+ 352   2                      break;
+ 353   2              //ANGELAG012:E+.
+ 354   2              //ANGELAS033:Add start
+ 355   2              case 0x7A:
+ 356   2                      PM2DataCount=0x01;
+ 357   2                      break;
+ 358   2              case 0x7B:
+ 359   2                      PM2DataCount=0x02;
+ 360   2                      break;
+ 361   2              //ANGELAS033:Add end
+ 362   2              //ANGELAS094:s+Add workaround for hang bios.
+ 363   2              case 0x7C:
+ 364   2                      Bioswatchdog=1;
+C51 COMPILER V8.12   OEM_PM2                                                               07/28/2018 12:03:56 PAGE 7   
+
+ 365   2                      Bioswatchdogtime=0;//ANGELAS106:Optimize ANGELAS094 clear time.
+ 366   2                      Data2PortDirect(0x68, 0x55);//ANGELAS105:Optimize ANGELAS094 add return date for bios.
+ 367   2                      break;
+ 368   2              case 0x7D:
+ 369   2                      Bioswatchdog=0;
+ 370   2                      Data2PortDirect(0x68, 0x55);//ANGELAS105:Optimize ANGELAS094 add return date for bios.
+ 371   2                      break;
+ 372   2              //ANGELAS094:e+Add workaround for hang bios.
+ 373   2      
+ 374   2              //MEILING031: add start
+ 375   2          case 0x7E:
+ 376   2                      PM2DataCount=0x02;
+ 377   2                      break;
+ 378   2              //MEILING031: add end
+ 379   2               
+ 380   2              //ANGELAS064:add start
+ 381   2              case 0x90:       
+ 382   2                      PM2DataCount=0x01;
+ 383   2                      break;
+ 384   2              case 0x91:        
+ 385   2                      PM2DataCount=0x02;
+ 386   2                      break;                          
+ 387   2              //ANGELAS064:add end
+ 388   2              case 0xB0:
+ 389   2                      PM2DataCount=0x01;
+ 390   2                      break;
+ 391   2              //: start for save P80 code to setup. 
+ 392   2              case 0xB1:
+ 393   2                      Cmd_B1(0x68,0xB1);
+ 394   2                      break;
+ 395   2              case 0xB2:
+ 396   2                      Cmd_B2(0x68,0xB2);
+ 397   2                      break;
+ 398   2              //: end for save P80 code to setup. 
+ 399   2              case 0xB3:
+ 400   2                      PM2DataCount=0x02;
+ 401   2                      break;
+ 402   2              //ANGELAS002:S+Support 686C flash EC in windows or Shell
+ 403   2              case 0xDC:
+ 404   2              PM2_6CCmd_DC();//BROOKEW008:support 686C flash EC.
+ 405   2              break;
+ 406   2              //ANGELAS002:E+Support 686C flash EC in windows or Shell
+ 407   2              }
+ 408   1      }
+ 409          
+ 410          //----------------------------------------------------------------------------
+ 411          // Process Command/Data received from System via 68/6C interface
+ 412          //----------------------------------------------------------------------------
+ 413          void service_pci3(void)
+ 414          {
+ 415   1              //G686C add info G59:Add 68/6C interface.
+ 416   1          if ( IS_MASK_CLEAR(PM2STS,P_IBF) )  
+ 417   1          {
+ 418   2                  return; 
+ 419   2          }
+ 420   1              if ( PM2STS & P_C_D)    // Command port
+ 421   1              {
+ 422   2              PM2DataCount =0;
+ 423   2                      PM2Cmd  = PM2DI;        // Load command 
+ 424   2                      EnablePMCIBFInt();
+ 425   2                      Hook_6CPort(PM2Cmd);    // Handle command               
+ 426   2              }
+C51 COMPILER V8.12   OEM_PM2                                                               07/28/2018 12:03:56 PAGE 8   
+
+ 427   1              else                                    // Data port
+ 428   1              {
+ 429   2                  PM2Data2 = PM2Data1;
+ 430   2                  PM2Data1 = PM2Data;         
+ 431   2              PM2Data = PM2DI;
+ 432   2              EnablePMCIBFInt();
+ 433   2              if (PM2DataCount!=0x00) 
+ 434   2              {
+ 435   3                          Hook_68Port(PM2Cmd);   // Handle command data
+ 436   3                          PM2DataCount--;
+ 437   3                  }
+ 438   2              }
+ 439   1      
+ 440   1      }
+ 441          
+C51 COMPILER V8.12   OEM_PM2                                                               07/28/2018 12:03:56 PAGE 9   
+
+ASSEMBLY LISTING OF GENERATED OBJECT CODE
+
+
+             ; FUNCTION Com008B (BEGIN)
+0000         L?0140:
+0000         L?0141:
+0000 AB00        E     MOV     R3,PM2Data
+0002 AD00        E     MOV     R5,PM2Data1
+0004 7F68              MOV     R7,#068H
+0006 22                RET     
+             ; FUNCTION Com008B (END)
+
+             ; FUNCTION _Hook_ReadLCFCECSpace (BEGIN)
+                                           ; SOURCE LINE # 19
+;---- Variable 'MapIndex' assigned to Register 'R7' ----
+                                           ; SOURCE LINE # 20
+                                           ; SOURCE LINE # 22
+0000 740F              MOV     A,#0FH
+0002 8F82              MOV     DPL,R7
+0004 F583              MOV     DPH,A
+0006 E0                MOVX    A,@DPTR
+0007 FF                MOV     R7,A
+;---- Variable 'Temp' assigned to Register 'R7' ----
+                                           ; SOURCE LINE # 23
+                                           ; SOURCE LINE # 24
+0008         ?C0001:
+0008 22                RET     
+             ; FUNCTION _Hook_ReadLCFCECSpace (END)
+
+             ; FUNCTION _Hook_WriteLCFCECSpace (BEGIN)
+                                           ; SOURCE LINE # 28
+;---- Variable 'data1' assigned to Register 'R5' ----
+;---- Variable 'MapIndex' assigned to Register 'R7' ----
+                                           ; SOURCE LINE # 29
+                                           ; SOURCE LINE # 30
+0000 CE                XCH     A,R6
+0001 ED                MOV     A,R5
+0002 CE                XCH     A,R6
+0003 EF                MOV     A,R7
+0004 FD                MOV     R5,A
+0005 740F              MOV     A,#0FH
+0007 8D82              MOV     DPL,R5
+0009 F583              MOV     DPH,A
+000B EE                MOV     A,R6
+000C F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 31
+000D 020000      E     LJMP    Diag_interface
+             ; FUNCTION _Hook_WriteLCFCECSpace (END)
+
+             ; FUNCTION PM2_Cmd_90Data (BEGIN)
+                                           ; SOURCE LINE # 36
+                                           ; SOURCE LINE # 38
+                                           ; SOURCE LINE # 39
+0000 E500        E     MOV     A,PM2DataCount
+0002 B4010D            CJNE    A,#01H,?C0004
+                                           ; SOURCE LINE # 40
+                                           ; SOURCE LINE # 41
+0005 AF00        E     MOV     R7,PM2Data
+0007 120000      R     LCALL   _Hook_ReadLCFCECSpace
+000A CD                XCH     A,R5
+000B EF                MOV     A,R7
+000C CD                XCH     A,R5
+C51 COMPILER V8.12   OEM_PM2                                                               07/28/2018 12:03:56 PAGE 10  
+
+000D 7F68              MOV     R7,#068H
+000F 120000      E     LCALL   _Data2Port
+                                           ; SOURCE LINE # 42
+                                           ; SOURCE LINE # 43
+0012         ?C0004:
+0012 22                RET     
+             ; FUNCTION PM2_Cmd_90Data (END)
+
+             ; FUNCTION PM2_Cmd_91Data (BEGIN)
+                                           ; SOURCE LINE # 44
+                                           ; SOURCE LINE # 45
+                                           ; SOURCE LINE # 46
+0000 E500        E     MOV     A,PM2DataCount
+0002 B40204            CJNE    A,#02H,?C0005
+                                           ; SOURCE LINE # 47
+                                           ; SOURCE LINE # 48
+0005 850000      E     MOV     PM2Data1,PM2Data
+                                           ; SOURCE LINE # 49
+0008 22                RET     
+0009         ?C0005:
+                                           ; SOURCE LINE # 50
+0009 E500        E     MOV     A,PM2DataCount
+000B B4010A            CJNE    A,#01H,?C0008
+                                           ; SOURCE LINE # 51
+                                           ; SOURCE LINE # 52
+000E AD00        E     MOV     R5,PM2Data
+0010 AF00        E     MOV     R7,PM2Data1
+0012 120000      R     LCALL   _Hook_WriteLCFCECSpace
+                                           ; SOURCE LINE # 53
+0015 120000      E     LCALL   Hook_ACPICommand
+                                           ; SOURCE LINE # 54
+                                           ; SOURCE LINE # 55
+0018         ?C0008:
+0018 22                RET     
+             ; FUNCTION PM2_Cmd_91Data (END)
+
+             ; FUNCTION _Hook_68Port (BEGIN)
+                                           ; SOURCE LINE # 61
+;---- Variable 'PM2Cmd' assigned to Register 'R7' ----
+                                           ; SOURCE LINE # 62
+                                           ; SOURCE LINE # 65
+0000 EF                MOV     A,R7
+0001 120000      E     LCALL   ?C?CCASE
+0004 0000        R     DW      ?C0010
+0006 40                DB      040H
+0007 0000        R     DW      ?C0011
+0009 41                DB      041H
+000A 0000        R     DW      ?C0013
+000C 42                DB      042H
+000D 0000        R     DW      ?C0014
+000F 43                DB      043H
+0010 0000        R     DW      ?C0015
+0012 45                DB      045H
+0013 0000        R     DW      ?C0016
+0015 46                DB      046H
+0016 0000        R     DW      ?C0017
+0018 47                DB      047H
+0019 0000        R     DW      ?C0019
+001B 4A                DB      04AH
+001C 0000        R     DW      ?C0020
+001E 4B                DB      04BH
+001F 0000        R     DW      ?C0025
+C51 COMPILER V8.12   OEM_PM2                                                               07/28/2018 12:03:56 PAGE 11  
+
+0021 4C                DB      04CH
+0022 0000        R     DW      ?C0029
+0024 4D                DB      04DH
+0025 0000        R     DW      ?C0032
+0027 4E                DB      04EH
+0028 0000        R     DW      ?C0034
+002A 52                DB      052H
+002B 0000        R     DW      ?C0041
+002D 53                DB      053H
+002E 0000        R     DW      ?C0044
+0030 58                DB      058H
+0031 0000        R     DW      ?C0045
+0033 59                DB      059H
+0034 0000        R     DW      ?C0046
+0036 5C                DB      05CH
+0037 0000        R     DW      ?C0047
+0039 5D                DB      05DH
+003A 0000        R     DW      ?C0048
+003C 71                DB      071H
+003D 0000        R     DW      ?C0049
+003F 72                DB      072H
+0040 0000        R     DW      ?C0050
+0042 7A                DB      07AH
+0043 0000        R     DW      ?C0051
+0045 7B                DB      07BH
+0046 0000        R     DW      ?C0053
+0048 7E                DB      07EH
+0049 0000        R     DW      ?C0055
+004B 90                DB      090H
+004C 0000        R     DW      ?C0056
+004E 91                DB      091H
+004F 0000        R     DW      ?C0057
+0051 B0                DB      0B0H
+0052 0000        R     DW      ?C0058
+0054 B3                DB      0B3H
+0055 0000              DW      00H
+0057 0000        R     DW      ?C0060
+                                           ; SOURCE LINE # 66
+                                           ; SOURCE LINE # 67
+0059         ?C0010:
+                                           ; SOURCE LINE # 68
+0059 AF00        E     MOV     R7,PM2Data
+005B 020000      E     LJMP    _Cmd_40
+                                           ; SOURCE LINE # 69
+                                           ; SOURCE LINE # 70
+005E         ?C0011:
+                                           ; SOURCE LINE # 71
+005E E500        E     MOV     A,PM2Data
+0060 64A1              XRL     A,#0A1H
+0062 6003              JZ      $ + 5H
+0064 020000      R     LJMP    ?C0060
+                                           ; SOURCE LINE # 72
+0067 7F68              MOV     R7,#068H
+0069 020000      E     LJMP    _Cmd_41_A1
+                                           ; SOURCE LINE # 73
+                                           ; SOURCE LINE # 74
+006C         ?C0013:
+                                           ; SOURCE LINE # 75
+006C AF00        E     MOV     R7,PM2Data
+006E 020000      E     LJMP    _Cmd_42
+                                           ; SOURCE LINE # 76
+                                           ; SOURCE LINE # 77
+C51 COMPILER V8.12   OEM_PM2                                                               07/28/2018 12:03:56 PAGE 12  
+
+0071         ?C0014:
+                                           ; SOURCE LINE # 78
+0071 AD00        E     MOV     R5,PM2Data
+0073 7F68              MOV     R7,#068H
+0075 020000      E     LJMP    _Cmd_43
+                                           ; SOURCE LINE # 79
+                                           ; SOURCE LINE # 80
+0078         ?C0015:
+                                           ; SOURCE LINE # 81
+0078 AD00        E     MOV     R5,PM2Data
+007A 7F68              MOV     R7,#068H
+007C 020000      E     LJMP    _Cmd_45
+                                           ; SOURCE LINE # 82
+                                           ; SOURCE LINE # 83
+007F         ?C0016:
+                                           ; SOURCE LINE # 84
+007F AD00        E     MOV     R5,PM2Data
+0081 7F68              MOV     R7,#068H
+0083 020000      E     LJMP    _Cmd_46
+                                           ; SOURCE LINE # 85
+                                           ; SOURCE LINE # 86
+0086         ?C0017:
+                                           ; SOURCE LINE # 87
+0086 AD00        E     MOV     R5,PM2Data
+0088 7F68              MOV     R7,#068H
+008A 020000      E     LJMP    _Cmd_47
+                                           ; SOURCE LINE # 88
+                                           ; SOURCE LINE # 89
+                                           ; SOURCE LINE # 90
+                                           ; SOURCE LINE # 92
+008D         ?C0019:
+                                           ; SOURCE LINE # 93
+008D AD00        E     MOV     R5,PM2Data
+008F 7F68              MOV     R7,#068H
+0091 020000      E     LJMP    _Cmd_4A
+                                           ; SOURCE LINE # 94
+                                           ; SOURCE LINE # 96
+0094         ?C0020:
+                                           ; SOURCE LINE # 97
+0094 E500        E     MOV     A,PM2DataCount
+0096 B40402            CJNE    A,#04H,?C0021
+                                           ; SOURCE LINE # 98
+                                           ; SOURCE LINE # 99
+                                           ; SOURCE LINE # 100
+0099 8021              SJMP    ?C0109
+                                           ; SOURCE LINE # 101
+009B         ?C0021:
+                                           ; SOURCE LINE # 102
+009B E500        E     MOV     A,PM2DataCount
+009D B40302            CJNE    A,#03H,?C0022
+                                           ; SOURCE LINE # 103
+                                           ; SOURCE LINE # 104
+                                           ; SOURCE LINE # 105
+00A0 8024              SJMP    ?C0110
+                                           ; SOURCE LINE # 106
+00A2         ?C0022:
+                                           ; SOURCE LINE # 107
+00A2 E500        E     MOV     A,PM2DataCount
+00A4 B40205            CJNE    A,#02H,?C0023
+                                           ; SOURCE LINE # 108
+                                           ; SOURCE LINE # 109
+00A7 900000      E     MOV     DPTR,#eEEPROMBank
+C51 COMPILER V8.12   OEM_PM2                                                               07/28/2018 12:03:56 PAGE 13  
+
+                                           ; SOURCE LINE # 110
+00AA 803B              SJMP    ?C0114
+                                           ; SOURCE LINE # 111
+00AC         ?C0023:
+                                           ; SOURCE LINE # 112
+00AC E500        E     MOV     A,PM2DataCount
+00AE 6401              XRL     A,#01H
+00B0 6003              JZ      $ + 5H
+00B2 020000      R     LJMP    ?C0060
+                                           ; SOURCE LINE # 113
+                                           ; SOURCE LINE # 114
+                                           ; SOURCE LINE # 115
+                                           ; SOURCE LINE # 116
+                                           ; SOURCE LINE # 117
+                                           ; SOURCE LINE # 118
+                                           ; SOURCE LINE # 119
+                                           ; SOURCE LINE # 120
+00B5 803D              SJMP    ?C0112
+                                           ; SOURCE LINE # 122
+00B7         ?C0025:
+                                           ; SOURCE LINE # 123
+00B7 E500        E     MOV     A,PM2DataCount
+00B9 B40305            CJNE    A,#03H,?C0026
+                                           ; SOURCE LINE # 124
+                                           ; SOURCE LINE # 125
+00BC         ?C0109:
+00BC 900000      R     MOV     DPTR,#i
+00BF         ?C0111:
+                                           ; SOURCE LINE # 126
+00BF 8026              SJMP    ?C0114
+                                           ; SOURCE LINE # 127
+00C1         ?C0026:
+                                           ; SOURCE LINE # 128
+00C1 E500        E     MOV     A,PM2DataCount
+00C3 B40205            CJNE    A,#02H,?C0027
+                                           ; SOURCE LINE # 129
+                                           ; SOURCE LINE # 130
+00C6         ?C0110:
+00C6 900000      E     MOV     DPTR,#eEEPROMAddrsss
+00C9         ?C0113:
+                                           ; SOURCE LINE # 131
+00C9 801C              SJMP    ?C0114
+                                           ; SOURCE LINE # 132
+00CB         ?C0027:
+                                           ; SOURCE LINE # 133
+00CB E500        E     MOV     A,PM2DataCount
+00CD 6401              XRL     A,#01H
+00CF 6003              JZ      $ + 5H
+00D1 020000      R     LJMP    ?C0060
+                                           ; SOURCE LINE # 134
+                                           ; SOURCE LINE # 135
+00D4 900000      E     MOV     DPTR,#eEEPROMBank
+00D7 E500        E     MOV     A,PM2Data
+00D9 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 136
+00DA 900000      E     MOV     DPTR,#eEEPROMAddrsss
+                                           ; SOURCE LINE # 137
+                                           ; SOURCE LINE # 138
+00DD 8039              SJMP    ?C0115
+                                           ; SOURCE LINE # 140
+00DF         ?C0029:
+                                           ; SOURCE LINE # 141
+C51 COMPILER V8.12   OEM_PM2                                                               07/28/2018 12:03:56 PAGE 14  
+
+00DF E500        E     MOV     A,PM2DataCount
+00E1 B40207            CJNE    A,#02H,?C0030
+                                           ; SOURCE LINE # 142
+                                           ; SOURCE LINE # 143
+00E4 900000      E     MOV     DPTR,#eEEPROMAddrsss
+00E7         ?C0114:
+00E7 E500        E     MOV     A,PM2Data
+00E9 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 144
+00EA 22                RET     
+                                           ; SOURCE LINE # 145
+00EB         ?C0030:
+                                           ; SOURCE LINE # 146
+00EB E500        E     MOV     A,PM2DataCount
+00ED 6401              XRL     A,#01H
+00EF 6003              JZ      $ + 5H
+00F1 020000      R     LJMP    ?C0060
+                                           ; SOURCE LINE # 147
+                                           ; SOURCE LINE # 148
+00F4         ?C0112:
+00F4 900000      E     MOV     DPTR,#eEEPROMData
+00F7 E500        E     MOV     A,PM2Data
+00F9 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 149
+00FA 900000      E     MOV     DPTR,#LENOVOPMFW_Temp
+00FD E0                MOVX    A,@DPTR
+00FE 4410              ORL     A,#010H
+0100 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 150
+0101 120000      E     LCALL   Update_EEPROMMark
+                                           ; SOURCE LINE # 151
+0104 900000      E     MOV     DPTR,#LENOVOPMFW_Temp
+0107 E0                MOVX    A,@DPTR
+0108 54EF              ANL     A,#0EFH
+010A F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 152
+010B E4                CLR     A
+010C FD                MOV     R5,A
+010D 7F68              MOV     R7,#068H
+010F 020000      E     LJMP    _Data2PortDirect
+                                           ; SOURCE LINE # 153
+                                           ; SOURCE LINE # 154
+                                           ; SOURCE LINE # 156
+0112         ?C0032:
+                                           ; SOURCE LINE # 157
+0112 900000      E     MOV     DPTR,#eEEPROMAddrsss
+0115 E500        E     MOV     A,PM2Data
+0117 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 158
+0118         ?C0115:
+0118 E0                MOVX    A,@DPTR
+0119 FD                MOV     R5,A
+011A 7F68              MOV     R7,#068H
+011C 020000      E     LJMP    _Cmd_4E
+                                           ; SOURCE LINE # 159
+                                           ; SOURCE LINE # 161
+                                           ; SOURCE LINE # 162
+                                           ; SOURCE LINE # 164
+011F         ?C0034:
+                                           ; SOURCE LINE # 165
+011F E500        E     MOV     A,PM2Data
+0121 B4A005            CJNE    A,#0A0H,?C0035
+C51 COMPILER V8.12   OEM_PM2                                                               07/28/2018 12:03:56 PAGE 15  
+
+0124 7F68              MOV     R7,#068H
+0126 120000      E     LCALL   _Cmd_52_A0
+0129         ?C0035:
+                                           ; SOURCE LINE # 166
+0129 E500        E     MOV     A,PM2Data
+012B B4A305            CJNE    A,#0A3H,?C0036
+012E 7F68              MOV     R7,#068H
+0130 120000      E     LCALL   _Cmd_52_A3
+0133         ?C0036:
+                                           ; SOURCE LINE # 167
+0133 E500        E     MOV     A,PM2Data
+0135 B4A405            CJNE    A,#0A4H,?C0037
+0138 7F68              MOV     R7,#068H
+013A 120000      E     LCALL   _Cmd_52_A4
+013D         ?C0037:
+                                           ; SOURCE LINE # 168
+013D E500        E     MOV     A,PM2Data
+013F B4A505            CJNE    A,#0A5H,?C0038
+0142 7F68              MOV     R7,#068H
+0144 120000      E     LCALL   _Cmd_52_A5
+0147         ?C0038:
+                                           ; SOURCE LINE # 169
+0147 E500        E     MOV     A,PM2Data
+0149 B4A605            CJNE    A,#0A6H,?C0039
+014C 7F68              MOV     R7,#068H
+014E 120000      E     LCALL   _Cmd_52_A6
+0151         ?C0039:
+                                           ; SOURCE LINE # 170
+0151 E500        E     MOV     A,PM2Data
+0153 64A7              XRL     A,#0A7H
+0155 7073              JNZ     ?C0060
+0157 7F68              MOV     R7,#068H
+0159 020000      E     LJMP    _Cmd_52_A7
+                                           ; SOURCE LINE # 171
+                                           ; SOURCE LINE # 173
+015C         ?C0041:
+                                           ; SOURCE LINE # 174
+015C E500        E     MOV     A,PM2DataCount
+015E 6401              XRL     A,#01H
+0160 7068              JNZ     ?C0060
+                                           ; SOURCE LINE # 175
+                                           ; SOURCE LINE # 176
+0162 900000      E     MOV     DPTR,#?_Cmd_53?BYTE+03H
+0165 E500        E     MOV     A,PM2Data
+0167 F0                MOVX    @DPTR,A
+0168 AB00        E     MOV     R3,PM2Data1
+016A AD00        E     MOV     R5,PM2Data2
+016C 7F68              MOV     R7,#068H
+016E 020000      E     LJMP    _Cmd_53
+                                           ; SOURCE LINE # 177
+                                           ; SOURCE LINE # 178
+                                           ; SOURCE LINE # 179
+                                           ; SOURCE LINE # 180
+                                           ; SOURCE LINE # 181
+0171         ?C0044:
+                                           ; SOURCE LINE # 182
+0171 AF00        E     MOV     R7,PM2Data
+0173 020000      E     LJMP    _Cmd_58
+                                           ; SOURCE LINE # 183
+                                           ; SOURCE LINE # 184
+0176         ?C0045:
+                                           ; SOURCE LINE # 185
+C51 COMPILER V8.12   OEM_PM2                                                               07/28/2018 12:03:56 PAGE 16  
+
+0176 E4                CLR     A
+0177 FB                MOV     R3,A
+0178 AD00        E     MOV     R5,PM2Data
+017A 7F68              MOV     R7,#068H
+017C 020000      E     LJMP    _Cmd_59
+                                           ; SOURCE LINE # 186
+                                           ; SOURCE LINE # 187
+017F         ?C0046:
+                                           ; SOURCE LINE # 188
+017F 7F68              MOV     R7,#068H
+0181 020000      E     LJMP    _Cmd_5C
+                                           ; SOURCE LINE # 189
+                                           ; SOURCE LINE # 190
+0184         ?C0047:
+                                           ; SOURCE LINE # 191
+0184 AF00        E     MOV     R7,PM2Data
+0186 020000      E     LJMP    _Cmd_5D
+                                           ; SOURCE LINE # 192
+                                           ; SOURCE LINE # 193
+0189         ?C0048:
+                                           ; SOURCE LINE # 199
+0189 AF00        E     MOV     R7,PM2Data
+018B 020000      E     LJMP    _Cmd_71
+                                           ; SOURCE LINE # 201
+                                           ; SOURCE LINE # 202
+018E         ?C0049:
+                                           ; SOURCE LINE # 203
+018E AF00        E     MOV     R7,PM2Data
+0190 020000      E     LJMP    _Cmd_72
+                                           ; SOURCE LINE # 204
+                                           ; SOURCE LINE # 206
+0193         ?C0050:
+                                           ; SOURCE LINE # 207
+0193 AD00        E     MOV     R5,PM2Data
+0195 7F68              MOV     R7,#068H
+0197 020000      E     LJMP    _Cmd_7A
+                                           ; SOURCE LINE # 208
+                                           ; SOURCE LINE # 209
+019A         ?C0051:
+                                           ; SOURCE LINE # 210
+019A E500        E     MOV     A,PM2DataCount
+019C 6401              XRL     A,#01H
+019E 702A              JNZ     ?C0060
+                                           ; SOURCE LINE # 211
+                                           ; SOURCE LINE # 212
+01A0 120000      R     LCALL   L?0140
+01A3 020000      E     LJMP    _Cmd_7B
+                                           ; SOURCE LINE # 213
+                                           ; SOURCE LINE # 214
+                                           ; SOURCE LINE # 218
+01A6         ?C0053:
+                                           ; SOURCE LINE # 219
+01A6 E500        E     MOV     A,PM2DataCount
+01A8 6401              XRL     A,#01H
+01AA 701E              JNZ     ?C0060
+                                           ; SOURCE LINE # 220
+                                           ; SOURCE LINE # 221
+01AC 120000      R     LCALL   L?0140
+01AF 020000      E     LJMP    _Cmd_7E
+                                           ; SOURCE LINE # 222
+                                           ; SOURCE LINE # 223
+                                           ; SOURCE LINE # 227
+C51 COMPILER V8.12   OEM_PM2                                                               07/28/2018 12:03:56 PAGE 17  
+
+01B2         ?C0055:
+                                           ; SOURCE LINE # 228
+01B2 020000      R     LJMP    PM2_Cmd_90Data
+                                           ; SOURCE LINE # 229
+                                           ; SOURCE LINE # 230
+01B5         ?C0056:
+                                           ; SOURCE LINE # 231
+01B5 020000      R     LJMP    PM2_Cmd_91Data
+                                           ; SOURCE LINE # 232
+                                           ; SOURCE LINE # 235
+01B8         ?C0057:
+                                           ; SOURCE LINE # 236
+01B8 AD00        E     MOV     R5,PM2Data
+01BA 7F68              MOV     R7,#068H
+01BC 020000      E     LJMP    _Cmd_B0
+                                           ; SOURCE LINE # 237
+                                           ; SOURCE LINE # 238
+01BF         ?C0058:
+                                           ; SOURCE LINE # 239
+01BF E500        E     MOV     A,PM2DataCount
+01C1 B40106            CJNE    A,#01H,?C0060
+                                           ; SOURCE LINE # 240
+                                           ; SOURCE LINE # 241
+01C4 120000      R     LCALL   L?0141
+01C7 120000      E     LCALL   _Cmd_B3
+                                           ; SOURCE LINE # 242
+                                           ; SOURCE LINE # 243
+                                           ; SOURCE LINE # 244
+                                           ; SOURCE LINE # 245
+01CA         ?C0060:
+01CA 22                RET     
+             ; FUNCTION _Hook_68Port (END)
+
+             ; FUNCTION _Hook_6CPort (BEGIN)
+                                           ; SOURCE LINE # 251
+;---- Variable 'PM2Cmd' assigned to Register 'R7' ----
+                                           ; SOURCE LINE # 252
+                                           ; SOURCE LINE # 254
+0000 EF                MOV     A,R7
+0001 120000      E     LCALL   ?C?CCASE
+0004 0000        R     DW      ?C0062
+0006 40                DB      040H
+0007 0000        R     DW      ?C0063
+0009 41                DB      041H
+000A 0000        R     DW      ?C0064
+000C 42                DB      042H
+000D 0000        R     DW      ?C0065
+000F 43                DB      043H
+0010 0000        R     DW      ?C0066
+0012 44                DB      044H
+0013 0000        R     DW      ?C0067
+0015 45                DB      045H
+0016 0000        R     DW      ?C0068
+0018 46                DB      046H
+0019 0000        R     DW      ?C0069
+001B 47                DB      047H
+001C 0000        R     DW      ?C0071
+001E 4A                DB      04AH
+001F 0000        R     DW      ?C0072
+0021 4B                DB      04BH
+0022 0000        R     DW      ?C0073
+0024 4C                DB      04CH
+C51 COMPILER V8.12   OEM_PM2                                                               07/28/2018 12:03:56 PAGE 18  
+
+0025 0000        R     DW      ?C0097
+0027 4D                DB      04DH
+0028 0000        R     DW      ?C0075
+002A 4E                DB      04EH
+002B 0000        R     DW      ?C0076
+002D 4F                DB      04FH
+002E 0000        R     DW      ?C0077
+0030 50                DB      050H
+0031 0000        R     DW      ?C0078
+0033 51                DB      051H
+0034 0000        R     DW      ?C0079
+0036 52                DB      052H
+0037 0000        R     DW      ?C0080
+0039 53                DB      053H
+003A 0000        R     DW      ?C0082
+003C 58                DB      058H
+003D 0000        R     DW      ?C0083
+003F 59                DB      059H
+0040 0000        R     DW      ?C0085
+0042 5D                DB      05DH
+0043 0000        R     DW      ?C0086
+0045 5E                DB      05EH
+0046 0000        R     DW      ?C0087
+0048 5F                DB      05FH
+0049 0000        R     DW      ?C0097
+004B 71                DB      071H
+004C 0000        R     DW      ?C0089
+004E 72                DB      072H
+004F 0000        R     DW      ?C0090
+0051 75                DB      075H
+0052 0000        R     DW      ?C0091
+0054 7A                DB      07AH
+0055 0000        R     DW      ?C0097
+0057 7B                DB      07BH
+0058 0000        R     DW      ?C0093
+005A 7C                DB      07CH
+005B 0000        R     DW      ?C0094
+005D 7D                DB      07DH
+005E 0000        R     DW      ?C0097
+0060 7E                DB      07EH
+0061 0000        R     DW      ?C0096
+0063 90                DB      090H
+0064 0000        R     DW      ?C0097
+0066 91                DB      091H
+0067 0000        R     DW      ?C0098
+0069 B0                DB      0B0H
+006A 0000        R     DW      ?C0099
+006C B1                DB      0B1H
+006D 0000        R     DW      ?C0100
+006F B2                DB      0B2H
+0070 0000        R     DW      ?C0097
+0072 B3                DB      0B3H
+0073 0000        R     DW      ?C0102
+0075 DC                DB      0DCH
+0076 0000              DW      00H
+0078 0000        R     DW      ?C0103
+                                           ; SOURCE LINE # 255
+                                           ; SOURCE LINE # 256
+007A         ?C0062:
+                                           ; SOURCE LINE # 257
+                                           ; SOURCE LINE # 258
+007A 806F              SJMP    ?C0137
+C51 COMPILER V8.12   OEM_PM2                                                               07/28/2018 12:03:56 PAGE 19  
+
+                                           ; SOURCE LINE # 259
+007C         ?C0063:
+                                           ; SOURCE LINE # 260
+007C         ?C0116:
+                                           ; SOURCE LINE # 261
+007C 806D              SJMP    ?C0137
+                                           ; SOURCE LINE # 262
+007E         ?C0064:
+                                           ; SOURCE LINE # 263
+007E         ?C0117:
+                                           ; SOURCE LINE # 264
+007E 806B              SJMP    ?C0137
+                                           ; SOURCE LINE # 265
+0080         ?C0065:
+                                           ; SOURCE LINE # 266
+0080         ?C0118:
+                                           ; SOURCE LINE # 267
+0080 8069              SJMP    ?C0137
+                                           ; SOURCE LINE # 268
+0082         ?C0066:
+                                           ; SOURCE LINE # 269
+0082 7F68              MOV     R7,#068H
+0084 020000      E     LJMP    _Cmd_44
+                                           ; SOURCE LINE # 270
+                                           ; SOURCE LINE # 271
+0087         ?C0067:
+                                           ; SOURCE LINE # 272
+0087         ?C0119:
+                                           ; SOURCE LINE # 273
+0087 8062              SJMP    ?C0137
+                                           ; SOURCE LINE # 274
+0089         ?C0068:
+                                           ; SOURCE LINE # 275
+0089         ?C0120:
+                                           ; SOURCE LINE # 276
+0089 8060              SJMP    ?C0137
+                                           ; SOURCE LINE # 277
+008B         ?C0069:
+                                           ; SOURCE LINE # 278
+008B         ?C0121:
+                                           ; SOURCE LINE # 279
+008B 805E              SJMP    ?C0137
+                                           ; SOURCE LINE # 280
+                                           ; SOURCE LINE # 281
+                                           ; SOURCE LINE # 283
+008D         ?C0071:
+                                           ; SOURCE LINE # 284
+008D         ?C0122:
+                                           ; SOURCE LINE # 285
+008D 805C              SJMP    ?C0137
+                                           ; SOURCE LINE # 287
+008F         ?C0072:
+                                           ; SOURCE LINE # 288
+008F 750004      E     MOV     PM2DataCount,#04H
+                                           ; SOURCE LINE # 289
+0092 22                RET     
+                                           ; SOURCE LINE # 290
+0093         ?C0073:
+                                           ; SOURCE LINE # 291
+                                           ; SOURCE LINE # 292
+0093 8014              SJMP    ?C0124
+                                           ; SOURCE LINE # 293
+C51 COMPILER V8.12   OEM_PM2                                                               07/28/2018 12:03:56 PAGE 20  
+
+                                           ; SOURCE LINE # 296
+0095         ?C0075:
+                                           ; SOURCE LINE # 297
+0095         ?C0123:
+                                           ; SOURCE LINE # 298
+0095 8054              SJMP    ?C0137
+                                           ; SOURCE LINE # 299
+0097         ?C0076:
+                                           ; SOURCE LINE # 300
+0097 020000      E     LJMP    Erase_EEPROMAll
+                                           ; SOURCE LINE # 301
+                                           ; SOURCE LINE # 303
+009A         ?C0077:
+                                           ; SOURCE LINE # 304
+009A 900000      E     MOV     DPTR,#ACPI_HOTKEY
+009D E0                MOVX    A,@DPTR
+009E 4440              ORL     A,#040H
+00A0 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 305
+00A1 22                RET     
+                                           ; SOURCE LINE # 307
+00A2         ?C0078:
+                                           ; SOURCE LINE # 308
+00A2 7F68              MOV     R7,#068H
+00A4 020000      E     LJMP    _Cmd_51
+                                           ; SOURCE LINE # 309
+                                           ; SOURCE LINE # 310
+00A7         ?C0079:
+                                           ; SOURCE LINE # 311
+00A7         ?C0126:
+                                           ; SOURCE LINE # 312
+00A7 8042              SJMP    ?C0137
+                                           ; SOURCE LINE # 313
+00A9         ?C0080:
+                                           ; SOURCE LINE # 314
+00A9         ?C0124:
+00A9 750003      E     MOV     PM2DataCount,#03H
+                                           ; SOURCE LINE # 315
+00AC 22                RET     
+                                           ; SOURCE LINE # 316
+                                           ; SOURCE LINE # 317
+                                           ; SOURCE LINE # 318
+00AD         ?C0082:
+                                           ; SOURCE LINE # 319
+00AD         ?C0127:
+                                           ; SOURCE LINE # 320
+00AD 803C              SJMP    ?C0137
+                                           ; SOURCE LINE # 321
+00AF         ?C0083:
+                                           ; SOURCE LINE # 322
+00AF         ?C0128:
+                                           ; SOURCE LINE # 323
+00AF 803A              SJMP    ?C0137
+                                           ; SOURCE LINE # 324
+                                           ; SOURCE LINE # 325
+                                           ; SOURCE LINE # 326
+00B1         ?C0085:
+                                           ; SOURCE LINE # 327
+00B1         ?C0129:
+                                           ; SOURCE LINE # 328
+00B1 8038              SJMP    ?C0137
+                                           ; SOURCE LINE # 330
+C51 COMPILER V8.12   OEM_PM2                                                               07/28/2018 12:03:56 PAGE 21  
+
+00B3         ?C0086:
+                                           ; SOURCE LINE # 332
+00B3 020000      E     LJMP    Unlock_ShipMode
+                                           ; SOURCE LINE # 334
+                                           ; SOURCE LINE # 335
+00B6         ?C0087:
+                                           ; SOURCE LINE # 337
+00B6 900000      E     MOV     DPTR,#ShipModeEn
+00B9 74A5              MOV     A,#0A5H
+00BB F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 338
+00BC 7D5A              MOV     R5,#05AH
+00BE 7F68              MOV     R7,#068H
+00C0 120000      E     LCALL   _Data2PortDirect
+                                           ; SOURCE LINE # 339
+00C3 7FA5              MOV     R7,#0A5H
+00C5 020000      E     LJMP    _RamDebug
+                                           ; SOURCE LINE # 341
+                                           ; SOURCE LINE # 343
+                                           ; SOURCE LINE # 346
+00C8         ?C0089:
+                                           ; SOURCE LINE # 347
+00C8         ?C0130:
+                                           ; SOURCE LINE # 348
+00C8 8021              SJMP    ?C0137
+                                           ; SOURCE LINE # 350
+00CA         ?C0090:
+                                           ; SOURCE LINE # 351
+00CA 020000      E     LJMP    Cmd_75
+                                           ; SOURCE LINE # 352
+                                           ; SOURCE LINE # 355
+00CD         ?C0091:
+                                           ; SOURCE LINE # 356
+00CD         ?C0132:
+                                           ; SOURCE LINE # 357
+00CD 801C              SJMP    ?C0137
+                                           ; SOURCE LINE # 358
+                                           ; SOURCE LINE # 363
+00CF         ?C0093:
+                                           ; SOURCE LINE # 364
+00CF 900000      E     MOV     DPTR,#Bioswatchdog
+00D2 7401              MOV     A,#01H
+00D4 F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 365
+00D5 E4                CLR     A
+00D6 900000      E     MOV     DPTR,#Bioswatchdogtime
+                                           ; SOURCE LINE # 366
+                                           ; SOURCE LINE # 367
+00D9 8004              SJMP    ?C0135
+                                           ; SOURCE LINE # 368
+00DB         ?C0094:
+                                           ; SOURCE LINE # 369
+00DB E4                CLR     A
+00DC 900000      E     MOV     DPTR,#Bioswatchdog
+00DF         ?C0135:
+00DF F0                MOVX    @DPTR,A
+                                           ; SOURCE LINE # 370
+00E0 7D55              MOV     R5,#055H
+00E2 7F68              MOV     R7,#068H
+00E4 020000      E     LJMP    _Data2PortDirect
+                                           ; SOURCE LINE # 371
+                                           ; SOURCE LINE # 375
+C51 COMPILER V8.12   OEM_PM2                                                               07/28/2018 12:03:56 PAGE 22  
+
+                                           ; SOURCE LINE # 381
+00E7         ?C0096:
+                                           ; SOURCE LINE # 382
+00E7         ?C0133:
+                                           ; SOURCE LINE # 383
+00E7 8002              SJMP    ?C0137
+                                           ; SOURCE LINE # 384
+00E9         ?C0097:
+                                           ; SOURCE LINE # 385
+00E9         ?C0136:
+                                           ; SOURCE LINE # 386
+00E9 8012              SJMP    ?C0138
+                                           ; SOURCE LINE # 388
+00EB         ?C0098:
+                                           ; SOURCE LINE # 389
+00EB         ?C0137:
+00EB 750001      E     MOV     PM2DataCount,#01H
+                                           ; SOURCE LINE # 390
+00EE 22                RET     
+                                           ; SOURCE LINE # 392
+00EF         ?C0099:
+                                           ; SOURCE LINE # 393
+00EF 7DB1              MOV     R5,#0B1H
+00F1 7F68              MOV     R7,#068H
+00F3 020000      E     LJMP    _Cmd_B1
+                                           ; SOURCE LINE # 394
+                                           ; SOURCE LINE # 395
+00F6         ?C0100:
+                                           ; SOURCE LINE # 396
+00F6 7DB2              MOV     R5,#0B2H
+00F8 7F68              MOV     R7,#068H
+00FA 020000      E     LJMP    _Cmd_B2
+                                           ; SOURCE LINE # 397
+                                           ; SOURCE LINE # 399
+00FD         ?C0138:
+00FD 750002      E     MOV     PM2DataCount,#02H
+                                           ; SOURCE LINE # 401
+0100 22                RET     
+                                           ; SOURCE LINE # 403
+0101         ?C0102:
+                                           ; SOURCE LINE # 404
+0101 120000      E     LCALL   PM2_6CCmd_DC
+                                           ; SOURCE LINE # 405
+                                           ; SOURCE LINE # 407
+                                           ; SOURCE LINE # 408
+0104         ?C0103:
+0104 22                RET     
+             ; FUNCTION _Hook_6CPort (END)
+
+             ; FUNCTION service_pci3 (BEGIN)
+                                           ; SOURCE LINE # 413
+                                           ; SOURCE LINE # 414
+                                           ; SOURCE LINE # 416
+0000 900000      E     MOV     DPTR,#PM2STS
+0003 E0                MOVX    A,@DPTR
+0004 30E132            JNB     ACC.1,?C0105
+                                           ; SOURCE LINE # 417
+                                           ; SOURCE LINE # 419
+0007         ?C0104:
+                                           ; SOURCE LINE # 420
+0007 900000      E     MOV     DPTR,#PM2STS
+000A E0                MOVX    A,@DPTR
+C51 COMPILER V8.12   OEM_PM2                                                               07/28/2018 12:03:56 PAGE 23  
+
+000B 30E311            JNB     ACC.3,?C0106
+                                           ; SOURCE LINE # 421
+                                           ; SOURCE LINE # 422
+000E E4                CLR     A
+000F F500        E     MOV     PM2DataCount,A
+                                           ; SOURCE LINE # 423
+0011 900000      E     MOV     DPTR,#PM2DI
+0014 E0                MOVX    A,@DPTR
+0015 F500        E     MOV     PM2Cmd,A
+                                           ; SOURCE LINE # 424
+0017 120000      E     LCALL   EnablePMCIBFInt
+                                           ; SOURCE LINE # 425
+001A AF00        E     MOV     R7,PM2Cmd
+001C 020000      R     LJMP    _Hook_6CPort
+                                           ; SOURCE LINE # 426
+001F         ?C0106:
+                                           ; SOURCE LINE # 428
+                                           ; SOURCE LINE # 429
+001F 850000      E     MOV     PM2Data2,PM2Data1
+                                           ; SOURCE LINE # 430
+0022 850000      E     MOV     PM2Data1,PM2Data
+                                           ; SOURCE LINE # 431
+0025 900000      E     MOV     DPTR,#PM2DI
+0028 E0                MOVX    A,@DPTR
+0029 F500        E     MOV     PM2Data,A
+                                           ; SOURCE LINE # 432
+002B 120000      E     LCALL   EnablePMCIBFInt
+                                           ; SOURCE LINE # 433
+002E E500        E     MOV     A,PM2DataCount
+0030 6007              JZ      ?C0105
+                                           ; SOURCE LINE # 434
+                                           ; SOURCE LINE # 435
+0032 AF00        E     MOV     R7,PM2Cmd
+0034 120000      R     LCALL   _Hook_68Port
+                                           ; SOURCE LINE # 436
+0037 1500        E     DEC     PM2DataCount
+                                           ; SOURCE LINE # 437
+                                           ; SOURCE LINE # 438
+                                           ; SOURCE LINE # 440
+0039         ?C0105:
+0039 22                RET     
+             ; FUNCTION service_pci3 (END)
+
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    854    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----       1
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
