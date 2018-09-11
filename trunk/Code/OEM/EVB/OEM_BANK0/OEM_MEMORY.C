@@ -299,12 +299,8 @@ XBYTE	DEBOUNCE_CONT16						_at_(DebounceRAM+0x0F); //(byte)
 
 XBYTE	pProject0						_at_(OEMRAM2+0x02);
 XBYTE	pDevStus						_at_(OEMRAM2+0x03);
-//ANGELAS107:S-Add code for GBSI function.
-//ANGELAS033:Add start
-//XBYTE	batteryFirstUsedDateL			_at_(OEMRAM2+0x04);
-//XBYTE	batteryFirstUsedDateH		_at_(OEMRAM2+0x05);
-//ANGELAS033:Add end
-//ANGELAS107:E-Add code for GBSI function.
+XBYTE   BatSmartChargeL					_at_ OEMRAM2+0x04;   //Add smart charge cmd.
+XBYTE   BatSmartChargeH					_at_ OEMRAM2+0x05;   //Add smart charge cmd.
 XBYTE  batteryChemistry[4]              _at_(OEMRAM2+0x06);//ANGELAS107:Add code for GBSI function.
 XBYTE	pOneKeyAPPStatus				_at_(OEMRAM2+0x0B);	// Lenovo_VGATurbo
 XBYTE 	pPROCHOT						_at_(OEMRAM2+0x0C);
