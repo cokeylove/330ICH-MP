@@ -198,31 +198,27 @@ void Hook_Timer10msEventA(void)
 }
 
 
-//MARTINH154:Add  start
 void Deal_CLEAR_CMOS(void)
 {
 	if (IS_MASK_SET(CMOS_TEST,b0_CMOS_FunctionKey))
   	{
-		if(SystemIsS5)
+		if(SystemIsS5||SystemIsDSX||SysPowState == SYSTEM_S5_DSX)
 		{     
 	    	if(IS_MASK_CLEAR(CMOS_TEST,b1_CMOS_delay1flag))
 			{ 
 		    	cmosdelay++;
-				RSMRST_LOW();
-				if(cmosdelay==0x01)
+                if(cmosdelay==0x02)
 				{
-		    		PCH_PWR_EN_OFF();
+		    		PWSeqStep = 1;
+		            PowSeqDelay = 0x00;
+			        SysPowState = SYSTEM_S5_DSX; 
 				}
-				if(cmosdelay==0x02)
-				{
-		       		EC_ON_LOW();
-				}
-				if(cmosdelay==0x03)
-				{
-		       		//PCH_PWREN_HI();
-		        	PM_PWRBTN_LOW();
-		        	AC_PRESENT_LOW();
-				}
+
+                if(cmosdelay==0x04)
+                {
+                    AC_PRESENT_LOW();
+                }
+				
 		    	if(cmosdelay==22)
 				{   		
 			    	RTCRST_ON_HI();
@@ -240,30 +236,22 @@ void Deal_CLEAR_CMOS(void)
 				if(cmosdelay==10)
 				{
 					if(Read_AC_IN())
-		    			EC_ON_HI();
+					{
+		    			PWSeqStep = 1;
+		            	PowSeqDelay = 0x00;
+			        	SysPowState = SYSTEM_DSX_S5; 
+					}
 		 		}
-		    	if(cmosdelay==11)
-				{
-			    	//PCH_PWREN_LOW();
- 					if(Read_AC_IN())
-						PM_PWRBTN_HI();
-				}		
-				if(cmosdelay==12)
-				{
-			    	if(Read_AC_IN())
-		            	PCH_PWR_EN_ON(); 
-		 		}
+
 		    	if(cmosdelay==15)
 				{
-					if(Read_AC_IN())
-		        		RSMRST_HI();
-			        	CLEAR_MASK(CMOS_TEST,b1_CMOS_delay1flag);
-		            	CLEAR_MASK(CMOS_TEST,b0_CMOS_FunctionKey);
-						CLEAR_MASK(CMOS_TEST,BIT3);
-		            	cmosdelay1=0;
- 					if(Read_AC_IN())
-		            	AC_PRESENT_HI();	
-		            	RamDebug(0x4A);
+		        	CLEAR_MASK(CMOS_TEST,b1_CMOS_delay1flag);
+	            	CLEAR_MASK(CMOS_TEST,b0_CMOS_FunctionKey);
+					CLEAR_MASK(CMOS_TEST,BIT3);
+	            	cmosdelay1=0;
+					    if(Read_AC_IN())
+	            	    AC_PRESENT_HI();	
+	            	RamDebug(0x4A);
 		 		}
 		
 			}
@@ -274,7 +262,6 @@ void Deal_CLEAR_CMOS(void)
 	  	cmosdelay=0;
   	}
 }
-//MARTINH154:Add  end
 
 //------------------------------------------------------------
 // Hook 10ms events
@@ -305,8 +292,9 @@ void Hook_Timer10msEventB(void)
   	{
         delayEDPTm--;
   	}
-	
-	//Deal_CLEAR_CMOS();
+#if CLEAR_CMOS_SUPPORT	
+	Deal_CLEAR_CMOS();
+#endif
 }
 
 //------------------------------------------------------------
@@ -618,12 +606,11 @@ void Hook_Timer500msEventC(void)
 }
 
 
-//MARTINH154:Add start
 void checkclearcmos(void)
 {
 	if (IS_MASK_SET(CMOS_TEST,BIT2))
 	{
-		if((!Read_SLPS3())&&(!Read_SLPS4()))
+		if((!Read_SLPS3())&&(!Read_SLPS4())||IS_MASK_SET(CMOS_TEST,BIT4))
 		{
 			cmosshutdelay++;
 			RamDebug(0x4B);
@@ -633,17 +620,20 @@ void checkclearcmos(void)
 			cmosshutdelay=0;
 			CLEAR_MASK(CMOS_TEST,BIT2);
 		}
+		
 		if(cmosshutdelay==5)
 		{
-			 SysPowState=SYSTEM_S5;  
-			 //SET_MASK(CMOS_TEST,BIT0); //ANGELAS052:remove
+		     CLEAR_MASK(CMOS_TEST,BIT2);
+		     CLEAR_MASK(CMOS_TEST,BIT4);
+		     //PWSeqStep = 1;
+		     //PowSeqDelay = 0x00;
+			 //SysPowState = SYSTEM_S0_S5; 			 
 			 SET_MASK(CMOS_TEST,b0_CMOS_FunctionKey); //ANGELAS052:add
-			 CLEAR_MASK(CMOS_TEST,BIT2);
 			 cmosshutdelay = 0x00;		 
 		}
 	}
 }	
-//MARTINH154:Add end
+
 
 //------------------------------------------------------------
 // Hook 1sec events A

@@ -46,6 +46,8 @@ void Hook_MailBox(BYTE Cmd)
 	case 0x47:
 		Cmd_47(0xFE,MMIO_iDATA8C);
 		break;
+    case 0x48:
+		Cmd_48(0xFE,MMIO_iDATA8C);
 		break;
 	case 0x49:
 		break;

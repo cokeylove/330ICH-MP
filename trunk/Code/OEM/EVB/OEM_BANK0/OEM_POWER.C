@@ -305,7 +305,7 @@ const sPowerSEQ code asPowerSEQS5DSX[]=
 {
     {0x0000,                        0,        0,    },
     {S5DSX_RSMRST_LOW,        5,        0,    },
-    {S5DSX_PCH_PWR_EN_OFF,    2,        0,    },
+    {S5DSX_PCH_PWR_EN_OFF,    10,        0,    },      //After RSMRST Low 15ms, pull EC_ON low,EE request change for Clear CMOS 
     {S5DSX_EC_ON_LOW,        0,        0,    },
     //{S5DSX_PMIC_Disable,        0,        0,    },
     {S5DSX_PWR_BTN_LOW,        5,        0,    },
@@ -607,7 +607,11 @@ void Oem_SysPowerContrl(void)
         
     case SYSTEM_DSX:
         CheckAutoPowerOn();
-        if((Read_AC_IN()) || (LOWBATT_3TIMES != 0))
+#if CLEAR_CMOS_SUPPORT
+        if( (Read_AC_IN() && IS_MASK_CLEAR(CMOS_TEST,b0_CMOS_FunctionKey)) || (LOWBATT_3TIMES != 0))
+#else
+		if( (Read_AC_IN()) || (LOWBATT_3TIMES != 0))
+#endif
         {  
             PWSeqStep = 1;
             PowSeqDelay = 0x00;

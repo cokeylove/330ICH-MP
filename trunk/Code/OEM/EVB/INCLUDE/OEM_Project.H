@@ -171,6 +171,7 @@
 //-----------------------------------------------------------------------------
 //#define Support_Steering_Fun       FALSE	// Support VGA Steering. //ANGELAS050:remove
 //#define Support_ODDZeroPower    FALSE     //: FALSE // Support ODD zero power. //ANGELAS050:remove 
+#define CLEAR_CMOS_SUPPORT      TRUE    //support using CMD to clear CMOS for production line. 
 #define SW_ChkTimeScale    	   	TRUE	// Support Timer.
 
 #define PS8625_SUPPORT         	FALSE

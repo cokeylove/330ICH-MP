@@ -86,6 +86,9 @@ void Hook_68Port(BYTE PM2Cmd)
 	case 0x47:
 		Cmd_47(0x68,PM2Data);
 		break;
+	case 0x48:
+		Cmd_48(0x68,PM2Data);
+		break;
 	case 0x49:
 		break;
 	//MEILING009:S+ Add 8 sec reset test function.
@@ -275,6 +278,9 @@ void Hook_6CPort(BYTE PM2Cmd)
 		PM2DataCount=0x01;
 		break;
 	case 0x47:
+		PM2DataCount=0x01;
+		break;
+	case 0x48:
 		PM2DataCount=0x01;
 		break;
 	case 0x49:

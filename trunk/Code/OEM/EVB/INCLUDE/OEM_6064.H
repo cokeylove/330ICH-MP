@@ -31,6 +31,8 @@ extern void Cmd_44(BYTE nPort);
 extern void Cmd_45(BYTE nPort, BYTE sCount);
 extern void Cmd_46(BYTE nPort,BYTE nData);
 extern void Cmd_47(BYTE nPort, BYTE nData);
+extern void Cmd_48(BYTE nPort, BYTE nData);
+
 extern void Cmd_4A(BYTE nPort, BYTE nData);//MEILING009:Add 8 sec reset test function.
 extern void Cmd_4E(BYTE nPort, BYTE nOffSet);
 extern void Cmd_51(BYTE nPort);

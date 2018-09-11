@@ -110,6 +110,8 @@ void Hook_60Port(BYTE KBHICmd)
 		Cmd_47(0x60,KBHIData);
 		break;
 		// msmart
+	case 0x48:
+	    Cmd_48(0x60,KBHIData);
 		break;
 	case 0x49:
 		//Cmd_49(KBHIData);
@@ -314,6 +316,9 @@ void Hook_64Port(BYTE KBHICmd)
 		KBHIStep=0x01;
 		break;
 	case 0x47:
+		KBHIStep=0x01;
+		break;
+	case 0x48:
 		KBHIStep=0x01;
 		break;
 	case 0x49:
@@ -1007,6 +1012,22 @@ void Cmd_47(BYTE nPort, BYTE nData)
 		break;
 	}
 }
+
+#if CLEAR_CMOS_SUPPORT
+void Cmd_48(BYTE nPort, BYTE nData)
+{
+    if(nData == 0x01)
+    {
+        SET_MASK(CMOS_TEST, BIT2);
+	    SET_MASK(CMOS_TEST, BIT4); 
+    }
+    else
+    {
+        CLEAR_MASK(CMOS_TEST, BIT2);
+	    CLEAR_MASK(CMOS_TEST, BIT4);
+    }
+}
+#endif
 
 //MEILING009:S+ Add 8 sec reset test function.
 void Cmd_4A(BYTE nPort, BYTE nData)
