@@ -149,9 +149,9 @@ void ACPI_Cmd_93(void)		// Oem function of writing EC external ram
 void ACPI_Cmd_DC(void)
 {
     #if WDT_Support
-    DisableInternalWDT();  //G64:Add disable watch dog when flash EC with CMD 0xDC.
+    DisableInternalWDT();  //Add disable watch dog when flash EC with CMD 0xDC.
     #endif
-	ITE_Flash_Utility();    // for 8500
+	ITE_Flash_Utility();    
 }
 
 //----------------------------------------------------------------------------
@@ -315,12 +315,10 @@ void SetTotalBurstTime(void)
  * ------------------------------------------------------------------------- */
 void ACPI_Gen_Int(BYTE Qevent)
 {
-//ANGELAS024:s+Modify ACPI function.
 	if(IS_MASK_CLEAR(SYS_MISC1,ACPI_OS) || (SysPowState!=SYSTEM_S0))
 	{
 		return;
 	}
-//ANGELAS024:e+Modify ACPI function.
     if(Qevent==QeventSCI)
     {
         DisableAllInterrupt();

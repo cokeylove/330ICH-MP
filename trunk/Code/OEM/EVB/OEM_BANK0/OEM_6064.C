@@ -12,7 +12,7 @@
 
 void Cmd_B4(void)
 {
-	//Mos: Stop charger when EC and Bios flash
+	//Stop charger when EC and Bios flash
 	SET_MASK(nStopChgStat3H, ECFLASH);
 	FAN_PWM_OUT;		// Set FAN_PWM OUTPUT.
 	EC_FAN_PWM_HI();	// Set FAN Full On.
@@ -565,22 +565,7 @@ void Cmd_45(BYTE nPort, BYTE sCount)
 {
 	switch( sCount )
 	{
-	/*
-	case 0x60: // Disable boost charger
-		if( ACPOWER_ON && nBattExistGET(CM_1st) && nBattRdCompleteGET(CM_1st) )
-		{
-			InQueueSMBus(SMBUS_PRJ,V_CHARGER,ChargeOption,PRTCL_WRITE_WORD_OEM,(WORD) (( ChargeOptionL + ChargeOptionH*256)&(~BoostEnable)),2 );
-			putchar('!');putchar('0');
-		}
-		break;
-	case 0x61:
-		if( ACPOWER_ON && nBattExistGET(CM_1st) && nBattRdCompleteGET(CM_1st) )
-		{
-			InQueueSMBus(SMBUS_PRJ,V_CHARGER,ChargeOption,PRTCL_WRITE_WORD_OEM,(WORD) (( ChargeOptionL + ChargeOptionH*256)|(BoostEnable)),2 );
-			putchar('!');putchar('1');
-		}
-		break;
-		*/
+	
 	#if Lenovo_Brightness
 	case 0x10://BIOS confirm Panel ok
 		uReserve07.fbit.uE_PanelOK = 1;
@@ -589,6 +574,7 @@ void Cmd_45(BYTE nPort, BYTE sCount)
 		uReserve07.fbit.uE_PanelOK = 0;
 		break;
 	#endif	// Lenovo_Brightness
+	
 	//Y7JERRY085:s+Add CMD for press power button 4s don't shutdown when flash bios.
 	#if chPWSW1WDT
 		case 0x20:	//Enable power switch WDT function
@@ -624,7 +610,6 @@ void Cmd_45(BYTE nPort, BYTE sCount)
 
 	#if Support_USB_Charge
 	case 0x8E:	// USB Enable Charger.
-		//SET_MASK(USB_Charger, b0USB_EN);		// USB enable charger.
 		if (IS_MASK_CLEAR(EMStatusBit, b1SetUSBChgEn))	// if USB charger disable, then enable it..
 		{
 			SET_MASK(EMStatusBit, b1SetUSBChgEn);// USB enable charger.
@@ -638,7 +623,6 @@ void Cmd_45(BYTE nPort, BYTE sCount)
 		break;
 
 	case 0x8F:	// USB Disable charger.
-		//CLR_MASK(USB_Charger, b0USB_EN);	// USB disable charger.
 		if (IS_MASK_SET(EMStatusBit, b1SetUSBChgEn))		// if USB charger enable, then disable it..
 		{
 			CLR_MASK(EMStatusBit, b1SetUSBChgEn);// USB enable charger.
@@ -703,12 +687,11 @@ void Cmd_45(BYTE nPort, BYTE sCount)
 		break;
 
 	case 0xAB:								// Return MBID
-		//Data2Port(nPort, pModuleID);
-		Data2PortDirect(nPort, uMBID);   //
+		Data2PortDirect(nPort, uMBID);   
 		break;
 
 	case 0xAE:
-		Data2PortDirect(nPort, uNovoVPCCount);  //
+		Data2PortDirect(nPort, uNovoVPCCount);  
 		uNovoVPCCount=0;		//JERRYCRZ018:+optimize clear NOVO button states function.
 		break;
 
@@ -748,7 +731,6 @@ void Cmd_45(BYTE nPort, BYTE sCount)
 		uMBGPU = 0x01;
        	if (IS_MASK_SET(SYS_STATUS,AC_ADP))  //read adapter ID after know UMA or dis.
       	{
-   		 	//ADAPTERIDON_LOW();  //MEILING001:remove.
    		 	AdapterIDOn_Flag = 0x01; //MEILING001:add.
  		 	ADPIDON10MS_NUM=0x0a;  
       	} 
@@ -757,12 +739,6 @@ void Cmd_45(BYTE nPort, BYTE sCount)
 		InitChargerIC(); //LMLKBL0014:add.
 		
 		break;
-
-	//LMLKBL0001:S-remove DIS cmd define.
-	/*case 0xE8:
-		CLR_MASK(pProject0,b4VGAType);	//Discreate
-		break;*/
-	//LMLKBL0001:E- remove DIS cmd define.
 
 	case 0xE9:
 		uReserve07.fbit.uACInOutBeep = 0;	// Enable AC in/out beep
@@ -784,7 +760,6 @@ void Cmd_45(BYTE nPort, BYTE sCount)
 		uPJID = 0x02;
        	if (IS_MASK_SET(SYS_STATUS,AC_ADP))  //read adapter ID after know UMA or dis.
       	{
-   		 	//ADAPTERIDON_LOW();  //MEILING001:remove.
    		 	AdapterIDOn_Flag = 0x01; //MEILING001:add.
  		 	ADPIDON10MS_NUM=0x0a;  
       	} 
@@ -798,7 +773,6 @@ void Cmd_45(BYTE nPort, BYTE sCount)
 		uPJID = 0x01;
        	if (IS_MASK_SET(SYS_STATUS,AC_ADP))  //read adapter ID after know UMA or dis.
       	{
-   		 	//ADAPTERIDON_LOW();  //MEILING001:remove.
    		 	AdapterIDOn_Flag = 0x01; //MEILING001:add.
  		 	ADPIDON10MS_NUM=0x0a;  
       	} 
@@ -807,77 +781,6 @@ void Cmd_45(BYTE nPort, BYTE sCount)
 		
 		break;
 	//LMLKBL0001:E+ add AMD or NV discrete cmd define.
-	
-	/*
-	case 0xE6:
-		nHybridGraphicsDIS;	//UMA = DGPU off (No need to read temp)
-		break;
-
-	//[Lenovo2010012802] start
-	#if Lenovo_Switchable
-	case 0xEB:					//Discrete
-		uProject3.bit.u04_SwitchCheck = 1;
-		SET_MASK(SWITCHABLE,SWITCHABLEBTN);	// enable Switchable button.
-		pSmiTrigSource4.bit.STS4_SWableBtn = 1;
-		if(nHybridGraphicsGET)
-			StringToHost1( sSWablebtn_Codes );
-
-		break;
-	case 0xEC:					//UMA
-		uProject3.bit.u04_SwitchCheck = 1;
-		CLR_MASK(SWITCHABLE,SWITCHABLEBTN);	// Disable Switchable button.
-		pSmiTrigSource4.bit.STS4_SWableBtn = 1;
-		if(nHybridGraphicsGET)
-			StringToHost1( sSWablebtnUMA_Codes );
-		break;
-	#endif
-	//[Lenovo2010012802] end
-	#if Lenovo_Optimus
-	case 0xEB:					//Change to Optimus
-		if( IS_MASK_CLEAR(SWITCHABLE,SWITCHABLEBTN) )
-		{
-			//change Graphics
-			if( IS_MASK_SET(cCmd, b6TestBtnEn) )
-			{
-				StringToHost1( sSWablebtn_Codes );
-			}
-			pSwitchSCICnt = T10MS_2SEC;
-			pDevStus.bit.pSwitchableBTN = 1; //save to ROM	//1:Dis; 0:UMA
-			SET_MASK(SWITCHABLE,SWITCHABLEBTN);	// let BIOS to read the
-			//pSmiTrigSource4.bit.STS4_SWableBtn = 1;//Send SCI to BIOS
-		}
-		break;
-	case 0xEC:					//Chagne to UMA
-		if( IS_MASK_SET(SWITCHABLE,SWITCHABLEBTN) )
-		{
-			if( IS_MASK_SET(cCmd, b6TestBtnEn) )
-			{
-				StringToHost1( sSWablebtn_Codes );
-			}
-			pSwitchSCICnt = T10MS_2SEC;
-			pDevStus.bit.pSwitchableBTN = 0; //save to ROM
-			//pSmiTrigSource4.bit.STS4_SWableBtn = 1;//Send SCI to BIOS
-			CLR_MASK(SWITCHABLE,SWITCHABLEBTN);	// Disable Switchable button.
-		}
-		break;
-	#endif
-	case 0xED:	// For Main build Switchable button LED test, Jacko
-		cOsLedCtrl.bit.cOL_CtrlRight = 1;
-		cOsLed1Ctrl.bit.cOL1_SwitchableBtnLed = 1;
-		break;
-	case 0xEE:// Enable Color engine
-		COLOR_ENGINEon;
-		//pnlDCRENon;
-		break;
-	case 0xEF:// Disable Color engine
-		COLOR_ENGINEoff;
-		//pnlDCRENoff;
-		break;
-	}
-	return (WORD)(NONE_RETURN);	// Nothing to send
-	}
-	#endif	// End of SW_OemCmd45Hook
-	*/
 	}
 }
 
@@ -934,7 +837,6 @@ void Cmd_47(BYTE nPort, BYTE nData)
 	switch( nData )
 	{
 	case 0x80:			// Return back the control right to EC
-		//cOsLedCtrl.fbit.cOL_CtrlRight = 0;
 		cOsLedCtrl.word = 0x00;
         cOsLed1Ctrl.word = 0x00;
 		OEM_Write_Leds(Led_Data);   //Hook Oem On-board LED control
@@ -1085,7 +987,6 @@ void Cmd_52_A0(BYTE nPort) {
 }
 
 void Cmd_52_A3(BYTE nPort) {
-	//Data2Port(nPort, (0x10+(CHIP_TYPE0&0x0F))); 
 	Data2PortDirect(nPort, (0x10+(CHIP_TYPE0&0x0F))); 
 }
 
@@ -1144,42 +1045,6 @@ void Cmd_59(BYTE nPort, BYTE nData, BYTE nData2)
 {
 	switch( nData )
 	{
-	/*
-	case 0x68:	// for ITPM test
-		SET_MASK(cCmd, b7LidIgnore);	// Disable lid switch function
-		cDev.bit.cAcS3AutoResume = 1;	// Auto resume from S3 by AC plug in
-		break;
-	case 0x69:	// for ITPM test
-		CLR_MASK(cCmd, b7LidIgnore);
-		cDev.bit.cAcS3AutoResume = 0;
-		break;
-	#if SW_ECRamDump
-       case 0x78:
-		ThermalFan1.FanStatus.bit.FS_FanFineTuneDisable = 1;
-		#if NUMOFFAN >= 2
-		ThermalFan2.FanStatus.bit.FS_FanFineTuneDisable = 1;
-		#endif	// End of NUMOFFAN
-		#if NUMOFFAN >= 3
-		ThermalFan3.FanStatus.bit.FS_FanFineTuneDisable = 1;
-		#endif	// End of NUMOFFAN
-		break;
-       case 0x79:
-		ThermalFan1.FanStatus.bit.FS_FanFineTuneDisable = 0;
-		#if NUMOFFAN >= 2
-		ThermalFan2.FanStatus.bit.FS_FanFineTuneDisable = 0;
-		#endif	// End of NUMOFFAN
-		#if NUMOFFAN >= 3
-		ThermalFan3.FanStatus.bit.FS_FanFineTuneDisable = 0;
-		#endif	// End of NUMOFFAN
-		break;
-
-	case 0x98:
-		cBattFlag0.bit.cBF0_ACOFF = 0;
-		break;
-	case 0x99:
-		cBattFlag0.bit.cBF0_ACOFF = 1;
-		break;
-	*/
 	case 0x60:	// Keep PCH power for RTC
 		SET_MASK(cCmd, bPCHPWR_Keep);
 		break;
@@ -1308,43 +1173,6 @@ void Cmd_59(BYTE nPort, BYTE nData, BYTE nData2)
 	case 0xA4:							// System enter quiet mode for LB state in CMOS setup
 		cBattInform.fbit.cBI_LbBeep = 0;
 		break;
-	/*
-	case 0xA8:	// Fan Control by OS
-		nThermalInitDIS;
-		break;
-	case 0xAD:
-		nWLanWakeEN;
-		break;
-	case 0xAE:
-		nWLanWakeDIS;
-		break;
-	case 0xB7:	// Modem ring enable
-		nMdmWakeEN;
-		break;
-	case 0xB8:	// Modem ring disable
-		nMdmWakeDIS;
-		break;
-
-	case 0xBD:
-		nRTCWakeEN;
-		break;
-	case 0xBE:
-		nRTCWakeDIS;
-		break;
-
-	case 0xCD: 	// Wake up LAN disable
-		nLanWakeDIS;
-		break;
-	case 0xCE: 	// Wake up LAN enable
-		nLanWakeEN;
-		break;
-	case 0xD0: 	// Disable IRQ1
-		IRQ1_Dis();
-		break;
-	case 0xD1: 	// Enable IRQ1
-		IRQ1_En();
-		break;
-	*/
 
 	case 0xB9:							// PME enable
 		uReserve07.fbit.nPmeWakeEN = 1;
@@ -1358,7 +1186,6 @@ void Cmd_59(BYTE nPort, BYTE nData, BYTE nData2)
 		break;
 	case 0xC2:	// Disable battery in learning state with AC
 		cBattFlag0.fbit.cBF0_BLMode = 0;
-		//AcOffProcess(nAcOffCmdDIS);	// Disable AcOff pin
 		break;
 
 	case 0xD2:	// Beep alarm 200ms
@@ -1537,6 +1364,7 @@ void Cmd_72(BYTE nData)
 
 }
 //Add flag for test tool to keep the battery RSOC at 60%
+
 //ANGELAG012:S+.
 void Cmd_75(void) 
 {
@@ -1852,7 +1680,7 @@ void Update_EEPROMB07(void)
 	DisableAllInterrupt();
 #if !EN_PwrSeqTest
 	#if WDT_Support
-	ResetInternalWDT();
+	    ResetInternalWDT();
 	#endif
 #endif
 

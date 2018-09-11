@@ -265,10 +265,8 @@ XWORD   PSW_COUNTER         				_at_(OEMRAM1+0xE3); // (word)
 XBYTE	DS3PowSeqStep			    		_at_(OEMRAM1+0xE6);
 XWORD   DS3PowSeqDelay						_at_(OEMRAM1+0xE7); // (word)
 XBYTE   DRAMRST_CNTRL_CNT					_at_(ECRAM1+0xE9);
-//XWORD	SUSACK_LOW_CNT				_at_(ECRAM1+0xEA);
 //XBYTE   SUSACK_HI_CNT					_at_(ECRAM1+0xEC);
 XBYTE	DRAMRST_CNTRL_LOW_CNT				_at_(ECRAM1+0xED);
-//XBYTE   S3S4DelayCnt						_at_(ECRAM1+0xEE); //ANGELAS012:Remove S3 delay.
 XBYTE   S3S4DelayCnt						_at_(ECRAM1+0xEE); //ANGELAS063:add
 XBYTE   CPUThrottlingDelayTime              _at_(ECRAM1+0xEF); //MEILING052:add.
 
@@ -363,7 +361,6 @@ XBYTE	P80CMOS[7]                      _at_(OEMRAM2+0x90);//from 0x90-0x9E
 XBYTE	P80Index                        _at_(OEMRAM2+0x97);
 XBYTE	P80CMOSSts                      _at_(OEMRAM2+0xA0);
 
-//XWORD	Read_VR_CPU_PWROK               _at_(OEMRAM2+0xb0);
 XWORD   API_ID                          _at_(OEMRAM2+0xb0);
 
 XBYTE	CombineKeyShip                  _at_(OEMRAM2+0xb3); //ANGELAS032: add
@@ -487,8 +484,6 @@ XBYTE	uIffsCnt							_at_(OEMRAM3+0x64);
 XBYTE	uISCT								_at_(OEMRAM3+0x70);
 XBYTE	uISCT_2								_at_(OEMRAM3+0x71);
 
-XBYTE	Reset_Delay                         _at_(OEMRAM3+0x72); 
-XBYTE	Reset_Delay_Count                  	_at_(OEMRAM3+0x73); 
 
 XWORD   ShipModeACK                        	_at_(OEMRAM3+0x75);//Start Shipmode disable 5s loop once 20130608 20:28 
 XBYTE   ShipModeCnt                         _at_(OEMRAM3+0x77);//Start Shipmode disable 5s loop once 20130608 20:28 
@@ -560,6 +555,7 @@ XBYTE	 CRESERVED2B						_at_(NameSpace+0x2B);	// 0x2B
 XBYTE	 CRESERVED2C						_at_(NameSpace+0x2C);	// 0x2C
 
 XBYTE	 PANEL_INFO[16]	    				_at_(NameSpace+0x30);	//ANGELAG008: modify 22 to 16 // 0x30~0x46
+XBYTE    QEVENTFlag                         _at_(NameSpace+0x40);	// 0x40
 XBYTE	 pDevStatus1 			            _at_(NameSpace+0x43);  // 0x43 //ANGELAG008: add
 XBYTE EMStatusBit2                          _at_(NameSpace+0x4A);	// 0x4A //ANGELAS032: add
 //ANGELAS107:S+Add code for GBSI function.
@@ -730,6 +726,7 @@ XBYTE	PECI_Err_CNT				_at_(OEMRAM5+0x21);
 XBYTE	PECI_GET_TEMPL				_at_(OEMRAM5+0x24);
 XBYTE	PECI_GET_TEMPH				_at_(OEMRAM5+0x25);
 
+XBYTE   PCHErrCnt					_at_(OEMRAM5+0x38);
 XBYTE	ERR_THMSTS					_at_(OEMRAM5+0x39);
 XBYTE	TMErrCnt					_at_(OEMRAM5+0x3A);
 XBYTE	VGAErrCnt					_at_(OEMRAM5+0x3B);
@@ -740,7 +737,7 @@ XBYTE	vgaok						_at_(OEMRAM5+0x3E);
 XWORD	cWriteCurrentPL1			_at_(OEMRAM5+0x40);
 XWORD	cWriteCurrentPL2			_at_(OEMRAM5+0x42);
 
-XBYTE 	USB_Delay					_at_(OEMRAM5+0x44);  //ANGELAG008: modify BYTE to XBYTE
+XBYTE 	USB_Delay					_at_(OEMRAM5+0x44); 
 
 //COKEYXU013:S+ ladder fan relative regs.
 XBYTE	  Fan1RPM			       _at_ (OEMRAM5+0x46);
@@ -768,7 +765,9 @@ XBYTE	   Fan2On_Step8 		   _at_ (OEMRAM5+0x5F);
 
 
 XBYTE  pDevStatus3 				_at_ (OEMRAM5 + 0x60); //ANGELAG008: add 
-XWORD   DisCPUTurboFor90s                   _at_(OEMRAM5+0x6A);   //COKEYXU029:add
+XBYTE   DisCPUTurboFor90s                   _at_(OEMRAM5+0x6A);   //COKEYXU029:add
+XBYTE   CountOfWinAndX          _at_(OEMRAM5+0x6B);
+
 
 XBYTE	MaxCPU_MCHTemp				_at_(OEMRAM5+0x6C);
 // Reserve 0x056D~057F
@@ -868,7 +867,6 @@ XBYTE    GPUProchotONCnt        	_at_ (OEMRAM5+0xC6);
 XBYTE    cBATTLowThrottling   		_at_ (OEMRAM5+0xC7);
 //MEILING055:E+.
 XBYTE    cGPUBattLTPThrottling   	_at_ (OEMRAM5+0xC8); //COKEYXU046:add
-XBYTE    BatteryOCPDelay   	_at_ (OEMRAM5+0xC9); //ANGELAG017: add
 XBYTE    cGPUBattPsysThrottling   	_at_ (OEMRAM5+0xCA); //ANGELAG019: add
 
 XBYTE	 GPU_Prochot		_at_ (OEMRAM5+0xCB); //ANGELAG020: add 
@@ -923,8 +921,6 @@ XBITS_8  	cBattFlag0				_at_(OEMRAM6+0x06);
 XBITS_8		cDev   					_at_(OEMRAM6+0x07);
 
 XBITS_8  	cSPIEEPROM  			_at_(OEMRAM6+0x0F);
-
-XBITS_8  	cThrottlingSet			_at_(OEMRAM6+0x15); 	// 00: Nothing, 01: Thr 12.5%, 02: Thr 25%,..,08: Thr 100%
 
 XBYTE 		cTargetGauge  			_at_(OEMRAM6+0x2B);
 XBYTE		uCpuLoadCnt			_at_(OEMRAM6+0x2C);
@@ -1193,7 +1189,9 @@ XBYTE	  RPMTimeShift			   _at_ (OEMRAMB+0xC8);
 XBYTE	  DebugFan1RPMT 		   _at_ (OEMRAMB+0xC9);
 //COKEYXU013:E+ ladder fan relative regs.
 
-
+XBYTE      PCHTEMP_Buff_1 		   _at_ (OEMRAMB+0xCA);
+XBYTE      PCHTEMP_Buff_2 		   _at_ (OEMRAMB+0xCB); 
+XBYTE      PCHTEMP_Buff_3 		   _at_ (OEMRAMB+0xCC);
 
 
 

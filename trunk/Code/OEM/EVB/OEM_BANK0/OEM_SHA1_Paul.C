@@ -352,7 +352,6 @@ void OEM_BAT_Authentication(void)
 			break;
 		case 4:
 			GetChallengeFromBat();
-//			Compare_Auth_Result();
 			Service_Auth_Step=0;
 			break;
 		case 0:

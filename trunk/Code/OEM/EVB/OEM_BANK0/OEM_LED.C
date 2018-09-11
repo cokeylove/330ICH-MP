@@ -399,7 +399,7 @@ void Lenovo_LED(void)
 					Battery_Charge_Discharge_LED_CONTROL(100,2);//White 0.1s off/5s on
 				}
 				else
-				{	// under 20%  Amber 0.25s On/ 0.25s Off for total 1.25s, remain off for 3s
+				{	// under 20%  Amber 0.25s On/ 0.25s Off for total 1.25s, remain off for 2s
 					BAT_LOW_LED_Cnt = BAT_LOW_LED_Cnt + 1;   
 					
 					if(BAT_LOW_LED_Cnt <= 25)
@@ -409,7 +409,7 @@ void Lenovo_LED(void)
 					else 
 					{
 						Battery_LED_Reset();
-						if(BAT_LOW_LED_Cnt==65) //ANGELAG003: Modify 85 to 65
+						if(BAT_LOW_LED_Cnt==65) 
 						{
 							BAT_LOW_LED_Cnt=0;
 						}
@@ -480,17 +480,6 @@ void Lenovo_LED(void)
 			}
 		}
 	}
-	/*
-	if ( SystemIsS0 )
-	{
-		if ( (DEVICEMODULE & 0x43) != 0 )
-		{ RF_LED_LOW(); }	// RF LED ON.
-		else
-		{ RF_LED_HI(); }	// RF LED OFF.
-	}
-	else
-	{ RF_LED_HI(); }		// RF LED OFF.
-	*/
 
 	#if Support_TPLED
 	if ( IS_MASK_SET(pDevStus, pENABLE_TP) )

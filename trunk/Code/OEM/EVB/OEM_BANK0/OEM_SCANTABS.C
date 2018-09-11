@@ -215,13 +215,24 @@ const unsigned char code EtKey_S3WakeUP_Tables[] =
 	0x55,0x55,0x55,
 };
 
-//----------------------------------------------------------------------------
-// The function of hotkey Fn + F1
-//----------------------------------------------------------------------------
+/*
+*******************************************************************************
+* Function name: HotKey_Fn_F1      
+*
+* Descriptoin: The function of hotkey Fn + F1. Mute.
+*
+* Invoked by: costomer_function(),Diag_interface() and Hook_Timer100msEventB()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void HotKey_Fn_F1(BYTE event)
 {
-	//MUTE
-	if(IS_MASK_SET(SYS_MISC1,ACPI_OS))//: REMOVE MBID_READY judge
+	if(IS_MASK_SET(SYS_MISC1,ACPI_OS))
 	{
 		if ( event == MAKE_EVENT )
 		{
@@ -240,12 +251,24 @@ void HotKey_Fn_F1(BYTE event)
 	}
 }
 
-//----------------------------------------------------------------------------
-// The function of hotkey Fn + F2
-//----------------------------------------------------------------------------
+/*
+*******************************************************************************
+* Function name: HotKey_Fn_F2      
+*
+* Descriptoin: The function of hotkey Fn + F2. Volume Down.
+*
+* Invoked by: costomer_function(),Diag_interface() and Hook_Timer100msEventB()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void HotKey_Fn_F2(BYTE event)
 {
-	if(IS_MASK_SET(SYS_MISC1,ACPI_OS))// : REMOVE MBID_READY judge
+	if(IS_MASK_SET(SYS_MISC1,ACPI_OS))
 	{
 		if ((event == MAKE_EVENT)||(event == REPEAT_EVENT))
 		{
@@ -264,12 +287,24 @@ void HotKey_Fn_F2(BYTE event)
 	 }
 }
 
-//----------------------------------------------------------------------------
-// The function of hotkey Fn + F3
-//----------------------------------------------------------------------------
+/*
+*******************************************************************************
+* Function name: HotKey_Fn_F3      
+*
+* Descriptoin: The function of hotkey Fn + F3. Volume Up.
+*
+* Invoked by: costomer_function(),Diag_interface() and Hook_Timer100msEventB()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void HotKey_Fn_F3(BYTE event)
 {
-	if(IS_MASK_SET(SYS_MISC1,ACPI_OS))//// : REMOVE MBID_READY judge
+	if(IS_MASK_SET(SYS_MISC1,ACPI_OS))
 	{
 		if ((event == MAKE_EVENT)||(event == REPEAT_EVENT))
 		{
@@ -288,12 +323,24 @@ void HotKey_Fn_F3(BYTE event)
 	}  
 }
 
-//----------------------------------------------------------------------------
-// The function of hotkey Fn + F4
-//----------------------------------------------------------------------------
+/*
+*******************************************************************************
+* Function name: HotKey_Fn_F4      
+*
+* Descriptoin: The function of hotkey Fn + F4. Mic function.
+*
+* Invoked by: costomer_function(),Diag_interface() and Hook_Timer100msEventB()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void HotKey_Fn_F4(BYTE event)
 {
-	//MEILING029:S+ add send QEvent to APP for mic function.
+	//add send QEvent to APP for mic function.
 	if(event == MAKE_EVENT)
     {
 		if ( IS_MASK_SET(SYS_MISC1, ACPI_OS) )
@@ -303,47 +350,23 @@ void HotKey_Fn_F4(BYTE event)
 			ECSMI_SCIEvent(SDV_VPC_notify);     
 		}
     }
-	//MEILING029:E+.
-	
-	//MEILING029:S- remove send scan code to driver for mic function.
-	//MEILING018:S+ add Mic enable/disable function.
-	/*if(IS_MASK_SET(SYS_MISC1,ACPI_OS))
-	{
-		
-		if (event == MAKE_EVENT)
-		{	
-			Buffer_Key(0xE0);	
-			Buffer_Key(0x53);
-		}
-	}*/
-	//MEILING018:E+.
-	//MEILING029:E-.
-	
-	//MEILING006: S- remove close current window function.
-	/*if(IS_MASK_SET(SYS_MISC1,ACPI_OS))
-	 {
-		if (event == MAKE_EVENT)
-		{	
-			Buffer_Key(0x11);	// ALT 	
-			Buffer_Key(0x0C);	// F4 
-		 }
-		else
-		{
-			if (event == BREAK_EVENT)
-			{
-				Buffer_Key(0xF0);	
-				Buffer_Key(0x11);	
-				Buffer_Key(0xF0);	
-				Buffer_Key(0x0C);	
-			}
-		}
-	}*/
-	//MEILING006: E-.
 }
 
-//----------------------------------------------------------------------------
-// The function of hotkey Fn + F5
-//----------------------------------------------------------------------------
+/*
+*******************************************************************************
+* Function name: HotKey_Fn_F5      
+*
+* Descriptoin: The function of hotkey Fn + F5. Refresh.
+*
+* Invoked by: costomer_function(),Diag_interface() and Hook_Timer100msEventB()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void HotKey_Fn_F5(BYTE event)
 {
 	if(IS_MASK_SET(SYS_MISC1,ACPI_OS))
@@ -363,55 +386,25 @@ void HotKey_Fn_F5(BYTE event)
  	}  
 }
 
-//----------------------------------------------------------------------------
-// The function of hotkey Fn + F6
-//----------------------------------------------------------------------------
+/*
+*******************************************************************************
+* Function name: HotKey_Fn_F6      
+*
+* Descriptoin: The function of hotkey Fn + F6. TP function.
+*
+* Invoked by: costomer_function(),Diag_interface() and Hook_Timer100msEventB()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void HotKey_Fn_F6(BYTE event)
 {
 	if ( (IS_MASK_SET(SYS_MISC1, ACPI_OS)) && (TouchPadCount == 0))
-	{
-    /*	if(event == MAKE_EVENT) //ANGELAG008: remove start
-    	{
-			if(uReserve07.fbit.nTPDriverIn ==0)
-			{
-				if (IS_MASK_SET(pDevStus, pENABLE_TP))
-				{					
-					ECSend2Port(2, 0xF5);
-                    TPCLK_OUTPUT;
-                    TPCLK_LOW();
-                    TouchPadCount = 3;
-					CLR_MASK(pDevStus, pENABLE_TP);
-				}
-				else
-				{
-
-                    TPCLK_OUTPUT;
-                    TPCLK_HI();
-                    TPCLK_ALT;
-					ECSend2Port(2, 0xF4);
-					TouchPadCount = 3;
-					SET_MASK(pDevStus, pENABLE_TP);
-				}
-			}
-			else
-			{
-				e0_prefix_code(0x51,event);
-				CPL_MASK(pDevStus, pENABLE_TP);
-				SET_MASK(StatusKeeper, b5TP_Event);
-			}
-
-			if (uReserve07.fbit.nVPCDriverIn==1)	// Check VPC driver.
-			{
-	        	        uVPCeventSource = TouchPad;
-		    	        uVPCeventSource2 = 0;
-				ECSMI_SCIEvent(SDV_VPC_notify);
-			}
-		}
-		else if(event == BREAK_EVENT && uReserve07.fbit.nTPDriverIn==1)
-		{
-			e0_prefix_code(0x51,event);
-		}*/ //ANGELAG008: remove end
-//ANGELAG008: add start
+	{        
 		if(event == MAKE_EVENT)
 		{
 			if(IS_MASK_SET(pDevStatus1,b5TPDRIVER_STATUS)) 
@@ -446,18 +439,28 @@ void HotKey_Fn_F6(BYTE event)
 				 }	
 			}
 
-		}
-//ANGELAG008: add end
+		}    
     }
 }
 
-//----------------------------------------------------------------------------
-// The function of hotkey Fn + F7
-//----------------------------------------------------------------------------
+
+/*
+*******************************************************************************
+* Function name: HotKey_Fn_F7      
+*
+* Descriptoin: The function of hotkey Fn + F7. Airplane function.
+*
+* Invoked by: costomer_function(),Diag_interface() and Hook_Timer100msEventB()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void HotKey_Fn_F7(BYTE event)
 {
-	//MEILING018:S+ add airplane fuciton.
-	//MEILING006: S-remove airplane fuciton.
     if(event == MAKE_EVENT)
     {
 		if ( IS_MASK_SET(SYS_MISC1, ACPI_OS) )
@@ -465,19 +468,28 @@ void HotKey_Fn_F7(BYTE event)
 	    	uVPCeventSource = 0;
 		    uVPCeventSource2 = App_Control_RF;
 			ECSMI_SCIEvent(SDV_VPC_notify);     
-			//ECSMI_SCIEvent(F7_Airplan_notify); 
 		}
     }
-    //MEILING006: E-.
-    //MEILING018:E+.
 }
 
-//----------------------------------------------------------------------------
-// The function of hotkey Fn + F8
-//----------------------------------------------------------------------------
+/*
+*******************************************************************************
+* Function name: HotKey_Fn_F8      
+*
+* Descriptoin: The function of hotkey Fn + F8. Camera on/off.
+*
+* Invoked by: costomer_function(),Diag_interface() and Hook_Timer100msEventB()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void HotKey_Fn_F8(BYTE event)
 {
-	//MEILING029:S+ add camera enable/disable function.
+	//add camera enable/disable function.
 	if(event == MAKE_EVENT)
     {
 		if ( IS_MASK_SET(SYS_MISC1, ACPI_OS) )
@@ -489,54 +501,26 @@ void HotKey_Fn_F8(BYTE event)
 			CPL_MASK(pDevStus, pCamera);   
 		}
     }
-	//MEILING029:E+.
-	
-	//MEILING018:S- remove airplane fuciton.
-	//MEILING006: S+ add airplane fuciton.
-    /*if(event == MAKE_EVENT)
-    	{
-		if ( IS_MASK_SET(SYS_MISC1, ACPI_OS) )
-		{
-	    	uVPCeventSource = 0;
-		    uVPCeventSource2 = App_Control_RF;
-			ECSMI_SCIEvent(SDV_VPC_notify);     
-			//ECSMI_SCIEvent(F7_Airplan_notify); 
-		}
-    	}*/
-    //MEILING006: E+.
-    //MEILING018:E-.
-
-	//MEILING006: S- remove view app function.
-	/*if(IS_MASK_SET(SYS_MISC1,ACPI_OS))
-	{
-		if (event == MAKE_EVENT)
-		{
-			Buffer_Key(0x14);	 
-    		Buffer_Key(0x11);	 
-    		Buffer_Key(0x0D);	
-		}
-		else
-		{
-			if (event == BREAK_EVENT)
-			{
-				Buffer_Key(0xF0);
-				Buffer_Key(0x14);
-				Buffer_Key(0xF0);
-    				Buffer_Key(0x11);
-				Buffer_Key(0xF0);
-    				Buffer_Key(0x0D);
-			}
-		}
-	 }*/
-	 //MEILING006: E-.
 }
 
-//----------------------------------------------------------------------------
-// The function of hotkey Fn + F9
-//----------------------------------------------------------------------------
+/*
+*******************************************************************************
+* Function name: HotKey_Fn_F9      
+*
+* Descriptoin: The function of hotkey Fn + F9. Win+L Lock Screen function.
+*
+* Invoked by: costomer_function(),Diag_interface() and Hook_Timer100msEventB()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void HotKey_Fn_F9(BYTE event)
 {
-	//MEILING018:S+ add Lock Screen function.
+	//add Lock Screen function.
 	if(IS_MASK_SET(SYS_MISC1,ACPI_OS))
     {
 		if ((event == MAKE_EVENT)||(event == REPEAT_EVENT))
@@ -557,85 +541,26 @@ void HotKey_Fn_F9(BYTE event)
 			}
 		}
 	}  
-	//MEILING018:E+.
-
-	//MEILING018:S- remove projector function.
-	//MEILING006: S+ add change display mode function.(Fixed The display mode auto change to the nearly mode when change the mode via lenovo hotkey)
-	/*if(IS_MASK_CLEAR(ACPI_HOTKEY, HotkeyDisable))
-	{
-	  	if(event == MAKE_EVENT)
-		{
-			if ( IS_MASK_SET(SYS_MISC1, ACPI_OS) )
-			{
-				if( IS_MASK_CLEAR(SysStatus, FnF3WinKeyDn) )
-				{
-					e0_prefix_code(0x1F,event); // Win Key.
-					SET_MASK(SysStatus, FnF3WinKeyDn);
-				}
-				simple_code(0x4D,event);		// P Key.
-			}
-		}
-	
-		if (event == BREAK_EVENT)
-		{
-			if ( IS_MASK_SET(SYS_MISC1, ACPI_OS) )
-			{
-				simple_code(0x4D,event);	// P Key.
-				SET_MASK(SysStatus, FnF3PKeyUp);
-			}
-		}
-	}
-	else
-	{
-		if(IS_MASK_SET(SYS_MISC1,ACPI_OS))
-       	{
-			if ((event == MAKE_EVENT)||(event == REPEAT_EVENT))
-			{
-				Buffer_Key(0xE0);
-				Buffer_Key(0x1F);
-				Buffer_Key(0x4D);
-			}
-			else
-			{
-				if (event == BREAK_EVENT)
-				{
-					Buffer_Key(0xF0);
-					Buffer_Key(0x4D);
-					Buffer_Key(0xE0);
-					Buffer_Key(0xF0);
-					Buffer_Key(0x1F);
-				}
-			}
-		}
-	}*/
-	//MEILING006: E+.
-	//MEILING018:E-.
-	
-	//MEILING006: S- remove turn on/off backlight function.
-   	/*if(event == MAKE_EVENT)
-    	{
-		if ( IS_MASK_CLEAR(pProject0, b0DispToggleEn) )
-		{
-			SET_MASK(pProject0,b0DispToggleEn);
-			SET_MASK(cCmd, b3BkOff);	// Turn off backlight.
-		}
-		else
-		{
-			CLR_MASK(cCmd, b3BkOff);	// Turn on backlight.
-			uVPCeventSource = Inverter;
-	    	uVPCeventSource2 = 0;
-			ECSMI_SCIEvent(SDV_VPC_notify);
-        	}
-    	}*/
-    //MEILING006: E-.
 }
 
-//----------------------------------------------------------------------------
-// The function of hotkey Fn + F10
-//----------------------------------------------------------------------------
+/*
+*******************************************************************************
+* Function name: HotKey_Fn_F10      
+*
+* Descriptoin: The function of hotkey Fn + F10. projector function.
+*
+* Invoked by: costomer_function(),Diag_interface() and Hook_Timer100msEventB()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void HotKey_Fn_F10(BYTE event)
 {
-	//MEILING018:S+ add projector function.(Fixed The display mode auto change to the nearly mode when change the mode via lenovo hotkey)
+	//add projector function.(Fixed The display mode auto change to the nearly mode when change the mode via lenovo hotkey)
 	if(IS_MASK_SET(ACPI_HOTKEY, HotkeyDisable))
 	{
 	  	if(event == MAKE_EVENT)
@@ -683,35 +608,23 @@ void HotKey_Fn_F10(BYTE event)
 			}
 		}
 	}
-	//MEILING018:E+.
-	
-	//MEILING006: S- remove change display mode function.
-	/*if(IS_MASK_SET(SYS_MISC1,ACPI_OS))
-    	{
-		if ((event == MAKE_EVENT)||(event == REPEAT_EVENT))
-		{
-			Buffer_Key(0xE0);
-			Buffer_Key(0x1F);
-			Buffer_Key(0x4D);
-		}
-		else
-		{
-			if (event == BREAK_EVENT)
-			{
-				Buffer_Key(0xF0);
-				Buffer_Key(0x4D);
-				Buffer_Key(0xE0);
-				Buffer_Key(0xF0);
-				Buffer_Key(0x1F);
-			}
-		}
-	}*/
-	//MEILING006: E-.
 }
 
-//----------------------------------------------------------------------------
-// The function of hotkey Fn + F11
-//----------------------------------------------------------------------------
+/*
+*******************************************************************************
+* Function name: HotKey_Fn_F11      
+*
+* Descriptoin: The function of hotkey Fn + F11. Brightness down.
+*
+* Invoked by: costomer_function(),Diag_interface() and Hook_Timer100msEventB()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void HotKey_Fn_F11(BYTE event)
 {
     if( event != BREAK_EVENT )
@@ -764,9 +677,21 @@ void HotKey_Fn_F11(BYTE event)
 
 }
 
-//----------------------------------------------------------------------------
-// The function of hotkey Fn + F12			[ Win + M ->  Win + Q ->  ESC ]
-//----------------------------------------------------------------------------
+/*
+*******************************************************************************
+* Function name: HotKey_Fn_F12      
+*
+* Descriptoin: The function of hotkey Fn + F12. Brightness Up.
+*
+* Invoked by: costomer_function(),Diag_interface() and Hook_Timer100msEventB()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void HotKey_Fn_F12(BYTE event)
 {
    	if( event != BREAK_EVENT )
@@ -818,9 +743,21 @@ void HotKey_Fn_F12(BYTE event)
     }
 }
 
-//----------------------------------------------------------------------------
-// The function of hotkey Fn +Plus
-//----------------------------------------------------------------------------
+/*
+*******************************************************************************
+* Function name: HotKey_Fn_Plus      
+*
+* Descriptoin: The function of hotkey Fn + Plus. Not used.
+*
+* Invoked by: costomer_function(),Diag_interface() and Hook_Timer100msEventB()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void HotKey_Fn_Plus(BYTE event)
 {
     if(event == MAKE_EVENT)
@@ -837,9 +774,22 @@ void HotKey_Fn_Plus(BYTE event)
 		}
     }
 }
-//----------------------------------------------------------------------------
-// The function of hotkey Fn +Plus
-//----------------------------------------------------------------------------
+
+/*
+*******************************************************************************
+* Function name: HotKey_Fn_Minus      
+*
+* Descriptoin: The function of hotkey Fn + Minus. Not used.
+*
+* Invoked by: costomer_function(),Diag_interface() and Hook_Timer100msEventB()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void HotKey_Fn_Minus(BYTE event)
 {
     if(event == MAKE_EVENT)
@@ -857,9 +807,21 @@ void HotKey_Fn_Minus(BYTE event)
     }
 }
 
-//----------------------------------------------------------------------------
-// The function of hotkey Fn + ESC
-//----------------------------------------------------------------------------
+/*
+*******************************************************************************
+* Function name: HotKey_Fn_ESC      
+*
+* Descriptoin: The function of hotkey Fn + ESC. Not used.
+*
+* Invoked by: costomer_function(),Diag_interface() and Hook_Timer100msEventB()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void HotKey_Fn_ESC(BYTE event)
 {
 	#if HotKey_WebCam
@@ -877,93 +839,22 @@ void HotKey_Fn_ESC(BYTE event)
 	#endif	// HotKey_WebCam
 }
 
-//----------------------------------------------------------------------------
-// The function of hotkey Fn + up arrow
-//----------------------------------------------------------------------------
-void HotKey_Fn_UP(BYTE event)
-{
-    //if((SYS_STATUS & 0x07) == 0x02)	// linpus
-    //{
-    //    e0_prefix_code(0x7F,event);	// ScanCode 0x54.
-    //}
-    //else
-    //{
-	/* 
-    	if( event != BREAK_EVENT )
-    	{
-        	if( cBrightUpDelayCnt == 0 )
-            {
-            		cBrightUpDelayCnt = Timer_5;
-    			uVPCeventSource = VPCeventBrightness;
-                	uVPCeventSource2 = 0;
-    			if( (SYS_STATUS & 0x07) != 0 )		// Check DOS mode.
-    			{ ECQEvent(LCD_BRIG_INC_EVENT); }	// 0x12 inform bios.
-    			else
-    			{
-    				if( nBrightValue < (BRIGHT_MAX_STEP - 1) )
-    				{
-    					nBrightValue++;
-    					cRecoveryBrightValue = nBrightValue;
-    				}
-    				//if (uReserve07.fbit.nVPCDriverIn==1)	// Check VPC driver.
-    				//{ ECQEvent(SDV_VPC_notify); }			// 0x44 for Levono used.
-    			}
-    		}
-            else
-            { cBrightUpDelayCnt--; }
-    	}
-    	else if( event == BREAK_EVENT )
-    	{
-            cBrightUpDelayCnt = 0;
-        }
- 	*/        
-    //}
-}
 
-//----------------------------------------------------------------------------
-// The function of hotkey Fn + down arrow
-//----------------------------------------------------------------------------
-void HotKey_Fn_DOWN(BYTE event)
-{
-    //if((SYS_STATUS & 0x07) == 0x02)	// linpus
-    //{
-    //    e0_prefix_code(0x73,event);	// ScanCode 0x4C.
-    //}
-    //else
-    //{
-	/*
-       if( event != BREAK_EVENT )
-    	{
-        	if( cBrightDnDelayCnt == 0 )
-            {
-            	cBrightDnDelayCnt = Timer_5;
-    			uVPCeventSource = VPCeventBrightness;
-    		    uVPCeventSource2 = 0;
-    			if( (SYS_STATUS & 0x07) != 0 )		// Check DOS mode.
-    			{ ECQEvent(LCD_BRIG_DEC_EVENT); }	// 0x11 inform bios.
-    			else
-    			{
-    				if( nBrightValue != 0 )
-    				{
-    					nBrightValue--;
-    					cRecoveryBrightValue = nBrightValue;
-    				}
-    				//if (uReserve07.fbit.nVPCDriverIn==1)	// Check VPC driver.
-                	//{ ECQEvent(SDV_VPC_notify); }	// 0x44 for Levono used.
-    			}
-    		}
-    		else
-        	{ cBrightDnDelayCnt--; }
-    	}
-    	else if( event == BREAK_EVENT )
-    	{ cBrightDnDelayCnt = 0; }
-    	//}
-	*/   
-}
-
-//----------------------------------------------------------------------------
-// The function of hotkey Fn + left arrow
-//----------------------------------------------------------------------------
+/*
+*******************************************************************************
+* Function name: HotKey_Fn_LEFT      
+*
+* Descriptoin: The function of hotkey Fn + LEFT. Not used.
+*
+* Invoked by: costomer_function(),Diag_interface() and Hook_Timer100msEventB()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void HotKey_Fn_LEFT(BYTE event)
 {
     if(event == MAKE_EVENT)
@@ -978,9 +869,21 @@ void HotKey_Fn_LEFT(BYTE event)
     }  
 }
 
-//----------------------------------------------------------------------------
-// The function of hotkey Fn + right arrow
-//----------------------------------------------------------------------------
+/*
+*******************************************************************************
+* Function name: HotKey_Fn_RIGHT      
+*
+* Descriptoin: The function of hotkey Fn + right. Not used.
+*
+* Invoked by: costomer_function(),Diag_interface() and Hook_Timer100msEventB()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void HotKey_Fn_RIGHT(BYTE event)
 {
     if(event == MAKE_EVENT)
@@ -995,31 +898,24 @@ void HotKey_Fn_RIGHT(BYTE event)
     }
 }
 
-//----------------------------------------------------------------------------
-// The function of hotkey Fn + Space
-//---------------------------------------------------------------------------
-
-//ELMERZH001:S+ add PWM control Keyboard backlight,transplant code from 720s.  
+/*
+*******************************************************************************
+* Function name: HotKey_Fn_Space      
+*
+* Descriptoin: The function of hotkey Fn + Space. Brightness Up.
+*
+* Invoked by: costomer_function(),Diag_interface() and Hook_Timer100msEventB()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
+//add PWM control Keyboard backlight.  
 void HotKey_Fn_Space(BYTE event)
 {
-/*
-	if (event == MAKE_EVENT)
-	{
-		if(0x00==LED_KB_PWM_Step)   
-        {
-            LED_KB_PWM_Step=LED_KB_PWM_Step+2;   
-        }     
-        else
-        {
-            LED_KB_PWM_Step++;
-        }  
-		CLR_MASK(EMStatusBit, b2KBLEDChk);
-		CLR_MASK(EMStatusBit, b0SetKBLEDON);
-		UpdateLEDBL_delay = 6;			// Delay 3 sec for Update LED Back Light.
-	}
-*/
-
-    	//72JERRY022: S+Modify GPIO setting follow SIT.
 	if(SystemIsS5 || SystemIsS3)
 	{
 		return;
@@ -1033,7 +929,7 @@ void HotKey_Fn_Space(BYTE event)
 		{
 			LED_KB_PWM_Step=0;
 		}
-//72JERRY036:s+ Modify KB backlight control for lenovo app setting.
+//Modify KB backlight control for lenovo app setting.
 		if(LED_KB_PWM_Step!=0)
 		{
 			SET_MASK(EMStatusBit, b0SetKBLEDON);
@@ -1042,7 +938,6 @@ void HotKey_Fn_Space(BYTE event)
 		{
 			CLEAR_MASK(EMStatusBit, b0SetKBLEDON);
 		}
-//72JERRY036: e+Modify KB backlight control for lenovo app setting.	
 		UpdateLEDBL_delay = 0;			// COKEYXU010: Delay 0 sec for Update LED Back Light.
 		if(uReserve07.fbit.nVPCDriverIn==1)
 		{
@@ -1050,10 +945,8 @@ void HotKey_Fn_Space(BYTE event)
     		uVPCeventSource2 = 0;
 			ECSMI_SCIEvent(SDV_VPC_notify);
 		}
-//72JERRY022: E+Modify GPIO setting follow SIT.
 	}
 }
-//ELMERZH001: E+ add PWM control Keyboard backlight,transplant code from 720s. 
 
 const FUNCT_PTR_V_B code HotKey_Fn_Fx[] =
 {
@@ -1073,7 +966,7 @@ const FUNCT_PTR_V_B code HotKey_Fn_Fx[] =
 //	HotKey_Fn_UP,    	// Fn + up arrow
 //	HotKey_Fn_DOWN,    	// Fn + down arrow
     HotKey_Fn_Plus,     // Fn+Plus
-    HotKey_Fn_Minus,    // Fn+Plus
+    HotKey_Fn_Minus,    // Fn+Minus
 	HotKey_Fn_LEFT,    	// Fn + left arrow   //:Used for Fn+ "+"(small keyboard)
 	HotKey_Fn_RIGHT,  	// Fn + right arrow  //:Used for Fn+ "-"(small keyboard)
 	HotKey_Fn_Space,	// Fn + Space
@@ -1400,14 +1293,14 @@ const BYTE code sskey2_overlay_table[] =
 	0x4D,0x91, 	// F9h 	P <-> Pause  //MEILING020:change (0x96,0x7E) to (0x4D,0x91)	
 	0x21,0x7E,  // FAh	C <-> SrcLk  //MEILING020:change (0x97,0xC2) to (0x21,0x7E)
 	0x35,0x93,	// FBh	Y <-> SysRq //MEILING020:change (0x95,0x92) to (0x1B,0x93)  //MEILING027:change (0x1B,0x93) to (0x35,0x93). 
-	0x76,0xDC,	// FCh		
+	0x76,0xDC,	// FCh	ESC	
 	0x29,0xE1,	// FDh   Space <-> KB Backlight
 	0x5A,0x81,	// FEh	
 	0xC5,0xC5,	// FFh	
 };
 												
 const BYTE code sskey2_overlay_table1[] =
-{//Normal   Fn   	// Keyboard matrix index
+{//Fn   Normal   	// Keyboard matrix index
 	0xD0,0x05,	// E0H    Mute <-> F1     	 
 	0xD1,0x06,	// E1H	Vol Down <-> F2	  	 
 	0xD2,0x04,	// E2H	Vol Up <-> F3	  	   
@@ -1436,7 +1329,7 @@ const BYTE code sskey2_overlay_table1[] =
 	0x4D,0x91, 	// F9h 	P <-> Pause  //MEILING020:change (0x96,0x7E) to (0x4D,0x91)	
 	0x21,0x7E,  // FAh	C <-> SrcLk  //MEILING020:change (0x97,0xC2) to (0x21,0x7E)
 	0x35,0x93,	// FBh	Y <-> SysRq //MEILING020:change (0x95,0x92) to (0x1B,0x93)  //MEILING027:change (0x1B,0x93) to (0x35,0x93). 
-	0xDC,0x76,	// FCh	
+	0xDC,0x76,	// FCh	ESC
 	0x29,0xE1,	// FDh  Space <-> KB Backlight	
 	0x81,0x5A, 	// FEh		
 	0xC5,0xC5, 	// FFh	
@@ -1570,7 +1463,7 @@ const BYTE code sskey3_80_table[] =
 	14	, DO_COSTOMER_FUNCTION,   	// Function key Down arrow	[DEh]
 	15	, DO_COSTOMER_FUNCTION,  	// Function key Left arrow	[DFh]
 	16	, DO_COSTOMER_FUNCTION,  	// Function key Right arrow	[E0h]
-	17	, DO_COSTOMER_FUNCTION,  	// Function key Right arrow	[E1h]
+	17	, DO_COSTOMER_FUNCTION,  	// Function key Space [E1h]
 };
 
 									// Reserved 0xE0 ~ 0xFF
@@ -1588,40 +1481,68 @@ const BYTE code sskey3_80_table[] =
 #define DebugKeyO			0x44	// O
 #define DebugKeyP			0x4D	// P//change "Fn+D"to"Fn+D+P".
 #define DebugKeyD			0x23	// D  
-#define DebugKeyV			0x2A	// V  ADD //ANGELAS032: add
-#define Crisiskey05			0xE1	// F2    //ANGELAG001: add
-#define Crisiskey06			0xEB	// F12  //ANGELAG001: add
+#define DebugKeyV			0x2A	// V  
+#define Crisiskey05			0xE1	// F2    
+#define Crisiskey06			0xEB	// F12  
 
-//ANGELAG001:S+ add CrisisHotkey05 function.
+
+/*
+*******************************************************************************
+* Function name: CrisisHotkey05      
+*
+* Descriptoin: CrisisHotkey05.
+*
+* Invoked by: CheckRNHotKey()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void CrisisHotkey05(BYTE event)
 {
-	/*if((IS_MASK_CLEAR(ACPI_HOTKEY, HotkeyDisable))&&(FnStatus == 1))//ANGELAG052: remove start  //"Fn+F2"
-	{
-		SET_MASK(F2_Pressed, F2Flag); 
-		CLEAR_MASK(F2_Pressed, F12Flag); 
-	}
-	else if((IS_MASK_SET(ACPI_HOTKEY, HotkeyDisable))&&(FnStatus == 0))//"F2"
-	{ */ //ANGELAG052: remove end
-		SET_MASK(F2_Pressed, F2Flag); 
-		CLEAR_MASK(F2_Pressed, F12Flag); 
-	//} //ANGELAG052: remove
+	SET_MASK(F2_Pressed, F2Flag); 
+	CLEAR_MASK(F2_Pressed, F12Flag); 
 }
 
+/*
+*******************************************************************************
+* Function name: CrisisHotkey06      
+*
+* Descriptoin: CrisisHotkey06.
+*
+* Invoked by: CheckRNHotKey()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void CrisisHotkey06(BYTE event)
 {
-	/*if((IS_MASK_CLEAR(ACPI_HOTKEY, HotkeyDisable))&&(FnStatus == 1))//"Fn+F12" //ANGELAG052: remove start
-	{
-		SET_MASK(F2_Pressed, F12Flag); 
-		CLEAR_MASK(F2_Pressed, F2Flag); 
-	}
-	else if((IS_MASK_SET(ACPI_HOTKEY, HotkeyDisable))&&(FnStatus == 0))//"F12"
-	{ */ //ANGELAG052: remove end
-		SET_MASK(F2_Pressed, F12Flag); 
-		CLEAR_MASK(F2_Pressed, F2Flag); 
-//	} //ANGELAG052: remove
+	SET_MASK(F2_Pressed, F12Flag); 
+	CLEAR_MASK(F2_Pressed, F2Flag); 
 }
-//ANGELAG001:E+.
 
+/*
+*******************************************************************************
+* Function name: FnHotkey01      
+*
+* Descriptoin: FnHotkey01.
+*
+* Invoked by: CheckBootHotKey()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void FnHotkey01(BYTE event)
 {
 	if(event == BREAK_EVENT)
@@ -1634,6 +1555,21 @@ void FnHotkey01(BYTE event)
 	}
 }
 
+/*
+*******************************************************************************
+* Function name: FnHotkey02      
+*
+* Descriptoin: FnHotkey02.
+*
+* Invoked by: CheckBootHotKey()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void FnHotkey02(BYTE event)
 {
 	if(event == MAKE_EVENT)
@@ -1645,6 +1581,22 @@ void FnHotkey02(BYTE event)
 	}
 }
 
+
+/*
+*******************************************************************************
+* Function name: FnHotkey03      
+*
+* Descriptoin: FnHotkey03.
+*
+* Invoked by: CheckBootHotKey()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void FnHotkey03(BYTE event)
 {
 	if(event == MAKE_EVENT)
@@ -1656,6 +1608,21 @@ void FnHotkey03(BYTE event)
 	}
 }
 
+/*
+*******************************************************************************
+* Function name: FnHotkey04      
+*
+* Descriptoin: FnHotkey04.
+*
+* Invoked by: CheckBootHotKey()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void FnHotkey04(BYTE event)
 {
     if(IS_MASK_CLEAR(LENOVOPMFW_Temp,EEPROM_Token))
@@ -1686,6 +1653,21 @@ const sBootHotKeyStruct code asBootHotKeyStruct[]=
 	{ DebugKeyA,	FnHotkey04	},
 };
 
+/*
+*******************************************************************************
+* Function name: CheckBootHotKey      
+*
+* Descriptoin: Check boot HotKey.
+*
+* Invoked by: OEM_Hook_Send_Key()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void CheckBootHotKey(matrix, event)
 {
 	BYTE index;
@@ -1700,31 +1682,48 @@ void CheckBootHotKey(matrix, event)
 	DebugCombineKey=0x00;
 }
 
-//change "Fn+D"to"Fn+D+P".
+/*
+*******************************************************************************
+* Function name: FnHotkeyPort80Log01      
+*
+* Descriptoin: Check HotKey Port80 log01.
+*
+* Invoked by: CheckRNHotKey()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void FnHotkeyPort80Log01(BYTE event)
 {
-	/*if(event == BREAK_EVENT)
-	{
-		CombineKeyRN=0x00;
-	}
-	else if(event == MAKE_EVENT)
-	{
-		CombineKeyRN=1;
-	}*/
-
 	if((event == MAKE_EVENT)&&(FnStatus == 1))
 	{
 		CombineKeyRN=1;
 	}
-	//ANGELAS091: s+Optimize ANGELAS032 ( press "fn+s" then release "S", flag can't be clear.)
 	else if(event == BREAK_EVENT)
 	{
 		CombineKeyRN=0;
 	}
-	//ANGELAS091:e+ Optimize ANGELAS032 ( press "fn+s" then release "S", flag can't be clear.)
 }
-// change "Fn+D"to"Fn+D+P".
 
+/*
+*******************************************************************************
+* Function name: FnHotkeyPort80Log02      
+*
+* Descriptoin: Check HotKey Port80 log02. Not used.
+*
+* Invoked by: CheckRNHotKey()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void FnHotkeyPort80Log02(BYTE event)
 {
 	if(event == MAKE_EVENT)
@@ -1736,15 +1735,24 @@ void FnHotkeyPort80Log02(BYTE event)
 	}
 }
 
+/*
+*******************************************************************************
+* Function name: FnHotkeyPort80Log03      
+*
+* Descriptoin: Check HotKey Port80 log03.
+*
+* Invoked by: CheckRNHotKey()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void FnHotkeyPort80Log03(BYTE event)
 {
-	/*if(event == MAKE_EVENT)
-	{
-		if (CombineKeyRN==2)
-			CombineKeyRN=3;
-		else
-			CombineKeyRN=0;
-	}*/
+
 	// 0ptimize"Fn+R"crisis recover bios follow lenovo spec(press "Fn+R" then press power button  that will enter crisis recover bios on DC or AC mode).
 	if(IS_MASK_CLEAR(SYS_MISC1,BATCRISIS_FLAG))
 	{
@@ -1759,6 +1767,21 @@ void FnHotkeyPort80Log03(BYTE event)
 	}
 }
 
+/*
+*******************************************************************************
+* Function name: FnHotkeyPort80Log04      
+*
+* Descriptoin: Check HotKey Port80 log04. Not used.
+*
+* Invoked by: CheckRNHotKey()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void FnHotkeyPort80Log04(BYTE event)
 {
 	if(event == MAKE_EVENT)
@@ -1772,25 +1795,57 @@ void FnHotkeyPort80Log04(BYTE event)
 			CombineKeyRN=0;
 	}
 }
+
+/*
+*******************************************************************************
+* Function name: FnHotkeyPort80Log05      
+*
+* Descriptoin: Check HotKey Port80 log05.
+*
+* Invoked by: CheckRNHotKey()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void FnHotkeyPort80Log05(BYTE event)
 {
-	if((event == MAKE_EVENT)&&(FnStatus == 1)&&(CombineKeyRN==1))//change "Fn+D"to"Fn+D+P".
+	if((event == MAKE_EVENT)&&(FnStatus == 1)&&(CombineKeyRN==1))
 	{
 		SET_MASK(P80CMOSSts,P80CMOSDis);
-		SET_MASK(ACPI_HOTKEY, b6Cmd_NoShut);//when battery mode press FN+D£¬do not cut power¡£
+		SET_MASK(ACPI_HOTKEY, b6Cmd_NoShut);//when battery mode press FN+D+O,do not cut power.
 	}
 }
 const sBootHotKeyStruct code asCheckRNStruct[]=
 {
-	{ DebugKeyD, 		FnHotkeyPort80Log01	},//change "Fn+D"to"Fn+D+P".
+	{ DebugKeyD, 		FnHotkeyPort80Log01	},
 	//{ DebugKeyEqu, 	FnHotkeyPort80Log02	},
 	{ DebugKeyR,	    FnHotkeyPort80Log03	},
-	//{ DebugKeyN,	      	FnHotkeyPort80Log04	},
-	//{ DebugKeyP,	    FnHotkeyPort80Log05	},//change "Fn+D"to"Fn+D+P".  //MEILING026:remove.
-	{ DebugKeyO,	    FnHotkeyPort80Log05	}, //MEILING026:add.
-	{ Crisiskey05,	    CrisisHotkey05	}, //ANGELAG001: add
-	{ Crisiskey06,	    CrisisHotkey06	}, //ANGELAG001:add.
+	//{ DebugKeyN,	    FnHotkeyPort80Log04	},
+	//{ DebugKeyP,	    FnHotkeyPort80Log05	},
+	{ DebugKeyO,	    FnHotkeyPort80Log05	}, 
+	{ Crisiskey05,	    CrisisHotkey05	}, 
+	{ Crisiskey06,	    CrisisHotkey06	}, 
 };
+
+/*
+*******************************************************************************
+* Function name: CheckRNHotKey      
+*
+* Descriptoin: Check RN HotKey.
+*
+* Invoked by: OEM_Hook_Send_Key()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void CheckRNHotKey(matrix, event)
 {
 	BYTE index;
@@ -1805,6 +1860,21 @@ void CheckRNHotKey(matrix, event)
 	CombineKeyRN=0;
 }
 
+/*
+*******************************************************************************
+* Function name: FnHotkeyGPIO01      
+*
+* Descriptoin: Fn Hotkey GPIO 01
+*
+* Invoked by: CheckIOHotKey()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void FnHotkeyGPIO01(BYTE event)
 {
 	if(event == BREAK_EVENT)
@@ -1818,6 +1888,21 @@ void FnHotkeyGPIO01(BYTE event)
 
 }
 
+/*
+*******************************************************************************
+* Function name: FnHotkeyGPIO02      
+*
+* Descriptoin: Fn Hotkey GPIO 02
+*
+* Invoked by: CheckIOHotKey()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void FnHotkeyGPIO02(BYTE event)
 {
 	if(event == MAKE_EVENT)
@@ -1829,6 +1914,21 @@ void FnHotkeyGPIO02(BYTE event)
 	}
 }
 
+/*
+*******************************************************************************
+* Function name: FnHotkeyGPIO03      
+*
+* Descriptoin: Fn Hotkey GPIO 03
+*
+* Invoked by: CheckIOHotKey()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void FnHotkeyGPIO03(BYTE event)
 {
 	if(event == MAKE_EVENT)
@@ -1841,6 +1941,21 @@ void FnHotkeyGPIO03(BYTE event)
 
 }
 
+/*
+*******************************************************************************
+* Function name: FnHotkeyGPIO04      
+*
+* Descriptoin: Fn Hotkey GPIO 04
+*
+* Invoked by: CheckIOHotKey()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void FnHotkeyGPIO04(BYTE event)
 {
 	if(event == MAKE_EVENT)
@@ -1889,6 +2004,22 @@ const sBootHotKeyStruct code asCheckIOStruct[]=
 	{ DebugKeyI,	FnHotkeyGPIO03	},
 	{ DebugKeyO,   	FnHotkeyGPIO04	},
 };
+
+/*
+*******************************************************************************
+* Function name: CheckIOHotKey      
+*
+* Descriptoin: Check GPIO HotKey.
+*
+* Invoked by: OEM_Hook_Send_Key()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void CheckIOHotKey(matrix, event)
 {
 	BYTE index;
@@ -1903,16 +2034,31 @@ void CheckIOHotKey(matrix, event)
 	CombineKeyIO=0;
 }
 
-//ANGELAS032: s+ add
 #if shipmodesupport 
+
+/*
+*******************************************************************************
+* Function name: FnHotkeyBattShip01      
+*
+* Descriptoin: Fn Hotkey Battery shipmode 01
+*
+* Invoked by: CheckBattShipHotKey()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void FnHotkeyBattShip01(BYTE event)
 {
 	if((event == MAKE_EVENT)&&(FnStatus == 1))
 	{
 		CombineKeyShip=1;
 	}
-	//ANGELAS056:add start
-	if((event == MAKE_EVENT) && (CombineKeyShip1==1))//ANGELAS090: Optimize ANGELAS032.change CombineKeyShip to CombineKeyShip1
+	
+	if((event == MAKE_EVENT) && (CombineKeyShip1==1))
 	{ 
 		//COKEYXU012: S+ Modify for AC cannot power on system after enter shipmode
 		if(SystemIsDSX)
@@ -1924,16 +2070,29 @@ void FnHotkeyBattShip01(BYTE event)
 		}
 		//COKEYXU012: E+ Modify for AC cannot power on system after enter shipmode
 	}
-	//ANGELAS056:add end
-	//ANGELAS091:s+ Optimize ANGELAS032 ( press "fn+s" then release "S", flag can't be clear.)
+	
 	if(event == BREAK_EVENT)
 	{
 		CombineKeyShip=0x00;
 		CombineKeyShip1=0x00; 
 	}
-	//ANGELAS091:e+ Optimize ANGELAS032 ( press "fn+s" then release "S", flag can't be clear.)
 }
 
+/*
+*******************************************************************************
+* Function name: FnHotkeyBattShip02      
+*
+* Descriptoin: Fn Hotkey Battery shipmode 02
+*
+* Invoked by: CheckBattShipHotKey()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void FnHotkeyBattShip02(BYTE event)
 {
 	if((event == MAKE_EVENT) && (CombineKeyShip==1))
@@ -1948,25 +2107,40 @@ void FnHotkeyBattShip02(BYTE event)
 		}
 		//COKEYXU012: E+ Modify for AC cannot power on system after enter shipmode
 	}
-	//ANGELAS056:add start
+
 	if((event == MAKE_EVENT)&&(FnStatus == 1))
 	{
 		CombineKeyShip1=1;
 	}
-	//ANGELAS056:add end
-	//ANGELAS091: s+Optimize ANGELAS032 ( press "fn+s" then release "S", flag can't be clear.)
+
 	if(event == BREAK_EVENT)
 	{
 		CombineKeyShip=0x00;
 		CombineKeyShip1=0x00; 
 	}
-	//ANGELAS091:e+ Optimize ANGELAS032 ( press "fn+s" then release "S", flag can't be clear.)
+
 }
 const sBootHotKeyStruct code asBattShipHotKeyStruct[]=
 {
 	{ DebugKeyS,    	FnHotkeyBattShip01	},
 	{ DebugKeyV,	    FnHotkeyBattShip02	},  //Fn+S+V
 };
+
+/*
+*******************************************************************************
+* Function name: CheckBattShipHotKey      
+*
+* Descriptoin: Check battery shipmode HotKey.
+*
+* Invoked by: OEM_Hook_Send_Key()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void CheckBattShipHotKey(matrix, event)
 {
 	BYTE index;
@@ -1979,35 +2153,55 @@ void CheckBattShipHotKey(matrix, event)
 		}
 	}
 	CombineKeyShip=0x00;
-	CombineKeyShip1=0x00; //ANGELAS056:add
+	CombineKeyShip1=0x00; 
 }
 #endif
-//ANGELAS032:e+ add
-//----------------------------------------------------------------------------
-// table_entry : value of keyboard matrix table. for example Rc_ROM_Tables[]
-// event : key MAKE_EVENT or BREAK_EVENT or REPEAT_EVENT
-//----------------------------------------------------------------------------
+
+/*
+*******************************************************************************
+* Function name: OEM_Hook_Send_Key      
+*
+* Descriptoin: OEM Hook Send Key.
+*              table_entry : value of keyboard matrix table. for example Rc_ROM_Tables[]
+*              event : key MAKE_EVENT or BREAK_EVENT or REPEAT_EVENT
+*
+* Invoked by: Send_Key()
+*
+* TimeDiv:  NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void OEM_Hook_Send_Key(BYTE table_entry, BYTE event)
 {
-	//if(SystemIsS0)
-	//{		
 		CheckBootHotKey(table_entry,event);
 		CheckRNHotKey(table_entry,event);
 		CheckIOHotKey(table_entry,event);
-		//ANGELAS032: s+ add
 		#if shipmodesupport
 		if((!Read_AC_IN())&&(SystemIsDSX))
 		{
 			CheckBattShipHotKey(table_entry,event);
 		}
 		#endif
-		//ANGELAS032: e+ add
-	//}	
 }
 
-//----------------------------------------------------------------------------
-// Return : 0xFF --> Send_Key function will be break; (no any scan code to host)
-//----------------------------------------------------------------------------
+/*
+*******************************************************************************
+* Function name: OEM_Hook_Skip_Send_Key      
+*
+* Descriptoin: OEM Hook Skip Send Key.
+*
+* Invoked by: Send_Key()
+*
+* TimeDiv: NA
+*
+* Arguments: NA
+*
+* Return Values: 0xFF --> Send_Key function will be break; (no any scan code to host)
+*******************************************************************************
+*/
 BYTE OEM_Hook_Skip_Send_Key(void)
 {
     return(0x00);

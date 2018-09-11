@@ -75,9 +75,6 @@ void main(void)
 	else
 	{
 		ECSleepCount = 3;
-		//ProcessSID(COLDBOOT_ID);
-		//pLastSID  = COLDBOOT_ID; //ANGELAS089: remove
-        //uMBID = Read_Eflash_Byte(EEPROMA2,(EEPROMA1_B03 | 0x07) ,0xE0);
 
 		EEPROM_PwrSts = Read_Eflash_Byte(EEPROMA2,(EEPROMA1_B03 | 0x07),0xDF);
 		if( (EEPROM_PwrSts & 0x10) != 0 )
@@ -109,7 +106,7 @@ void main(void)
 	
 	#if !EN_PwrSeqTest
 		#if WDT_Support
-		EnableInternalWDT();
+		    EnableInternalWDT();
 		#endif
 	#endif
 	
@@ -128,7 +125,7 @@ void main(void)
        	}
     }    
     #endif
-	ProcessSID(ShutDnCause); //ANGELAS089:add
+	ProcessSID(ShutDnCause); 
 	//T11N + e
 	while(1)
    	{
@@ -660,83 +657,66 @@ void Timer1MinEvent(void)
 bit CheckCanEnterDeepSleep()
 {
   	//under S5&S3 battery mode  EC enter sleep mode start
-	BYTE resault;
-	resault = 0x00;
+	BYTE result;
+	result = 0x00;
 	if(Read_AC_IN()) 
 	{
-		resault = 0x01;
+		result = 0x01;
 	}
 	if(SystemIsS0) 							 // if system in S0
 	{
-		resault = 0x01;
+		result = 0x01;
 	}
-	//MARTINH154:Add  start
-	if(IS_MASK_SET(CMOS_TEST,b0_CMOS_FunctionKey))							  // if system in S0
+
+	if(IS_MASK_SET(CMOS_TEST,b0_CMOS_FunctionKey))					
 	{
-		resault = 0x01;
+		result = 0x01;
 	}
-	//MARTINH154:Add end
-	//ANGELAS044:add start
+
 	if(Read_EC_PWRBTN())		                       
 	{	
-		resault = 0x01;
+		result = 0x01;
 	}
 	if(LOWBATT_3TIMES!=0)
 	{
-		resault=0x01;
+		result=0x01;
 	}
 	if(IS_MASK_SET(ACPI_HOTKEY, b6Cmd_NoShut))
 	{
-		resault = 0x01;
+		result = 0x01;
 	}
-	//ANGELAS067:add start
 	if(IS_MASK_SET(ACPI_HOTKEY, b7BIOS_NoShut))
 	{
-		resault = 0x01;
+		result = 0x01;
 	}
-	//ANGELAS067:add end
-	if(Read_AC_IN()&&(IS_MASK_CLEAR(nBattery0x16L,FullyChg))&&(IS_MASK_SET(BT1_STATUS1, bat_in)))
+
+	if(LID_DEBOUNCE_CNT>0)
 	{
-		resault=0x01;
+		result=0x01;
 	}
-	if(LID_DEBOUNCE_CNT>0)//W127
-	{
-		resault=0x01;
-	}
-    //ANGELAS044:add end
-   	//ANGELAS081:remove start
-   	//if(Read_LID_SW_IN()&& IS_MASK_SET(SysStatus,CloseLid))//G83:Fixed cannot resume from S3 by open lid after enter S3 via close lid on DC mode.
-    //{
-    //	resault = 0x01;
-    //}
-    //ANGELAS081:remove end
+ 
 	if(IS_MASK_SET(POWER_FLAG1, wait_PSW_off))	// power switch pressed
 	{
-		resault = 0x01;
+		result = 0x01;
 	}
-	 /*ANGELAS057:remove start
-	if(SystemIsS3) //ANGELAS044:s5 to s3
-	{
-		resault = 0x01;
-	}
-	*///ANGELAS057:remove end
+
 	if((SysPowState==SYSTEM_S5_S0)||(SysPowState==SYSTEM_S4_S0)||
      (SysPowState==SYSTEM_S3_S0)||(SysPowState==SYSTEM_S0_S5)||(SysPowState==SYSTEM_S0_S4)||
      (SysPowState==SYSTEM_S0_S3)||(SysPowState == SYSTEM_S5_DSX)||(SysPowState == SYSTEM_DSX_S5))
 	{
-		resault = 0x01;
+		result = 0x01;
 	}
 
-	if(resault == 0x00)
+	if(result == 0x00)
 	{
-		if(DeepSleepCunt < 250)		  // Delay 2500 ms for EC deep sleep mode////G83
+		if(DeepSleepCunt < 250)		  // Delay 2500 ms for EC deep sleep mode
 		{
 			DeepSleepCunt++;
-			resault = 0x02;
+			result = 0x02;
 		}
 		else
 		{
-			resault = 0x00;
+			result = 0x00;
 			DeepSleepCunt = 0x00;
 		}
 	}
@@ -745,7 +725,7 @@ bit CheckCanEnterDeepSleep()
 		DeepSleepCunt = 0x00;
 	}
 
-	switch(resault)
+	switch(result)
 	{
 		case 0:
 			return(1);
@@ -790,14 +770,6 @@ void InitEnterDeepSleep(void)
 	KSOH1	= 0x00;
 	KSOH2	= 0x00;
 	KSICTRL = 0x00;
-
-	//MEILING030:S-remove change LED control mode.
-	/*if(SystemIsS3)
-	{
-		GPCRA0 = ALT; 
-		DCR0 = 0x7F; 
-	}*/
-	//MEILING030:S-remove change LED control mode.
 	
 	if(SystemIsDSX)
 	{

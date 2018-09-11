@@ -33,7 +33,6 @@ extern BYTE OEM_SkipMainServiceFunc(void);
 
 extern void PollingBIOS80Port(void);
 extern void ProcessSID(BYTE SID);
-extern bit CheckDebugMode(void);
 extern void Workaround_For_HangBios(void);//ANGELAS094:Add workaround for hang bios.
 extern void ACOutProchotRelease(void); //MEILING039:add.
 extern void GPUProchotOnControl(void); //MEILING042:add.

@@ -641,9 +641,8 @@ void CheckKSO1617Support(void)
 	{
 		ExtendMatrix = 0;
 	}
-//msmart test
 	GPCRC3 = ALT + PULL_UP ;
-	GPCRC5 = ALT +PULL_UP;
+	GPCRC5 = ALT + PULL_UP;
 }
 
 /* ----------------------------------------------------------------------------
@@ -789,20 +788,14 @@ void service_scan(void)
 
   	if (scan_activity)				// There is scan activity.
        {
-		if (SystemIsS3&&Read_LID_SW_IN()) //MARTINA025:add LID judge;
+		if (SystemIsS3&&Read_LID_SW_IN()) //add LID judge;
 		{
-			//if ( DSxPowState != SYSTEM_DSxOK )
-			//{
 				if (KB_S3Dly > 10)
 				{
-				//	PWSeqStep = 1; //ANGELAG039: remove
-				//	PowSeqDelay = 1; //ANGELAG039: remove
-                    RamDebug(0x30);         //T045A
-		        //    SysPowState=SYSTEM_S3_S0; //ANGELAG039: remove
-				PulseSBPowerButton(); //ANGELAG039: add 
+                    RamDebug(0x30);        
+				    PulseSBPowerButton(); 
 				}
 				KB_S3Dly++;
-			//}
 		}
 	}
     else							// No scan activity

@@ -318,7 +318,7 @@ extern ECReg    GCR11           ;// 0x16FA  General Control 11 Register
 extern ECReg    GCR12           ;// 0x16FB  General Control 12 Register
 extern ECReg    GCR13           ;// 0x16FC  General Control 13 Register
 extern ECReg    GCR14           ;// 0x16FD  General Control 14 Register
-extern ECReg	   GCR15     		;// 0x16FE  General Control 15 Register
+extern ECReg	GCR15     		;// 0x16FE  General Control 15 Register
 extern ECReg    GCR16           ;// 0x16E0  General Control 16 Register
 extern ECReg    GCR17           ;// 0x16E1  General Control 17 Register
 extern ECReg    GCR18           ;// 0x16E2  General Control 18 Register
@@ -478,13 +478,13 @@ extern ECReg	PSDAT3 			;// 0x170E	 PS/2 Data Register 3
 extern ECReg	C0CPRS  		;// 0x1800	 Channel 0 Clock Prescaler Register
 extern ECReg	CTR       		;// 0x1801	 Cycle Time 0
 extern ECReg	DCR0     		;// 0x1802	 Channel 0 PWM Duty Cycle
-extern ECReg	DCR1      		;// 0x1803	 Channel 0 PWM Duty Cycle
-extern ECReg	DCR2     		;// 0x1804	 Channel 0 PWM Duty Cycle
-extern ECReg	DCR3       		;// 0x1805	 Channel 0 PWM Duty Cycle
-extern ECReg	DCR4      		;// 0x1806	 Channel 0 PWM Duty Cycle
-extern ECReg	DCR5      		;// 0x1807	 Channel 0 PWM Duty Cycle
-extern ECReg	DCR6       		;// 0x1808	 Channel 0 PWM Duty Cycle
-extern ECReg	DCR7     		;// 0x1809	 Channel 0 PWM Duty Cycle
+extern ECReg	DCR1      		;// 0x1803	 Channel 1 PWM Duty Cycle
+extern ECReg	DCR2     		;// 0x1804	 Channel 2 PWM Duty Cycle
+extern ECReg	DCR3       		;// 0x1805	 Channel 3 PWM Duty Cycle
+extern ECReg	DCR4      		;// 0x1806	 Channel 4 PWM Duty Cycle
+extern ECReg	DCR5      		;// 0x1807	 Channel 5 PWM Duty Cycle
+extern ECReg	DCR6       		;// 0x1808	 Channel 6 PWM Duty Cycle
+extern ECReg	DCR7     		;// 0x1809	 Channel 7 PWM Duty Cycle
 extern ECReg	PWMPOL        	;// 0x180A	 PWM Polarity
 extern ECReg	PCFSR      		;// 0x180B	 Prescaler Clock Frequency Select Register
 extern ECReg	PCSSGL   		;// 0x180C	 Prescaler Clock Source Select Group Low
@@ -497,7 +497,6 @@ extern ECReg	F2TLRR    		;// 0x1820	 Fan 2 Tachometer LSB Reading
 extern ECReg	F2TMRR     		;// 0x1821	 Fan 2 Tachometer MSB Reading
 extern ECReg	ZINTSCR   		;// 0x1822	 Zone Interrupt Status Control
 extern ECReg	ZTIER      		;// 0x1823	 PWM Clock Control Register
-extern ECReg	TSWCTLR    		;// 0x1824   Tachometer Switch Control Register
 extern ECReg	C4CPRS    		;// 0x1827	 Channel 4 Clock Prescaler Register
 extern ECReg	C4MCPRS    		;// 0x1828	 Channel 4 Clock Prescaler MSB Register
 extern ECReg	C6CPRS    		;// 0x182B	 Channel 6 Clock Prescaler Register
@@ -513,7 +512,7 @@ extern ECReg	CFLRR    		;// 0x1845   Color Frequency LSB Register
 extern ECReg	CFMRR    		;// 0x1846   Color Frequency MSB Register
 extern ECReg	CFINTCTRL		;// 0x1847   Color Frequency Interrupt Control Register
 
-extern ECReg	TSWCTRL    		;// 0x1848   Tachometer Switch Control Register
+extern ECReg	TSWCTLR    		;// 0x1848   Tachometer Switch Control Register
 extern ECReg	PWMODENR		;// 0x1849   PWM Output Open-Drain Enable Register
 
 //MEILING030:S+ add PWM0 dimming control register.
@@ -938,6 +937,7 @@ extern ECReg    CGCTRL4R        ;// 0x1E09   Clock Gating Control 4 Register
 // (1Fxxh) External Timer & External Watchdog (ETWD)
 //-----------------------------------------------------------------------------
 extern ECReg	ETWCFG        	;// 0x1F01	 External Timer/WDT Configuration Register
+#define EWDKEYEN        BIT5    /* External WDT Key Enabled */
 extern ECReg	ETPSR         	;// 0x1F02	 External Timer Prescaler Register
 extern ECReg	ETCNTLHR     	;// 0x1F03	 External Timer Counter High Byte
 extern ECReg	ETCNTLLR      	;// 0x1F04	 External Timer Counter Low Byte

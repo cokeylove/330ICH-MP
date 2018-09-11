@@ -38,7 +38,7 @@ void Hook_62Port(BYTE PM1Cmd)
 		Cmd_45(0x62,PM1Data);
 		break;
 	case 0x46:
-		Cmd_46(0x62,PM1Data); //Add 68/6C interface.
+		Cmd_46(0x62,PM1Data); 
 		break;
 	case 0x47:
 		Cmd_47(0x62,PM1Data);
@@ -118,8 +118,8 @@ void Hook_62Port(BYTE PM1Cmd)
 		if(PM1Data==0xA3) Cmd_52_A3(0x62);
 		if(PM1Data==0xA4) Cmd_52_A4(0x62);
 		if(PM1Data==0xA5) Cmd_52_A5(0x62);
-		if(PM1Data==0xA6) Cmd_52_A6(0x62); //LMLKBL0018:add.
-		if(PM1Data==0xA7) Cmd_52_A7(0x62); //LMLKBL0018:add.
+		if(PM1Data==0xA6) Cmd_52_A6(0x62); 
+		if(PM1Data==0xA7) Cmd_52_A7(0x62); 
 		break;
 
 	case 0x53:
@@ -235,11 +235,11 @@ void Hook_66Port(BYTE PM1Cmd)
 	case 0x4F:
 		Erase_EEPROMAll();
 		break;
-//REJERRY093: Add CMD 0X50 for osAging S4 keep EC power.
+//Add CMD 0X50 for osAging S4 keep EC power.
 		case 0x50:
 			SET_MASK(ACPI_HOTKEY, b6Cmd_NoShut);//for osAging s4 keep EC power
 			break;
-	//REJERRY093: Add CMD 0X50 for osAging S4 keep EC power.
+	// Add CMD 0X50 for osAging S4 keep EC power.
 	case 0x51:
 		Cmd_51(0x62);
 		break;
@@ -341,7 +341,6 @@ void Hook_66Port(BYTE PM1Cmd)
 #if ACPI_Smbus
 BYTE vOSSMbusWBlcok(void)
 {
-	//return (bWSMBusBlock(SMbusCh1, SMbusRBK, SMB_ADDR, SMB_CMD, &SMB_DATA, SMB_BCNT, (SMB_PRTC & 0x80)));
     return (bWSMBusBlock(SMbusChB, SMbusRBK, SMB_ADDR, SMB_CMD, &SMB_DATA, SMB_BCNT,SMBus_NeedPEC));
 }
 
@@ -457,7 +456,7 @@ void ResetSCIEvent(void)
  * ------------------------------------------------------------------------- */
 void ECQEvent(BYTE sci_number)
 {
-	if(IS_MASK_CLEAR(SYS_MISC1,ACPI_OS) || (SysPowState!=SYSTEM_S0))
+	if(IS_MASK_CLEAR(SYS_MISC1,ACPI_OS) || (SysPowState!=SYSTEM_S0) || IS_MASK_SET(QEVENTFlag,QEVENT_dis))
 	{
 		return;
 	}

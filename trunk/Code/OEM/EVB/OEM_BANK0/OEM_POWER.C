@@ -15,72 +15,93 @@
 #include <OEM_INCLUDE.H>
 
 
-void S5S0_AC_PRESENT_EN(void) ;
-
-
-// ----------------------------------------------------------------------------
-// To read variable [RSTStatus] to get EC reset source
-// ----------------------------------------------------------------------------
+/*
+*******************************************************************************
+* Function name: CheckResetSource      
+*
+* Descriptoin: To read variable [RSTStatus] to get EC reset source.
+*
+* Invoked by: STARTUP.A51
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void CheckResetSource(void)
 {
 //add debug information for EC reset status(1.external watch-dog, 2.internal watch-dog; 3. EC VSTBY or WRST reset,4.EC code reset).
-	RamDebug(0xBB); //ANGELAS089:add
-	RamDebug(RSTStatus);
-	RamDebug(GPCRA0);
-	RamDebug(PWRSW8SRST);  //ANGELAS089:add
-	RamDebug(0xBB);     //ANGELAS089:add
-	switch(RSTStatus&0x03)
-	{
-	case 0:
-	case 1:
-		if(GPCRA0==0x80)
-		{
-			ShutDnCause = SC_ECColdBoot;
-		}
-		else
-		{
-			ShutDnCause = SC_EC_0x0000;
-		}
-		break;
-				
-	case 2:
-		if(GPCRA0==0x80)
-		{
-			ShutDnCause = SC_IntWatchDog;
-		}
-		else
-		{
-			ShutDnCause = SC_EC_0x0000;
-		}
-		break;		   
-	
-	case 3:
-		if(GPCRA0==0x80)
-		{
-			ShutDnCause = SC_ExtWatchDog;
-		}
-		else
-		{
-			ShutDnCause = SC_EC_0x0000;
-		}
-		break;
-	}
-	
-	//ANGELAS089 add start
-	if(IS_MASK_SET(PWRSW8SRST,BIT(1)))
-	{
-    	ShutDnCause = SC_EC8SRESET;
-	}
-	//ANGELAS089 add end
-	
-//add debug information for EC reset status(1.external watch-dog, 2.internal watch-dog; 3. EC VSTBY or WRST reset,4.EC code reset).		
+    RamDebug(0xBB); 
+    RamDebug(RSTStatus);
+    RamDebug(GPCRA0);
+    RamDebug(PWRSW8SRST);  
+    RamDebug(0xBB);    
+    switch (RSTStatus & 0x03)
+    {
+        case 0:
+        case 1:
+            if (GPCRA0 == 0x80)
+            {
+                ShutDnCause = SC_ECColdBoot;
+            }
+            else
+            {
+                ShutDnCause = SC_EC_0x0000;
+            }
+            break;
+
+        case 2:
+            if (GPCRA0 == 0x80)
+            {
+                ShutDnCause = SC_IntWatchDog;
+            }
+            else
+            {
+                ShutDnCause = SC_EC_0x0000;
+            }
+            break;
+
+        case 3:
+            if (GPCRA0 == 0x80)
+            {
+                ShutDnCause = SC_ExtWatchDog;
+            }
+            else
+            {
+                ShutDnCause = SC_EC_0x0000;
+            }
+
+            break;
+    }
+
+    if (IS_MASK_SET(PWRSW8SRST, BIT(1)))
+    {
+        ShutDnCause = SC_EC8SRESET;
+    }
 }
 
+
+/*
+*******************************************************************************
+* Function name: Check_LPC_Reset      
+*
+* Descriptoin: Check LPC reset.
+*
+* Invoked by: Oem_SysPowerContrl()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void Check_LPC_Reset(void)
 {
 	if(!Read_LPC_RST())
 	{
-		//GATEA20_HI();
    		CLEAR_MASK(KBHISR,SYSF);
 	    CLEAR_MASK(SYS_MISC1,ACPI_OS);
 		OEM_LPC_Reset();	// initial OEM status.
@@ -88,144 +109,58 @@ void Check_LPC_Reset(void)
 		TPCLK_OUTPUT;
         TPCLK_HI();
         TPCLK_ALT;
-		//LPCRSTCnt++;
 	}
 }
 
+/*
+*******************************************************************************
+* Function name: OEM_LPC_Reset      
+*
+* Descriptoin: OEM LPC Reset.
+*
+* Invoked by: Check_LPC_Reset()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void OEM_LPC_Reset(void)
 {
 	BYTE BSLI_Det;
 	uReserve07.fbit.nTPDriverIn = 0;
 	uReserve07.fbit.nVPCDriverIn = 0;
-	uReserve07.fbit.nFanManual = 0; //ANGELAS030:Clear thermal tool flag under S3/S4/S5. return EC control
-	//SYS_STATUS &= 0xF8;			// Clear OS mode.
+	uReserve07.fbit.nFanManual = 0; //Clear thermal tool flag under S3/S4/S5. return EC control
 	CPU_TYPE &= 0x3f;//CLEAR BIT6 and BIT7 Unit abnormal shuntdown will not clear GPU flag,so when enter S5,WB and S3 we clear GPU flag to not read GPU temperature.
 	SET_MASK(pDevStus, pENABLE_TP);	// Turn on TouchPad.
-	//CMOS_Cam_ON();					// Turn on Camera power.
 	CLR_MASK(cCmd, b3BkOff);		// Turn on backlight.
-	CLR_MASK(OEMControl, b1BkOff);	//ANGELAG005:add
+	CLR_MASK(OEMControl, b1BkOff);	
 	SMartNoise = 0x04;				// Stop Fan Dust mode.
-	BackLight_En_Delay = 40;			//:Increase lit backlight time for reboot.//:Panel background light delay about 1s after Lenovo logo show out when reboot change 40 to 3. //:Remove  CHANGE 3 TO 40 
-	//if (IS_MASK_SET(LENOVOPMFW,BATTERY_MAIN_CAL))
-	//{
-		CLEAR_MASK(LENOVOPMFW,BATTERY_MAIN_CAL);
-		CLEAR_MASK(LENOVOPMFW,BATTERY_CAL_END);
-		LENOVOPMFW_Temp = 0;
-    	CLEAR_MASK(ACOFF_SOURCE, BATTLEARN);
-    	// ACOFF_LOW();
-	//}
-	//uNovoVPCCount = 0;			// Clear NOVO VPC status.    ANGELAS004 Remove  clear novo button status when LPC reset function.
+	BackLight_En_Delay = 40;			//Increase lit backlight time for reboot.//:Panel background light delay about 1s after Lenovo logo show out when reboot.
 
-	//#if SupportReadTPID
-	//ReadTPid();
-	//#endif
-//ANGELAG008: add start
-		CLEAR_MASK(pDevStatus3,b6EnDisTPSend);
+	CLEAR_MASK(LENOVOPMFW,BATTERY_MAIN_CAL);
+	CLEAR_MASK(LENOVOPMFW,BATTERY_CAL_END);
+	LENOVOPMFW_Temp = 0;
+	CLEAR_MASK(ACOFF_SOURCE, BATTLEARN);
+
+	CLEAR_MASK(pDevStatus3,b6EnDisTPSend);
 	CLEAR_MASK(pDevStatus3,b7TPStateFormer);
 
 	
-		CLEAR_MASK(pDevStatus1,b0F6ScanCodeSend);
-
-		CLEAR_MASK(pDevStatus1,b1F6DisableTP);
+	CLEAR_MASK(pDevStatus1,b0F6ScanCodeSend);
+    CLEAR_MASK(pDevStatus1,b1F6DisableTP);
 
 	CLEAR_MASK(pDevStatus1,b4LNVAPP_STATUS);
-	  CLEAR_MASK(pDevStatus1,b5TPDRIVER_STATUS);
+	CLEAR_MASK(pDevStatus1,b5TPDRIVER_STATUS);
 	CLEAR_MASK(pDevStatus1,b6MODE_STATUS);
 	CLEAR_MASK(pDevStatus1,b7DisableTP);
-//ANGELAG008: add end
-	//GPU_Prochot = 0; //ANGELAG033: remove //ANGELAG028: add
-	DisCPUTurboFor90s=90;                         //COKEYXU029:add
+	DisCPUTurboFor90s = 90;                         //COKEYXU029:add
+	CountOfWinAndX = 10;
 	CLR_MASK(uVGATurboFun, uDisCPUTurboOK);	     //COKEYXU029: add
 }
 
-void Charge_inhibit2sec(void)
-{
-	inhibit2sec = 20;		// 100ms*20 = 2000ms
-	SET_MASK(nStopChgStat3L,ENCHARGESUSP);		// use for detect battery charging suspend
-	CHGIC_ptr = 2;
-	WriteSmartChgIC();
-}
-
-void CHK_SUSACK(void)
-{
-#if 0
-	if(!Read_SUSWARN())
-	{
-		if (Read_SUSACK())
-		{
-			if (SUSACK_LOW_CNT > 500)  //for DS3 test
-			{
-				SUSACK_LOW();
-			}
-			else
-			{
-				SUSACK_LOW_CNT++;
-			}
-		}
-		else
-		{	SUSACK_LOW_CNT = 0;	}
-	}
-	else
-	{
-		if (!Read_SUSACK())
-		{
-			if (SUSACK_HI_CNT > 20)
-			{
-				SUSACK_HI();
-			}
-			else
-			{
-				SUSACK_HI_CNT++;
-			}
-		}
-		else
-		{	SUSACK_HI_CNT = 0;		}
-	}
-#endif
-}
-
-#if 0
-void CHK_DRAMRST_CNTRL(void)
-{
-	if (Read_VR_ON())
-	{
-		if (!Read_DRAMRST_CNTRL_EC())
-		{
-			if (DRAMRST_CNTRL_CNT > 200)
-			{
-				DRAMRST_CNTRL_EC_HI();
-			}
-			else
-			{
-				DRAMRST_CNTRL_CNT++;
-			}
-		}
-	}
-	else
-	{ DRAMRST_CNTRL_CNT = 0; }
-
-	if (!Read_SLPS3())
-	{
-		if ( SysPowState != SYSTEM_S5_S0 )
-		{
-			DRAMRST_CNTRL_EC_LOW();
-			DRAMRST_CNTRL_CNT = 0;
-		}
-/*
-		if (DRAMRST_CNTRL_LOW_CNT > 20)
-		{
-			DRAMRST_CNTRL_EC_LOW();
-		}
-		else
-		{
-			DRAMRST_CNTRL_LOW_CNT++;
-		}
-*/
-	}
-	else
-	{ DRAMRST_CNTRL_LOW_CNT = 0; }
-}
-#endif
 
 
 //============S5 -> DSX==========================================================
@@ -251,31 +186,58 @@ void S5DSX_PWR_BTN_LOW()
     PM_PWRBTN_LOW();
 }
 
-
+/*
+*******************************************************************************
+* Function name: Enter_ShipMode      
+*
+* Descriptoin: Enter Ship mode.
+*
+* Invoked by: Oem_S5DSXSequence()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void Enter_ShipMode()
 {
 #if shipmodesupport
     if((ShipModeEn == 0xA5) || IS_MASK_SET(EMStatusBit2, b0SetBatteryShipMode)) 
     {
-        //JIMAPLO022     ShipModeEn=0x00;
-        SET_MASK(BATTUPDATEFW, PriBattInhib);//JIMAPLO042
-        Delay1MS(200); //JIMAPLO042
-        Delay1MS(100); //JIMAPLO042
-        Delay1MS(250); //MARTINO004:add
-        Delay1MS(250); //MARTINO004:add
-        Delay1MS(250); //MARTINO004:add
-        Delay1MS(250); //MARTINO004:add
+        SET_MASK(BATTUPDATEFW, PriBattInhib);
+        Delay1MS(200); 
+        Delay1MS(100); 
+        Delay1MS(250); 
+        Delay1MS(250); 
+        Delay1MS(250); 
+        Delay1MS(250); 
         Lock_ShipMode();
-        //MARTINO016:add start
+
         Delay1MS(250);  
         Delay1MS(250);  
         Delay1MS(250);  
         Delay1MS(250);  
-        //MARTINO016:add end
     }
 #endif
 }
 
+/*
+*******************************************************************************
+* Function name: RecordenEnterShipMode      
+*
+* Descriptoin: Recorden Enter Ship mode.
+*
+* Invoked by: Oem_S5DSXSequence()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void RecordenEnterShipMode()
 {
 #if shipmodesupport
@@ -288,14 +250,28 @@ void RecordenEnterShipMode()
             ProcessSID(0xA8);
             while(1);
         }
-        CLEAR_MASK(BATTUPDATEFW,PriBattInhib);//JIMAPLO042:add  
+        CLEAR_MASK(BATTUPDATEFW,PriBattInhib);
     }
 #endif
 }
 
+/*
+*******************************************************************************
+* Function name: S5DSX_Init_Status      
+*
+* Descriptoin: S5 to DSX init Status.
+*
+* Invoked by: Oem_S5DSXSequence()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void S5DSX_Init_Status()
 {
-    //Check_G3_S0_Delay = 0;//JIMAPLO00F
     PowerInitOK=0;
     SysPowState = SYSTEM_DSX;
     RamDebug(0x0C);
@@ -304,17 +280,30 @@ void S5DSX_Init_Status()
 const sPowerSEQ code asPowerSEQS5DSX[]=
 {
     {0x0000,                        0,        0,    },
-    {S5DSX_RSMRST_LOW,        5,        0,    },
-    {S5DSX_PCH_PWR_EN_OFF,    2,        0,    },
-    {S5DSX_EC_ON_LOW,        0,        0,    },
-    //{S5DSX_PMIC_Disable,        0,        0,    },
-    {S5DSX_PWR_BTN_LOW,        5,        0,    },
-    
-    {Enter_ShipMode,            120,        0,    },
+    {S5DSX_RSMRST_LOW,              5,        0,    },
+    {S5DSX_PCH_PWR_EN_OFF,          2,        0,    },
+    {S5DSX_EC_ON_LOW,               0,        0,    },
+    {S5DSX_PWR_BTN_LOW,             5,        0,    },    
+    {Enter_ShipMode,              120,        0,    },
     {RecordenEnterShipMode,        20,        0,    },
-    {S5DSX_Init_Status,            0,        0,    },
+    {S5DSX_Init_Status,             0,        0,    },
 };
 
+/*
+*******************************************************************************
+* Function name: Oem_S5DSXSequence      
+*
+* Descriptoin: OEM S5 to DSX sequence.
+*
+* Invoked by: Oem_SysPowerContrl()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void Oem_S5DSXSequence(void)
 {
     if(PowSeqDelay != 0x00 )
@@ -379,6 +368,21 @@ void DSXS5_RSMRST_HI(void)
     RSMRST_HI(); 
 }
 
+/*
+*******************************************************************************
+* Function name: DSXS5_Init_Status      
+*
+* Descriptoin: DSX to S5 init Status.
+*
+* Invoked by: Oem_DSXS5Sequence()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void DSXS5_Init_Status(void)
 {  
     if(IS_MASK_SET(SYS_STATUS, AC_ADP))
@@ -398,19 +402,29 @@ const sPowerSEQ code asPowerSEQDSXS5[]=
 {
     { 0x0000,                    0,        0,    },
     { DSXS5_EC_ON_HI,            0,        0,    },
-
-    { DSXS5_PMIC_Init,        0,        1,    },
-    { DSXS5_PWR_BTN_HI,        1,        0,    },
-
-    { DSXS5_PCH_PWR_EN,        30,        0,    },
-
-    { DSXS5_RSMRST_HI,            20,        0,    },
-    
-    { S5S0_AC_PRESENT_EN,            1,        0,    },
-    
-    { DSXS5_Init_Status,            0,        0,    },
+    { DSXS5_PMIC_Init,           0,        1,    },
+    { DSXS5_PWR_BTN_HI,          1,        0,    },
+    { DSXS5_PCH_PWR_EN,         30,        0,    },
+    { DSXS5_RSMRST_HI,          20,        0,    },   
+    { S5S0_AC_PRESENT_EN,        1,        0,    },  
+    { DSXS5_Init_Status,         0,        0,    },
 };
 
+/*
+*******************************************************************************
+* Function name: Oem_DSXS5Sequence      
+*
+* Descriptoin: OEM DSX to S5 sequence.
+*
+* Invoked by: Oem_SysPowerContrl()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void Oem_DSXS5Sequence(void)
 {
     if(PowSeqDelay != 0x00 )
@@ -446,16 +460,23 @@ void Oem_DSXS5Sequence(void)
     }
 }
 
-
-//-----------------------------------------------------------------------------
-// Handle System Power Control
-// Called by service_1mS -> Timer1msEvent -> Hook_Timer1msEvent
-//-----------------------------------------------------------------------------
+/*
+*******************************************************************************
+* Function name: Oem_SysPowerContrl      
+*
+* Descriptoin: Handle System Power Control.
+*
+* Invoked by: Hook_Timer1msEvent()
+*
+* TimeDiv：1ms
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void Oem_SysPowerContrl(void)
 {
-	//CHK_SUSACK();
-	//CHK_DRAMRST_CNTRL();
-
     // Check current System PowerState to see what should we do.
     switch (SysPowState)
     {
@@ -468,7 +489,6 @@ void Oem_SysPowerContrl(void)
 				PowSeqDelay = 00;
                 RamDebug(0xD0);        
               	SysPowState=SYSTEM_S0_S3;
-				//S0S3_VR_ON(); // include SYS_PWROK, PCH_PWROK,VR_ON enable orderly.
 				if (!Read_SLPS4())
 				{
 					PWSeqStep = 1;
@@ -478,7 +498,6 @@ void Oem_SysPowerContrl(void)
 				}
 				else if (IS_MASK_SET(SysStatus,CloseLid))
 				{
-					//CLEAR_MASK(SysStatus,CloseLid);
 					SET_MASK(SysStatus,EnterS3Lid);
 				}
 			}
@@ -494,50 +513,20 @@ void Oem_SysPowerContrl(void)
 		Check_LPC_Reset();
 		break;
 
-   	case SYSTEM_S3:
-			
-		//S34toDSx();        
-		//DSxtoS34();      
-        if(Read_SLPS3())  //S3 to S0
+   	case SYSTEM_S3:   
+        if(Read_SLPS3())  
         {
             PWSeqStep = 3;
 		    PowSeqDelay = 20;
             RamDebug(0x33);   
            	SysPowState=SYSTEM_S3_S0;
-        }
-		//ANGELAS025:S+Modify power off sequence.
-		/*ANGELAS066:remove start
-		if (!Read_SLPS4())
-		{
-			PWSeqStep = 1;
-			PowSeqDelay = 0x00;
-			RamDebug(0x0D);
-			SysPowState=SYSTEM_S0_S5;
-		}*///ANGELAS066:remove end
-		//ANGELAS025:S-Modify power off sequence.
-		// for EM9 adapter detection and protection       
+        }    
+        
         if(IS_MASK_SET(SYS_STATUS,b4IllegalAdp)&&Read_AC_IN())
         {
-   		    SET_MASK(SYS_STATUS,AC_ADP);	//set AC in  flag
-		    //ACOFF_LOW();
-			BATT_LEN_OFF();//JERRYCRZ030��o
+   		    SET_MASK(SYS_STATUS,AC_ADP);	
+			BATT_LEN_OFF();
         }
-		//for EM9 adapter detection and protection 
-		/*
-		if (!Read_SLPS4() && (DSxPowState == SYSTEM_S3S4))
-		{
-			if (S3S4DelayCnt > 100)
-			{
-				PWSeqStep = 1;
-				PowSeqDelay = 0x00;
-    				SysPowState=SYSTEM_S0_S5;
-			}
-			else
-			{	S3S4DelayCnt++;	}
-		}
-		else
-		{	S3S4DelayCnt = 0;		}
-		*/
         break;
 
     case SYSTEM_S4:
@@ -550,24 +539,20 @@ void Oem_SysPowerContrl(void)
 			SysPowState=SYSTEM_S5_S0;
 		}
 		CheckAutoPowerOn();
-  		// (remove to avoid turn off EC_ON)          		Check_EC_ON();
-  		//ANGELAS031 Check_EC_ON(); //martin0313C+
-  		//ANGELAS032:add start
 #if shipmodesupport
   		if((ShipModeEn==0xA5)||IS_MASK_SET(EMStatusBit2,b0SetBatteryShipMode))
   		{
   			CLEAR_MASK(ACPI_HOTKEY, b7BIOS_NoShut);
 			CLEAR_MASK(ACPI_HOTKEY, b6Cmd_NoShut);
   		}
-		//ANGELAS032:add end
 #endif
-		//MEILING002: S+
 	
 		if(PowerOTP_REG)
 		{
-			if ( IS_MASK_CLEAR(SysStatus, ERR_ShuntDownFlag) ) //ANGELAG007: add
+			if ( IS_MASK_CLEAR(SysStatus, ERR_ShuntDownFlag) ) 
 			{ 
-			ProcessSID(PMIC_Shutdown_ID); } //ANGELAG007: add
+			    ProcessSID(PMIC_Shutdown_ID);
+			} 
 			OTP_TEMP = PowerOTP_REG;
 			PowerOTP_REG = 0;
 			RSMRST_LOW();
@@ -576,7 +561,7 @@ void Oem_SysPowerContrl(void)
 			PowerInitOK = 0;
 			
 		}
-		//MEILING002: E+
+
         if ((IS_MASK_CLEAR(ACPI_HOTKEY, b7BIOS_NoShut)) && (IS_MASK_CLEAR(ACPI_HOTKEY, b6Cmd_NoShut)) && (LOWBATT_3TIMES==0))
         {
             if ((!Read_AC_IN()) && IS_MASK_CLEAR(cCmd, bPCHPWR_Keep)) 
@@ -587,22 +572,13 @@ void Oem_SysPowerContrl(void)
                 SysPowState=SYSTEM_S5_DSX;
             }
         }
-  		//ANGELAS031:add start
-        /*if(( IS_MASK_CLEAR(ACPI_HOTKEY, b7BIOS_NoShut))&& (IS_MASK_CLEAR(ACPI_HOTKEY, b6Cmd_NoShut))) 
-		{ 
-		    S34toDSx();  
-		}
-  		DSxtoS34(); 
-        */
-		//ANGELAS031:add end
-  		//for EM9 adapter detection and protection       
+     
         if(IS_MASK_SET(SYS_STATUS,b4IllegalAdp)&&Read_AC_IN())
         {
-   		    SET_MASK(SYS_STATUS,AC_ADP);	//set AC in  flag
-		    //   ACOFF_LOW();
-			BATT_LEN_OFF();//JERRYCRZ030
+   		    SET_MASK(SYS_STATUS,AC_ADP);	
+			BATT_LEN_OFF();
         }
-		//for EM9 adapter detection and protection 
+
         break;
         
     case SYSTEM_DSX:
@@ -612,7 +588,6 @@ void Oem_SysPowerContrl(void)
             PWSeqStep = 1;
             PowSeqDelay = 0x00;
             SysPowState=SYSTEM_DSX_S5;
-			//SET_MASK(UMA_ONLY_FLAG, SET_VGA_WA_FLAG);
         }
         break;
     case SYSTEM_DSX_S5:
@@ -632,14 +607,6 @@ void Oem_SysPowerContrl(void)
 
     case SYSTEM_S0_S3:
 		Oem_S0S3Sequence();
-		/*                       
-		if (!Read_SLPS4())
-		{
-			PWSeqStep = 1;
-			PowSeqDelay = 0x00;
-    			SysPowState=SYSTEM_S0_S5;
-		}
-		*/
         break;
 
     case SYSTEM_S0_S4:
@@ -670,31 +637,25 @@ void Oem_SysPowerContrl(void)
     }
 }
 
-void SetS3GPIO(void)
-{/*
-	TP_CLK_INDW;		// TP_CLK to Input+pull_DW pin
-	TP_DATA_INDW;		// TP_DATA to Input+pull_DW pin
-	SMBus2_CLK_INDW;	// SMBus2 CLK to Input+pull_DW pin
-	SMBus2_DAT_INDW;	// SMBus2 DATA to Input+pull_DW pin
-	FAN_PWM_INDW;		// Set FAN_PWM input+pull_dw.
-	FAN_SPEED_INDW;		// Set FAN Speed input+pull_dw.
-	//ODD_DA_INDW;		// Set ODD_DA input+pull_dw.
-*/}
-
+/*
+*******************************************************************************
+* Function name: SetS0GPIO      
+*
+* Descriptoin: Set S0 GPIO.
+*
+* Invoked by: S5S0_SUSP(),S3S0_SUSP()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void SetS0GPIO(void)
 {
 	SCI_HI();			  	//RUNSCI Hi
-	//SMI_HI();			  	//GA20 Hi
-	//GATEA20_HI();
 	RCING_HI();
-
-	//VGA_AC_DET_HI();
-	//LAN_PWR_ON_LO();
-	//CMOS_Cam_ON();			// Turn on Camera power.
-	//SUSACK_HI();
-	// AOAC_PWRON();			// Turn on WLAN power.
-	//LED_KB_PWM_ALT;
-
 	TPCLK_ALT;				// TP_CLK to alternate pin
 	TP_DATA_ALT;			// TP_DATA to alternate pin
 	SMBus2_CLK_ALT;			// SMBus2 CLK to alternate pin
@@ -702,16 +663,15 @@ void SetS0GPIO(void)
 
 	#if FAN_TABLE_Already
 	FAN_PWM_ALT;			// Set FAN_PWM Alt.
-	FAN2_PWM_ALT;//JERRYCH00:Modify the fan control from linear to the ladder.
+	FAN2_PWM_ALT;
 	#else
 	FAN_PWM_OUT;			// Set FAN_PWM OUTPUT.
 	EC_FAN_PWM_HI();       
-    FAN2_PWM_OUT;           //ELMERZH002:FAN 2 running at full speed.
-    EC_FAN2_PWM_HI();       //ELMERZH002:FAN 2 running at full speed.
+    FAN2_PWM_OUT;           //FAN 2 running at full speed.
+    EC_FAN2_PWM_HI();       
 	#endif	// FAN_TABLE_Already
 
 	FAN_SPEED_ALT;			// Set FAN Speed Alt.
-	//ODD_DA_INPUT;
 	InitSio();
 
 	KBHISR = 0x00;
@@ -725,16 +685,6 @@ void SetS0GPIO(void)
 	PECIDelayCnt = 0x04;
 
 	Fan_Init();
-	//pDevStus=Read_Eflash_Byte(EEPROMA2,(EEPROMA1_B03|0x07),0xE1);
-	//Charge_inhibit2sec();  //LMLKBL0010:remove.
-
-#if UCS1022_Support
-	USB_CH_OUTPUT;
-	//if ( IS_MASK_CLEAR(USB_Charger, b0USB_EN) )
-	if ( IS_MASK_CLEAR(EMStatusBit, b1SetUSBChgEn) )
-	{ USB_CH_LOW(); }
-	CLR_MASK(USB_Charger, b1USB_initOK);
-#endif	// UCS1022_Support
 
 	if ( IS_MASK_SET(SYS_MISC1, b1Num_LED) )
 	{ NUMLED_ON(); }
@@ -742,11 +692,25 @@ void SetS0GPIO(void)
 	{ NUMLED_OFF(); }
 }
 
+
+/*
+*******************************************************************************
+* Function name: SetS5GPIO      
+*
+* Descriptoin: Set S5 GPIO.
+*
+* Invoked by: S0S5_SUSP(),S0S3_SUSP()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void SetS5GPIO(void)
 {
 	SCI_LOW();			//RUNSCI Hi
-	//SMI_LOW();			//GA20 Hi
-	//GATEA20_LOW();
 	RCING_LOW();
 
 	TP_CLK_INDW;		// TP_CLK to Input+pull_DW pin
@@ -755,63 +719,40 @@ void SetS5GPIO(void)
 	SMBus2_DAT_INDW;	// SMBus2 DATA to Input+pull_DW pin
 	FAN_PWM_INDW;		// Set FAN_PWM input+pull_dw.
 	FAN_SPEED_INDW;		// Set FAN Speed input+pull_dw.
-	//ODD_DA_INDW;		// Set ODD_DA input+pull_dw.
 
-	//VGA_AC_DET_LO();
-	// AOAC_PWROFF();		// Turn off WLAN power.
-	//CMOS_Cam_OFF();		// Turn off Camera power.
 	CAPLED_OFF();		// Turn off Cap LED.
 	NUMLED_OFF();		// Turn off Num LED.
-
-	//LED_KB_PWM_INPUT;
-
-	//if ( SysPowState != SYSTEM_S0_S3 ) //ANGELAS063:remove
-	if ( SysPowState == SYSTEM_S0_S5 ) //ANGELAS063:add
+	if ( SysPowState == SYSTEM_S0_S5 ) 
 	{
 		USB_ON_INPUT;	// Disable USB wake.
-        //USB_ON_OUTPUT;   
-        //USB_ON_LOW();     
-		//LAN_PWR_ON_HI();
 	}
 	else
 	{
-		if ( IS_MASK_CLEAR(SYS_STATUS,AC_ADP) )
-		{ 
-			//LAN_PWR_ON_HI(); 
-        }	// turn off LAN power.
-		else
-		{ 
-			//LAN_PWR_ON_LO(); 
-        }	// Turn on LAN power.
-		//Remove turn off USB power enter S3. 
-		/*if ( IS_MASK_CLEAR(WAKEUP_ENABLE, USBWAKE) )
- 		{ 
- 		    	USB_ON_INPUT; 
-                  	//USB_ON_OUTPUT;   
-                  	//USB_ON_LOW();             
-              }	// turn off USB power.
-		else*///Remove turn off USB power enter S3. 
-		{
-			USB_ON_OUTPUT;
-			USB_ON_LOW();	// Turn on USB power.
-		}
+		USB_ON_OUTPUT;
+		USB_ON_LOW();	// Turn on USB power.
 	}
 	AC_IN_INPUT;
-
-#if UCS1022_Support
-	//if ( IS_MASK_SET(USB_Charger, b0USB_EN) )
-	if ( IS_MASK_SET(EMStatusBit, b1SetUSBChgEn) )
-	{ UCS1002HCACharger_Init(); }
-	else 
-	{
-		if ( SysPowState != SYSTEM_S0_S5 )
-		{ UCS1002HCACharger_Init(); }	// Entry S3 status.
-	}
-#endif	// UCS1022_Support
 	CLR_MASK(SYS_MISC1,b5Crisis_LED);	// Clear Crisis LED.
 }
 
 //============S5 -> S0==========================================================
+
+
+/*
+*******************************************************************************
+* Function name: S5S0_STEP1      
+*
+* Descriptoin: S5 to S0 step1.
+*
+* Invoked by: Oem_S5S0Sequence()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 BYTE S5S0_STEP1(void)
 {
     CLR_MASK(cCmd, bPCHPWR_Keep);    
@@ -821,13 +762,27 @@ BYTE S5S0_STEP1(void)
 	  	CLEAR_MASK(SysStatus2, b3EC8S_Reset);
 	}
 	  
-	EC_ON_HI(); //ANGELAS038:add
+	EC_ON_HI(); 
    	PM_PWRBTN_HI();
     RamDebug(0x80);
 	return(1);
 }
 
-//MEILING002: S+
+/*
+*******************************************************************************
+* Function name: S5S0_PMIC_Initial      
+*
+* Descriptoin: S5 to S0 PMIC Initial.
+*
+* Invoked by: Oem_S5S0Sequence()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 BYTE S5S0_PMIC_Initial(void)
 {
 	InitPMIC(); 
@@ -837,9 +792,23 @@ BYTE S5S0_PMIC_Initial(void)
 	else
 		return 1;
 }
-//MEILING002: E+
 
 
+/*
+*******************************************************************************
+* Function name: S5S0_AC_PRESENT_EN      
+*
+* Descriptoin: S5 to S0 AC PRESENT enable.
+*
+* Invoked by: Oem_S5S0Sequence()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void S5S0_AC_PRESENT_EN(void) 
 {
 	uPGID= Read_Eflash_Byte(EEPROMA2,(EEPROMA1_B03 | 0x07) ,0xE0); //:Add the difference between G and Z project
@@ -869,10 +838,10 @@ void S5S0_RSMRST_EN(void)
 void S5S0_PM_PWER_BTN2(void)
 {
 	PM_PWRBTN_LOW();
-	SET_MASK(CMOS_TEST,BIT2); //ANGELAS052:add
+	SET_MASK(CMOS_TEST,BIT2); 
     RamDebug(0x85);
 }
-// open
+
 void S5S0_PM_PWER_BTN3(void)
 {
 	PM_PWRBTN_HI();
@@ -884,12 +853,10 @@ BYTE S5S0_CHK_S4(void)
 	if(Read_SLPS4())
 	{
 	    PM_PWRBTN_HI(); 
-		//SYSON_HI(); //ANGELAS063:remove
-		EC_VCCST_EN_HI(); //ANGELAS063:add
+		EC_VCCST_EN_HI();
         RamDebug(0x87);
 		return(1);
 	}
-    //Reset_Delay=0x44; //:Remove work around
     PM_PWRBTN_LOW(); 
     
     RamDebug(0x88);
@@ -899,53 +866,31 @@ BYTE S5S0_CHK_S4(void)
 BYTE S5S0_CHK_S3(void)
 {
 	if(Read_SLPS3())
-	{
-		//if( Read_Eflash_Byte(EEPROMA2,(EEPROMA1_B03|0x00),0xEE) )
-		//{
-		//	SET_MASK(EMStatusBit, b4RdKBLEDFun);	// default support KB LED.
-		//}
-		
+	{		
         RamDebug(0x89);
 		return(1);
 	}
     RamDebug(0x8A);
-   	//Reset_Delay=0x55;  //Remove work around
 	return(0);
 }
 
-void S5S0_EC_VCCST_EN(void)
-{
-	EC_VCCST_EN_HI();
-    
-    RamDebug(0x8B);
-}
-
-//MEILING001:S+
 void S5S0_EC_VPP_PWREN(void)
 {
 	EC_VPP_PWREN_HI();
     
     RamDebug(0x8C);
 }
-//MEILING001:E+
 
-//ANGELAS063:add start
 void S5S0_SYSON(void)
 {
 	SYSON_HI();
     RamDebug(0x8D);
 }
-//ANGELAS063:add end
-void S5S0_GPO7(void)
-{
-//	VGA_AC_DET_HI();
-}
+
 void S5S0_SUSP(void)
 {
 	SUSP_ON();
-    //ROMPWREN_HIGH(); 
 	CURRENT_STATUS &= 0xC0; //Clear flags of entering and resuming from S3 & S4 &S5
-    //LAN_PWR_IN; 
 	SetS0GPIO();
 }
 
@@ -954,41 +899,11 @@ void S5S0_EC_VCCIO_EN(void)
 	EC_VCCIO_EN_HI();
 }
 
-void S5S0_NVDD_PWR(void)
-{
-	#if	Support_External_IO
-    NVDD_PWR_EN_HI();
-	S_NVDD_PWR_EN_HI();
-	#endif	// Support_External_IO
-}
 
 void S5S0_USBON(void)
 {
 	USB_ON_OUTPUT;
 	USB_ON_LOW();
-    //Remove read projectID for this project.
-	/*nKbProjectID = Read_Eflash_Byte(EEPROMA2,(EEPROMA1_B03|0x00),0xF0);	// read KB Type.
-	switch( nKbProjectID )
-	{
-		case 'K':	// UK keyboard  ascii=4b
-			cKBStatus &= 0xFC;
-			cKBStatus |= 0x01;	// Set UK keyboard.
-			break;
-		case 'J':	// JP keyboard   ascii=4a
-			cKBStatus &= 0xFC;
-			cKBStatus |= 0x02;	// Set JP keyboard.
-			break;
-		case 'E':	// EX keyboard   ascii=45
-			cKBStatus |= 0x03;	// Set BR keyboard.
-			break;
-		case 'S':	// US keyboard   ascii=53
-		default: 	// Other character then set US matrix for default
-			cKBStatus &= 0xFC;	// Set US keyboard.
-			break;
-	}
-	LoadKBMatrixToRAM();
-	SET_MASK(EMStatusBit, b4RdKBLEDFun);	// default support KB LED.
-	*///Remove read projectID for this project.
 	SET_MASK(EMStatusBit, b7RdUSBChgEn);	// default support USB charger S4/S5.
 }
 
@@ -997,16 +912,12 @@ void S5S0_VCCST_PWRGD(void)
 	//EC_VCCST_PWRGD_HI();
 }
 
-//same as S5S0_CHK_SA_PWRGOOD, only change name for clear read.
 
 BYTE S5S0_CHK_VDDQ_PWRGOOD(void)
 {
 	BYTE BPwrDate=0x03;
-    // Reset_Delay=0x00;  //Remove work around
 	if(Read_VDDQ_PGOOD())
 	{
-		//bRWSMBus(SMbusCh4, SMbusWB, TmlIC_Addr, TmlIC_Rate, &BPwrDate, SMBus_NoPEC);
-		//LED_KB_PWM_Step=Read_Eflash_Byte(EEPROMA2,(EEPROMA1_B03|0x07),0xE2);//JERRYCH004:Enable keyboard backlight.
         RamDebug(0x8E);
 
         return(1);
@@ -1014,40 +925,16 @@ BYTE S5S0_CHK_VDDQ_PWRGOOD(void)
     RamDebug(0x8F);
 	return(0);
 }
-/*
-BYTE S5S0_CHK_SA_PWRGOOD(void)
-{
-	BYTE BPwrDate=0x03;
-	if(Read_VDDQ_PGOOD())
-	{
-		//bRWSMBus(SMbusCh4, SMbusWB, TmlIC_Addr, TmlIC_Rate, &BPwrDate, SMBus_NoPEC);
-		LED_KB_PWM_Step=Read_Eflash_Byte(EEPROMA2,(EEPROMA1_B03|0x07),0xE2);
-		return(1);
-	}
-	return(0);
-}
-*/
-
 
 void S5S0_VR_ON(void)
 {
 	Clr_UEFIStatus();	// Clear UEFI status for BIOS used.
 	VR_ON_ON();
- 	/*  
-       if (IS_MASK_SET(SYS_STATUS,AC_ADP)) 
-       {
-	    ADAPTERIDON_LOW();
-       }
- 	*/       
- 	// for EM9 adapter detection and protection     
-    //SetPowerBatteryparameter(); 
     if (IS_MASK_SET(SYS_STATUS,AC_ADP))   
     {
-   		//ADAPTERIDON_LOW();  //MEILING001:remove.
-   		AdapterIDOn_Flag = 0x01; //MEILING001:add.
+   		AdapterIDOn_Flag = 0x01; 
  		ADPIDON10MS_NUM=0xa0;  // Modify read adapter ID time, in order to enter S4 under DC mode ,then plug in AC and wake up from S4 not pop up limited support.
-    } 
-	//:for EM9 adapter detection and protection   
+    }  
 	MuteCount = 4;
 }
 
@@ -1071,26 +958,31 @@ void S5S0_SYS_PWROK(void)
 	SYS_PWROK_HI();
 }
 
-void LPC_RST(void)
-{
-	#if	Support_External_IO
-	DGPU_HOLD_RST_HI();
-	S_DGPU_RST_HI();
-	#endif	// Support_External_IO
-}
-
-
+/*
+*******************************************************************************
+* Function name: S5S0_Init_Status      
+*
+* Descriptoin: S5 to S0 init Status.
+*
+* Invoked by: Oem_S5S0Sequence()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void S5S0_Init_Status(void)
 {
-	CLEAR_MASK(ACPI_HOTKEY, b7BIOS_NoShut); //support RTC wake and psw can wake during RTC wake enable  in DC mode except ship mode enable //ANGELAS031
-	CLEAR_MASK(ACPI_HOTKEY, b6Cmd_NoShut); //ANGELAS031
-	ShipModeEn=0x00; //ANGELAS037: add 
+	CLEAR_MASK(ACPI_HOTKEY, b7BIOS_NoShut); //support RTC wake and psw can wake during RTC wake enable  in DC mode except ship mode enable 
+	CLEAR_MASK(ACPI_HOTKEY, b6Cmd_NoShut); 
+	ShipModeEn=0x00; 
 	Fan_ON_Count = FAN_Boot_On;	// Turn on Fan 3 Sec.
-	disable_turbo_counter=60; //ANGELAG050: add
+	disable_turbo_counter=60; 
 	nBrightValue = 17;			// Default WIN8 brightness 110~130 nit.
 	nCpuTemp = VGA_TEMP = EXTVGA_TEMP = nSKINTemp90 = 32;	// Default temperature value.
-	ThermistorCPU_TEMP=32;	//ANGELAS070:add
-	//ANGELAS033:Add start	
+	ThermistorCPU_TEMP=32;		
   	if(IS_MASK_SET(SEL_STATE0,PRESENT_A))
   	{
     	batteryFirstUsedDateL = batteryFirstUsedDateH = 0x00;
@@ -1103,42 +995,30 @@ void S5S0_Init_Status(void)
 			RamDebug(0xAE);
 	  	}
   	}			
-	//ANGELAS033:Add end
-	 InitThermalTable1();//JERRYCH00:Modify the fan control from linear to the ladder.
-    InitThermalTable2();//JERRYCH00:Modify the fan control from linear to the ladder.
-	//SysPowState = SYSTEM_S0;	// Set System S0 status. //ANGELAS045:remove
+	InitThermalTable1();
+    InitThermalTable2();
 	LED_KB_PWM_Count = 10;	// Turn on KB BL LED.  //MEILING030:change 3 to 10(1.5s to 5s).
 	ACPI_HOTKEY &= 0x1F;	// Clear bit6,7, can cut power in the battery mode.
 	SYS_STATUS &= 0xF8;		// Clear OS mode.
-	//DSxPowState = SYSTEM_S3S4;	// Clear Deep status. //ANGELAS045:remove
 	CLR_MASK(cCmd, b3BkOff);	// Turn on backlight.
-	CLR_MASK(OEMControl, b1BkOff); //ANGELAG005:add
+	CLR_MASK(OEMControl, b1BkOff); 
 	BackLight_En_Delay =16;	// Delay 280msec turn on backlight.//reduce light backlight time for clodboot.from 28 to 16.
-    delayEDPTm = 5;                             // Delay 50ms to initial EDP.   // CMW Temp
-	//SetACIN_Int(); //ANGELAS079:remove
+    delayEDPTm = 5;                             // Delay 50ms to initial EDP. 
 	SET_MASK(pDevStus, pENABLE_TP);	// Turn on TouchPad.
-	//turn on touch sensor power
-	//if ( uMBID & 0x08 )  // add MBID judge.
     //add lid flag to BIOS, whether need to open  backlight.
     if(Read_LID_SW_IN())
     	SET_MASK(SWI_EVENT,LID);
     else
         CLEAR_MASK(SWI_EVENT,LID);
-    {
-    	//EC_TS_ON_OUTPUT;
-       	// EC_TS_ON_LOW();//Add touch panel control signal.//remove  for SIT unit. 
-        EC_TS_ON_HI();//Add touch panel control signal.  //MEILING001:add.
-    }    
+
+    EC_TS_ON_HI();//Add touch panel control signal. 
     #if SupportReadTPID
     ReadTPid();
     #endif
     uReserve07.fbit.uACInOutBeep = 1;
-	//CLEAR_MASK(BATTUPDATEFW,BIT0); //ANGELAS054:add //ANGELAS083:remove
-	Lowpower_DISfunction(); //ANGELAS047:add
-	//PECIBIOSTEST=2;//when enter S3/S4/CB,BIOS sent B4 CMD to EC from 66port for peci fail.// : CHANGE FROM 0 TO 2//remove 
-	CPUThrottlingDelayTime = 60; //MEILING052:add delay time 1 minute to send 0x1D event.
-	SysPowState = SYSTEM_S0;	//ANGELAS045:add set S0 power state.
-	//DSxPowState = SYSTEM_S3S4;	// Clear Deep status. //ANGELAS045:add
+	Lowpower_DISfunction();
+	CPUThrottlingDelayTime = 60; //add delay time 1 minute to send 0x1D event.
+	SysPowState = SYSTEM_S0;	//add set S0 power state.
 }
 
 /* follow ITE EVB Power Sequence 20111202.pdf
@@ -1171,39 +1051,50 @@ void S5S0_Init_Status(void)
 //-------------------------------------------------------------------------------------
 //  Do S5 -> S0 power sequnce
 //-------------------------------------------------------------------------------------
+
 const sPowerSEQ code asPowerSEQS5S0[]=
 {
 	{ 0x0000, 				0,		0,  },	//Dummy step always in the top of tabel
-	{ S5S0_STEP1,			0,		1,	},  //MEILING002:change delay time from 10 to 1. //MEILING010:change 1 to 0.
-	{ S5S0_PMIC_Initial,	1,		1,	},  //MEILING002: add  //MEILING010:change 10 to 1.
+	{ S5S0_STEP1,			0,		1,	},  
+	{ S5S0_PMIC_Initial,	1,		1,	},  
 	{ S5S0_PCH_PWR_EN,		30,		0,  },
 	{ S5S0_RSMRST_EN,		20,		0,  },
 	{ S5S0_AC_PRESENT_EN,	76,		0,  }, // 20+76>95
 	{ S5S0_PM_PWER_BTN2,    20,		0,  },
 	{ S5S0_PM_PWER_BTN3,    0,      0,  },  
-	{ S5S0_CHK_S4,			0, 		1,	}, //ANGELAS063: 2 to 1 //MEILING001:change 2 to 0.
-	{ S5S0_EC_VPP_PWREN,    2,      0,  }, //MEILING001:add.
-	{ S5S0_SYSON,			0, 		0,	}, //    ANGELAS063:add
-	//{ S5S0_CHK_S3,		1,     	1,  	}, //ANGELAS063:remove
+	{ S5S0_CHK_S4,			0, 		1,	}, 
+	{ S5S0_EC_VPP_PWREN,    2,      0,  },
+	{ S5S0_SYSON,			0, 		0,	}, 
 	{ S5S0_CHK_VDDQ_PWRGOOD,0,	  	1,	},
-	{ S5S0_CHK_S3,			0,     	1,  }, //ANGELAS063:add
-	{ SLPS3_Sleep_En,       0,      0,  }, //ANGELAS063:add
-	{ SLPS4_Sleep_En,       0,      0,  }, //ANGELAS063:add
-	//{ S5S0_EC_VCCST_EN,	2,		0,	}, //ANGELAS063:remove
-	{ S5S0_SUSP,			0, 		0,	},  //ANGELAS063: 2 to 0
+	{ S5S0_CHK_S3,			0,     	1,  }, 
+	{ SLPS3_Sleep_En,       0,      0,  }, 
+	{ SLPS4_Sleep_En,       0,      0,  }, 
+	{ S5S0_SUSP,			0, 		0,	},  
 	{ S5S0_EC_VCCIO_EN,		8, 		0,	},  //   syson to vccio <25
     { S5S0_USBON,			50,		0,	},
     { S5S0_VCCST_PWRGD,		5,		0,	},
 	{ S5S0_VR_ON,			0,		0,	},    
 	{ S5S0_CHK_VRREADY,		10,		1,	},
-	{ S5S0_PCH_PWROK,		100,	0,	},  // check VR_ON  //MEILING010:change 85 to 100.
+	{ S5S0_PCH_PWROK,		100,	0,	},  // check VR_ON
 	{ S5S0_SYS_PWROK,		49,		0,	},	
 	{ S5S0_Init_Status,		0,		0,	},
 };
 
-//----------------------------------------------------------------------------
-// S5 to S0 sequnce
-//----------------------------------------------------------------------------
+/*
+*******************************************************************************
+* Function name: Oem_S5S0Sequence      
+*
+* Descriptoin: S5 -> S0 power sequnce.
+*
+* Invoked by: Oem_SysPowerContrl()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void Oem_S5S0Sequence(void)
 {
     if ( PowSeqDelay != 0x00 )
@@ -1242,8 +1133,7 @@ void S0S5_VR_ON(void)
 	SYS_PWROK_LOW();
 	PCH_PWROK_LOW();
 	VR_ON_OFF();
-	//EC_VCCST_PWRGD_LOW();
-	USB_ON_INPUT; //ANGELAS031: add
+	USB_ON_INPUT; 
 	EC_VCCIO_EN_LOW();
 	#if	Support_External_IO
 	DGPU_HOLD_RST_LOW();
@@ -1251,35 +1141,21 @@ void S0S5_VR_ON(void)
 	#endif	// Support_External_IO
 }
 
-void S0S5_NVDD_OFF(void)
-{
-	#if	Support_External_IO
-	NVDD_PWR_EN_LOW();
-	S_NVDD_PWR_EN_LOW();
-	#endif	// Support_External_IO
-}
-
 void S0S5_SUSP(void)
 {
-    EC_LID_OUT_LOW(); //ANGELAG008: add
+    EC_LID_OUT_LOW(); 
 	SUSP_OFF();
 	SetS5GPIO();
 }
+
 void S0S5_EC_VCCST_EN(void)
 {
 	EC_VCCST_EN_LOW();
 }
 
-//MEILING001:S+
 void S0S5_EC_VPP_PWREN(void)
 {
 	EC_VPP_PWREN_LOW();
-}
-//MEILING001:E+
-
-void S0S5_GPO7(void)
-{
-	//VGA_AC_DET_LO();
 }
 
 void S0S5_SYS_ON(void)
@@ -1287,27 +1163,30 @@ void S0S5_SYS_ON(void)
 	SYSON_LOW();
 	Write_NOVOS4();
 }
-void S0S5_DPWROK_OFF(void)
-{
-	if(IS_MASK_CLEAR(cCmd, bPCHPWR_Keep))
-	{
-	    // DPWROK_EC_LOW();
-        RSMRST_LOW(); 
-    }
-}
 
-
+/*
+*******************************************************************************
+* Function name: S0S5_Init_Status      
+*
+* Descriptoin: S0 to S5 init Status.
+*
+* Invoked by: Oem_S0S5Sequence()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void S0S5_Init_Status(void)
 {
-	//GPU_Prochot = 0; //ANGELAG033: remove //ANGELAG028: add
-	F2_Pressed=0; //ANGELAG001: ADD
-	//DSxPowState = SYSTEM_S3S4; //ANGELAS045:remove
-//Y7JERRY085:Add CMD for press power button 4s don't shutdown when flash bios.
+	F2_Pressed=0; 
+//Add CMD for press power button 4s don't shutdown when flash bios.
 	#if chPWSW1WDT
        CLEAR_MASK(pProject4,pPWSWdisable);
-    #endif  //chPWSW1WDT 
-//Y7JERRY085:Add CMD for press power button 4s don't shutdown when flash bios.    
-	//ANGELAS033:Add start			
+    #endif  //chPWSW1WDT     
+			
   	if(IS_MASK_SET(SEL_STATE0,PRESENT_A))
   	{
     	if(IS_MASK_SET(pProject0,b1uFUdayClr))
@@ -1321,16 +1200,13 @@ void S0S5_Init_Status(void)
       		}
     	}
   	}
-	//ANGELAS033:Add end
-	Bioswatchdog=0;////ANGELAS106:Optimize ANGELAS094 clear time.
-	//SysPowState = SYSTEM_S5; //ANGELAS045:remove
+
+	Bioswatchdog=0;
 	uNovoVPCCount = 0;				// Clear NOVO VPC status.
 	nCpuTemp = TEMP_Buff_1 = TEMP_Buff_2 = TEMP_Buff_3=0x00; //:Clear CPU & VGA & thermal IC temp after system shutdown or enter s3.
 	VGA_TEMP = VGA_TBuff3 = VGA_TBuff2 = VGA_TBuff1 = 0x00;	//:Clear CPU & VGA & thermal IC temp after system shutdown or enter s3.
 	nNBTemp = nRamTemp =0;//:Clear CPU & VGA & thermal IC temp after system shutdown or enter s3.
 	CLEAR_MASK(nBatteryStatH, CMBS_CRITICALLOW); 
-    // if(AutoTimer&0x7F)
-    //  SET_MASK(AutoTimer,b7AutoBootTm);
 	CPU_TYPE &= 0x3f;//:CLEAR BIT6 and BIT7 Unit abnormal shuntdown will not clear GPU flag,so when enter S5,WB and S3 we clear GPU flag to not read GPU temperature.
 	CPU_Shut_Cnt = VGA_Shut_Cnt = EXTVGA_Shut_Cnt = 0;	// Clear shutdown conunt.
 	ERR_THMSTS = 0;					// Clear thermal status fail bit.
@@ -1343,8 +1219,8 @@ void S0S5_Init_Status(void)
     	SET_MASK(SWI_EVENT,LID);
     else
         CLEAR_MASK(SWI_EVENT,LID);
-    //EC_TS_ON_INPUT;     //   turn ooff touch sensor power
-    EC_TS_ON_LOW();//Turn off touch pad sensor power in s5/s3.  //MEILING001:add.
+
+    EC_TS_ON_LOW();//Turn off touch pad sensor power in s5/s3.  
        
 	if (cSysActionFlag == SysAction_EC_Restart || cSysActionFlag == SysAction_SysShutdown_EC_AutoBoot)
 	{
@@ -1352,16 +1228,13 @@ void S0S5_Init_Status(void)
         WinFlashMark2 = 0x35;
 		InternalWDTNow();
 	}
-	//else if(( (WinFlashMark == 0xFC)&&(WinFlashMark1==0x55)) || (cSysActionFlag == SysAction_EC_Shutdown)) //ANGELAG012:remove.
-	else if(cSysActionFlag == SysAction_EC_Shutdown) //ANGELAG012:add.
+	else if(cSysActionFlag == SysAction_EC_Shutdown) 
 	{
 		ProcessSID(FLASH_ID);
 		WinFlashMark = 0xAA;
 		WinFlashMark1=0x88;
 		InternalWDTNow();
 	}
-
-	//Clr_Thermal_Tab();	// Clear Thermal table value.//JERRYCH00:Modify the fan control from linear to the ladder.
 
 	if(IS_MASK_SET(SysStatus,LidKBIgnore))
 	{
@@ -1370,15 +1243,14 @@ void S0S5_Init_Status(void)
 		Unlock_Scan();		// UnLock scanner
 		CLEAR_MASK(SysStatus,LidKBIgnore);
 	}
-	//ANGELAG007: add start
+
 	if(PowerOVP_REG|PowerUVP_REG|PowerOCP_REG|PowerOTP_REG)
 	{
 		if ( IS_MASK_CLEAR(SysStatus, ERR_ShuntDownFlag) )
 		{ ProcessSID(PMIC_Shutdown_ID); }
 	}
-	//ANGELAG007: add end
 
-	PollingOTP();//MEILING002:add.
+	PollingOTP();
 
 	if ( IS_MASK_CLEAR(SysStatus, ERR_ShuntDownFlag) )
 	{ ProcessSID(S5_ID); }
@@ -1386,10 +1258,7 @@ void S0S5_Init_Status(void)
 	initMark = 0x00;	// CMW 20121203 for PS8625 translator
 	TEMP_Error = 0x00; // CMW 20121203 for PS8625 translator
 	PECI_Err_CNT=0;//When enter S3/S4/S4,clear PECI fail count.
-	// PECI_INDW;			// Set PECI pin to ALT.//Change PECI initialize after S0 states.//: +remove  AND 
-    //CLR_MASK(GCR2, PECIE);     // Enable PECI//Change PECI initialize after S0 states.//: +remove  AND 
 	Lowpower_ENfunction(); 
-//ANGELAG008: add start
 	CLEAR_MASK(pDevStatus3,b6EnDisTPSend);
 	CLEAR_MASK(pDevStatus3,b7TPStateFormer);
 	CLEAR_MASK(pDevStatus1,b0F6ScanCodeSend);
@@ -1398,11 +1267,9 @@ void S0S5_Init_Status(void)
 	CLEAR_MASK(pDevStatus1,b5TPDRIVER_STATUS);
 	CLEAR_MASK(pDevStatus1,b6MODE_STATUS);
 	CLEAR_MASK(pDevStatus1,b7DisableTP);
-//ANGELAG008: add end
-	//DSxPowState = SYSTEM_S3S4; 
+
 	PM_PWRBTN_HI();
-	SysPowState = SYSTEM_S5;
-	
+	SysPowState = SYSTEM_S5;	
 	  
 }
 
@@ -1414,17 +1281,28 @@ const sPowerSEQ code asPowerSEQS0S5[]=
 	{ 0x0000, 				0,		0,  },	// Dummy step always in the top of tabel
 	{ S0S5_VR_ON,			0,		0,	},  
 	{ S0S5_SUSP, 		   	0,		0,  },
-	//{ S0S5_EC_VCCST_EN,	0,		0,	},  //ANGELAS063:remove
-	//{ S0S5_SYS_ON,		30,		0,	}, //ANGELAS063:remove
-	{ S0S5_SYS_ON,			0,		0,	}, //ANGELAS063:add
-	{ S0S5_EC_VCCST_EN,		30,		0,	}, //ANGELAS063:add
-	{ S0S5_EC_VPP_PWREN,    10,     0,  }, //MEILING001:add.
+	{ S0S5_SYS_ON,			0,		0,	}, 
+	{ S0S5_EC_VCCST_EN,		30,		0,	}, 
+	{ S0S5_EC_VPP_PWREN,    10,     0,  }, 
 	{ S0S5_Init_Status,		0,		0,	},
 };
 
-//----------------------------------------------------------------------------
-// S0 to S5 sequnce
-//----------------------------------------------------------------------------
+
+/*
+*******************************************************************************
+* Function name: Oem_S0S5Sequence      
+*
+* Descriptoin: S0 -> S5 power sequnce.
+*
+* Invoked by: Oem_SysPowerContrl()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void Oem_S0S5Sequence(void)
 {
 	if ( PowSeqDelay != 0x00 )
@@ -1466,9 +1344,8 @@ void S0S3_VR_ON(void)
 	SYS_PWROK_LOW();
 	PCH_PWROK_LOW();
   	VR_ON_OFF();	
-	//EC_VCCST_PWRGD_LOW();
 	EC_VCCIO_EN_LOW();
-	#if	Support_External_IO	//cwy
+	#if	Support_External_IO	
 	NVDD_PWR_EN_LOW();
 	S_NVDD_PWR_EN_LOW();
 	S_DGPU_PWR_EN_LOW();
@@ -1478,7 +1355,7 @@ void S0S3_VR_ON(void)
 
 void S0S3_SUSP(void)
 {
-    EC_LID_OUT_LOW(); //ANGELAG008: add 
+    EC_LID_OUT_LOW(); 
 	SUSP_OFF();
 	#if	Support_External_IO
 	DGPU_HOLD_RST_LOW();
@@ -1486,55 +1363,55 @@ void S0S3_SUSP(void)
 	#endif	// Support_External_IO
 	SetS5GPIO();
 }
-void S0S3_EC_VCCST_EN(void)
-{
-	EC_VCCST_EN_LOW();
-}
-void S0S3_GPO7(void)
-{
-//	VGA_AC_DET_LO();
-}
+
+/*
+*******************************************************************************
+* Function name: S0S3_Init_Status      
+*
+* Descriptoin: S0 to S3 init Status.
+*
+* Invoked by: Oem_S0S3Sequence()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void S0S3_Init_Status(void)
 {
-	//GPU_Prochot = 0; //ANGELAG033: remove //ANGELAG028: add
 	#if	Support_External_IO
-	Init_IT8302();  //cwy
+	Init_IT8302();  
 	#endif	// Support_External_IO
 	CPU_TYPE &= 0x3f;//:CLEAR BIT6 and BIT7 Unit abnormal shuntdown will not clear GPU flag,so when enter S5,WB and S3 we clear GPU flag to not read GPU temperature.
 	CPU_Shut_Cnt = VGA_Shut_Cnt = EXTVGA_Shut_Cnt = 0;	// Clear shutdown conunt.
 	nCpuTemp = TEMP_Buff_1 = TEMP_Buff_2 = TEMP_Buff_3=0x00; //:Clear CPU & VGA & thermal IC temp after system shutdown or enter s3.
 	VGA_TEMP = VGA_TBuff3 = VGA_TBuff2 = VGA_TBuff1 = 0x00;	//:Clear CPU & VGA & thermal IC temp after system shutdown or enter s3.
 	nNBTemp = nRamTemp =0;//:Clear CPU & VGA & thermal IC temp after system shutdown or enter s3.
-	//SysPowState=SYSTEM_S3;  //ANGELAS045:remove
-	//DSxPowState = SYSTEM_S3S4;  //ANGELAS045:remove
 #if TouchPad_only
     PowerOffClearTPPendingData();
 #endif  
-	//Clr_Thermal_Tab();				// Clear Thermal table value.//JERRYCH00:Modify the fan control from linear to the ladder.
 	ERR_THMSTS = 0;					// Clear thermal status fail bit.
 	Thro_Status = Thro_Status2 = 0;	// clear Throttling status.  
 	AOAC_STATUS &= 0x10;			// Clear ISCT status.
-	initMark = 0x00;	// CMW 20121203
-	TEMP_Error = 0x00;	// CMW 20121203
-   	// EC_TS_ON_INPUT;   //   turn off touch sensor power
-    EC_TS_ON_LOW();//Turn off touch pad sensor power in s5/s3.  //MEILING001:add.
+	initMark = 0x00;	
+	TEMP_Error = 0x00;	
+    EC_TS_ON_LOW();//Turn off touch pad sensor power in s5/s3.  
     PECI_Err_CNT=0;//:When enter S3/S4/S4,clear PECI fail count.
-   	// PECI_INDW;			// Set PECI pin to ALT.//:Change PECI initialize after S0 states.//: +remove  AND 
-  	// CLR_MASK(GCR2, PECIE);     // Enable PECI//:Change PECI initialize after S0 states.//: +remove  AND
-	Lowpower_ENfunction(); //ANGELAS047:add
-//ANGELAG008: add start
+	Lowpower_ENfunction(); 
+
 	CLEAR_MASK(pDevStatus3,b6EnDisTPSend);
 	CLEAR_MASK(pDevStatus3,b7TPStateFormer);
 	CLEAR_MASK(pDevStatus1,b0F6ScanCodeSend);
 	CLEAR_MASK(pDevStatus1,b1F6DisableTP);
 	CLEAR_MASK(pDevStatus1,b4LNVAPP_STATUS);
 	CLEAR_MASK(pDevStatus1,b5TPDRIVER_STATUS);
-		CLEAR_MASK(pDevStatus1,b6MODE_STATUS);
+	CLEAR_MASK(pDevStatus1,b6MODE_STATUS);
 
-		CLEAR_MASK(pDevStatus1,b7DisableTP);
-//ANGELAG008: add end
-   	SysPowState=SYSTEM_S3;  //ANGELAS045:add
-	//DSxPowState = SYSTEM_S3S4;  //ANGELAS045:add
+	CLEAR_MASK(pDevStatus1,b7DisableTP);
+
+   	SysPowState=SYSTEM_S3; 
 }
 
 //-------------------------------------------------------------------------------------
@@ -1548,9 +1425,21 @@ const sPowerSEQ code asPowerSEQS0S3[]=
   	{ S0S3_Init_Status,		0,		0,	},
 };
 
-//----------------------------------------------------------------------------
-// S0 to S3 sequnce
-//----------------------------------------------------------------------------
+/*
+*******************************************************************************
+* Function name: Oem_S0S3Sequence      
+*
+* Descriptoin: S0 -> S3 power sequnce.
+*
+* Invoked by: Oem_SysPowerContrl()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void Oem_S0S3Sequence(void)
 {
   	if(PowSeqDelay != 0x00 )
@@ -1597,14 +1486,7 @@ void S3S0_PM_PWER_BTN2(void)
 	PM_PWRBTN_HI();
 	SysPowState=SYSTEM_S3;
 }
-void S3S0_EC_VCCST_EN(void)
-{
-	EC_VCCST_EN_HI();
-}
-void S3S0_GPO7(void)
-{
-//VGA_AC_DET_HI();
-}
+
 void S3S0_SUSP(void)
 {
 	PM_PWRBTN_HI();
@@ -1612,7 +1494,6 @@ void S3S0_SUSP(void)
 	SetS0GPIO();
 	USB_ON_OUTPUT;
 	USB_ON_LOW();
-    //LAN_PWR_IN; 
 	#if	Support_External_IO
 	DGPU_PWR_EN_HI();
 	S_DGPU_PWR_EN_HI();
@@ -1636,51 +1517,47 @@ void S3S0_VR_ON(void)
 {
 	VR_ON_ON();
 	MuteCount = 18;  
-	//: for EM9 adapter detection and protection    
     if (IS_MASK_SET(SYS_STATUS,AC_ADP))   
     {
-   		//ADAPTERIDON_LOW(); //MEILINNG001:remove.
-   		AdapterIDOn_Flag = 0x01; //MEILING001:add.
+   		AdapterIDOn_Flag = 0x01; 
  		ADPIDON10MS_NUM=0x20;
     }
-	//:for EM9 adapter detection and protection 
 }
+
 void PCH_PWROK(void)
 {
 	PCH_PWROK_HI();
 }
 
-
+/*
+*******************************************************************************
+* Function name: S3S0_Init_Status      
+*
+* Descriptoin: S3 to S0 init Status.
+*
+* Invoked by: Oem_S3S0Sequence()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void S3S0_Init_Status(void)
 {
 	Fan_ON_Count = FAN_Boot_On;	// Turn on Fan 3 Sec.
-	disable_turbo_counter=60; //ANGELAG050: add
-	//SysPowState = SYSTEM_S0; //ANGELAS045:remove
-	//DSxPowState = SYSTEM_S3S4;	// Clear Deep status. //ANGELAS045:remove
-    RamDebug(0x9B);
-    // AOAC_INPUT();   
-	//LED_KB_PWM_Count = 3;	// Turn on KB BL LED.  //MEILING030:remove.
+	disable_turbo_counter=60; 
+    RamDebug(0x9B);   
 	CLR_MASK(cCmd, b3BkOff);	// Turn on backlight.
-	CLR_MASK(OEMControl, b1BkOff); //ANGELAG005:add
+	CLR_MASK(OEMControl, b1BkOff); 
 	BackLight_En_Delay = 3;		// Delay 30msec turn on backlight.
-    delayEDPTm = 40;                           // Delay 100ms to initial EDP. // CMW Temp
-	//SetACIN_Int(); //ANGELAS079:remove
+    delayEDPTm = 40;                           // Delay 100ms to initial EDP.
 	SET_MASK(pDevStus, pENABLE_TP);	// Turn on TouchPad.
-	CURRENT_STATUS &= 0xC0; 		//(JSN20120614) Clear flags of entering and resuming from S3 & S4 &S5
-	//turn on touch sensor power
-	//if ( uMBID & 0x08 )  //T28A +: add MBID judge.
-	//if ( uMBID & 0x08 )  //T28A +: add MBID judge.  //T028C+
-     {
-          //EC_TS_ON_OUTPUT;
-          //EC_TS_ON_LOW();//Remove  for SIT unit.//:-Add touch panel control signal. 
-          EC_TS_ON_HI(); //MEILING001:add.
-     }      
-	//if ( (IS_MASK_SET(ACPI_HOTKEY,b5BIOS_IFFS)) )
-	//{ EC_LID_OUT_HI(); }
-	Lowpower_DISfunction(); //ANGELAS047:add
-	SysPowState = SYSTEM_S0;   //ANGELAS045:add
-	//DSxPowState = SYSTEM_S3S4;	// Clear Deep status. //ANGELAS045:add
-
+	CURRENT_STATUS &= 0xC0; 		// Clear flags of entering and resuming from S3 & S4 &S5 
+    EC_TS_ON_HI(); 
+	Lowpower_DISfunction(); 
+	SysPowState = SYSTEM_S0;   
 }
 
 //-------------------------------------------------------------------------------------
@@ -1695,17 +1572,29 @@ const sPowerSEQ code asPowerSEQS3S0[]=
 	{ S3S0_EC_VCCIO_EN,     50,    	0,  },		
 	{ S3S0_VCCST_PWRGD,     5,    	0,  },		
   	{ S3S0_VR_ON,			0,		0,	},
-  	{ SLPS3_Sleep_En,       0,      0,  }, //ANGELAS063:add
-  	{ SLPS4_Sleep_En,       0,      0,  }, //ANGELAS063:add
+  	{ SLPS3_Sleep_En,       0,      0,  }, 
+  	{ SLPS4_Sleep_En,       0,      0,  }, 
  	{ S5S0_CHK_VRREADY,		10,		1,	},	//  there S5S0... same as S3S0... 
- 	{ S5S0_PCH_PWROK,		100,	0,	},	//  there S5S0... same as S3S0...  //LMLKBL0013:modify delay time from 85 to 100.
+ 	{ S5S0_PCH_PWROK,		100,	0,	},	//  there S5S0... same as S3S0...  //modify delay time from 85 to 100.
 	{ S5S0_SYS_PWROK,		110,	0,	},	//  there S5S0... same as S3S0...
 	{ S3S0_Init_Status,		0,		0,	},
 };
 
-//----------------------------------------------------------------------------
-//S3 to S0 Sequence
-//----------------------------------------------------------------------------
+/*
+*******************************************************************************
+* Function name: Oem_S3S0Sequence      
+*
+* Descriptoin: S3 -> S0 power sequnce.
+*
+* Invoked by: Oem_SysPowerContrl()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void Oem_S3S0Sequence(void)
 {
   	if(PowSeqDelay != 0x00 )
@@ -1741,80 +1630,54 @@ void Oem_S3S0Sequence(void)
   	}
 }
 //=============================================================================
+
+
+/*
+*******************************************************************************
+* Function name: CheckAutoPowerOn      
+*
+* Descriptoin: Check auto power on.
+*
+* Invoked by: Oem_SysPowerContrl()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void CheckAutoPowerOn(void)
 {
 	if ((WinFlashMark == 0x53) && (WinFlashMark2 == 0x35) &&( SystemIsS5|| (SystemIsDSX && (!Read_AC_IN()) ) ))
 	{
-		//AutoTimer = 0x01;
 		AutoTimer = 0x83;
 		WinFlashMark = 0;
        	WinFlashMark2 = 0;
 	}
 }
 
-void Check_EC_ON()
-{
-	//if ( IS_MASK_CLEAR(ACPI_HOTKEY, b7BIOS_NoShut)&&(LOWBATT_3TIMES==0)&&((SysStatus2&0x03)== 0))  	// Not cut power in the battery mode for BIOS used.
-	if ( IS_MASK_CLEAR(ACPI_HOTKEY, b7BIOS_NoShut)&&(LOWBATT_3TIMES==0))  
-	{
-		if ( IS_MASK_CLEAR(ACPI_HOTKEY, b6Cmd_NoShut) )	// Not cut power in the battery mode for command used.
-		{
-            //if (!Read_AC_IN())   
-            //if (!Read_AC_IN()&& (DSxPowState == SYSTEM_DSxOK))//SysPowState
-            if (!Read_AC_IN()&& (SysPowState == SYSTEM_S5))
-            {
-			    //T31- EC_ON_LOW();
-			    //EC_ON_Flag =0x55;  
-			#if shipmodesupport		//:add ship mode judge
-				if(ShipModeEn==0xA5)
-				{
-				  	ShipModeEn=0x00;
-				   	Lock_ShipMode();
-                  	GPCRC1=INPUT;
-                   	GPCRC2=INPUT;
-				   	Delay1MS(100);				   			   
-				}
-			#endif
-                     			//Delay1MS(10); 
-				RSMRST_LOW();
-				Delay1MS(2); 
-				PCH_PWR_EN_OFF();
-				Delay1MS(12); //:Add 12 ms delay between PCH_PWR_EN_OFF and EC_ON_LOW
-				/*//ANGELAS038:remove start
-				//ANGELAS005:s+ Support UMA SKU EC_ON pin design.
-				//if(NTC_V1>682) 	//ANGELAS007:Optimize power on sequence.
-				if(NTC_FLAG)//ANGELAS007:Optimize power on sequence.
-				{
-					CLR_MASK(GPDRF,BIT(0));
-					//GPCRF0 = INPUT; //ANGELAS020
-				}
-				else
-				//ANGELAS005:e+ Support UMA SKU EC_ON pin design.
-				*///ANGELAS038:remove end
-			    EC_ON_LOW();    
-				PM_PWRBTN_LOW();
-				//LID_readytime = 11 ;	 //ANGELAS007:Optimize power on sequence.									// LID switch wakeup time = 100ms
-				CLR_MASK(LENOVOPMFW_Temp,b3EC_ONStatus);
-				SET_MASK(LENOVOPMFW_Temp,b5EC_ON_EN);		  
-		    }
-    
-			return;
-		}
-	}
-	SET_MASK(LENOVOPMFW_Temp,b3EC_ONStatus);
-	CLR_MASK(LENOVOPMFW_Temp,b5EC_ON_EN);
-}
 
-//ANGELAS041:add start
+/*
+*******************************************************************************
+* Function name: check8sreset      
+*
+* Descriptoin: Check 8s reset
+*
+* Invoked by: Core_Initialization()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void check8sreset(void)
 {
-	//BYTE tempEC201Ch; //ANGELAS089:remove
-    //tempEC201Ch = EC201Ch; //ANGELAS089:remove
 	RamDebug(ShutDnCause);
-	//RamDebug(tempEC201Ch); //ANGELAS089:remove
 	Init_SMBus_Regs();
-    //if(IS_MASK_SET(tempEC201Ch,BIT1)) //ANGELAS089:remove
-	if(IS_MASK_SET(PWRSW8SRST,BIT1))  //ANGELAS089:add
+	if(IS_MASK_SET(PWRSW8SRST,BIT1))  
     {  
         SET_MASK(SysStatus2, b3EC8S_Reset);
         RamDebug(0xA8);
@@ -1825,102 +1688,22 @@ void check8sreset(void)
         RamDebug(0xA9);
     }
 }
-//ANGELAS041:add end
 
 /*
-void CHK_BATT_5PERCL(void)
-{
-    BYTE tempEC201Ch;  
-    tempEC201Ch = EC201Ch;
-	RamDebug(ShutDnCause);
-	RamDebug(tempEC201Ch);	
-	Init_SMBus_Regs();	// initial SMBUS	
-       if(IS_MASK_SET(tempEC201Ch,BIT1))  //SPCTRL4:LRSIPWRSWTR 
-       {  
-             SET_MASK(SysStatus2, b3EC8S_Reset);
-             RamDebug(0xA8);
-       }
-       else 
-       {
-            CLEAR_MASK(SysStatus2, b3EC8S_Reset);
-            RamDebug(0xA9);
-       }
-                RamDebug(0xAA);
-                RamDebug(WinFlashMark);
-                RamDebug(WinFlashMark2);
-                if((0x38==WinFlashMark)&&(0x83==WinFlashMark2))
-               {
-                                    WinFlashMark=0x00;
-                                    WinFlashMark2=0x00;
-                       		PWSeqStep = 1;
-		                    PowSeqDelay = 0x00;
-                                  RamDebug(0x56);
-		                    SysPowState=SYSTEM_S5_S0; 
-               }
-	//(JSN20120614)+	if (!Read_AC_IN() && Read_EC_PWRBTN())
-	if ( !Read_AC_IN() && (Read_EC_PWRBTN() || Read_EC_NOVO()) )
-	//(JSN20120614)-
-	{
-		EC_ON_HI();
-		//EC_ON2_HI();
-		if( Read_EC_NOVO() )
-		{
-			uNovoVPCCount = 1;
-
-			EEPROM_PwrSts = Read_Eflash_Byte(EEPROMA2,(EEPROMA1_B03 | 0x07),0xDF);
-		    	// NOVO button should be no function when resuming from S4
-			if( (EEPROM_PwrSts & 0x10) == 0 )
-			{
-				if ( (EEPROM_PwrSts & 0x01) != 0 )
-				{ return; }
-			}
-		}
-		else
-		{uNovoVPCCount = 0;}
-
-		//if ((Battdata_ready != 1)&&(!Read_AC_IN()||Read_ACOFF()))
-		if ((Battdata_ready != 1)&&(!Read_AC_IN()))
-		{
-		   	FirstGetBatData();
-		    	while(BatSMbusFailCount!=0) //:Fixup battery LED show amber and flash 3 times
-            		{      
-				FirstGetBatData();
-            			bRWSMBus(SMbusChB, SMbusRW, SmBat_Addr,C_RSOC,&BAT1PERCL ,SMBus_NoPEC);
-              	}
-			if (Battdata_ready != 1)
-			{
-				Battdata_ready = 0xFF;
-				return;
-			}
-		}
-
-		//if ((BAT1PERCL < 0x02)&&(!Read_AC_IN()||Read_ACOFF()))  //: change 0x05 to 0x00 G23
-		if ((BAT1PERCL < 0x02)&&(!Read_AC_IN()))  //: change 0x05 to 0x00 G23
-		{
-			SET_MASK(nBatteryStatL,CMBS_LOWBATT);
-			LOWBATT_3TIMES = 100;		// set 5 sec
-			//EC_ON_HI();
-			return;
-		}
-
-		//EC_ON_HI();
-		if(!Read_LID_SW_IN())
-		{ 
-		    	return; 
-              }
-              if(IS_MASK_SET(SysStatus2, b3EC8S_Reset))
-              {
-                    CLEAR_MASK(SysStatus2, b3EC8S_Reset);
-                    return;
-              }
-		 PWSeqStep = 1;
-		 PowSeqDelay = 0x00;
-              RamDebug(0x54);
-		 SysPowState=SYSTEM_S5_S0;
-	}
-}
+*******************************************************************************
+* Function name: SendSynapticsIDSequence      
+*
+* Descriptoin: Send Synaptics ID Sequence
+*
+* Invoked by: ReadTPid()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
 */
-
 void SendSynapticsIDSequence()
 {
     BYTE Temp;
@@ -1936,6 +1719,21 @@ void SendSynapticsIDSequence()
 	Send2PortNWait(0x02, 0xE9, 4);
 }
 
+/*
+*******************************************************************************
+* Function name: SendElanIDSequence      
+*
+* Descriptoin: Send Elan ID Sequence
+*
+* Invoked by: ReadTPid()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void SendElanIDSequence()
 {
     Send2PortNWait(0x02, 0xE6, 1);
@@ -1943,6 +1741,22 @@ void SendElanIDSequence()
     Send2PortNWait(0x02, 0xE6, 1);
     Send2PortNWait(0x02, 0xE9, 4);
 }
+
+/*
+*******************************************************************************
+* Function name: SendALPSIDSequence      
+*
+* Descriptoin: Send ALPS ID Sequence
+*
+* Invoked by: ReadTPid()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void SendALPSIDSequence()
 {
     Send2PortNWait(0x02, 0xE7, 1);
@@ -1950,11 +1764,24 @@ void SendALPSIDSequence()
     Send2PortNWait(0x02, 0xE7, 1);
     Send2PortNWait(0x02, 0xE9, 4);
 }
+
+/*
+*******************************************************************************
+* Function name: ReadTPid      
+*
+* Descriptoin: Read TP ID
+*
+* Invoked by: S5S0_Init_Status()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void ReadTPid()
 {
-    //BYTE Temp;
-    // if((TP_Type == 0x01)||(TP_Type == 0x02)||(TP_Type == 0x03)) //G34: remove read TP ID only one time.
-       // return;
     SendSynapticsIDSequence();
 
     if(TPID3 == 0x47)
@@ -1979,19 +1806,23 @@ void ReadTPid()
        }  
    	}
 
-   	/*
-    	Temp = Read_Eflash_Byte(0x01,0xB0,0xEF);
-
-    	if(Temp != TP_Type)
-    	{
-        	eEEPROMBank= 0x00;
-        	eEEPROMAddrsss = 0xEF;
-        	eEEPROMData	= TP_Type;
-        	Update_EEPROMMark();
-    	}
-	*/
 }
 
+/*
+*******************************************************************************
+* Function name: Write_NOVOS4      
+*
+* Descriptoin: Write NOVO S4
+*
+* Invoked by: S0S5_SYS_ON()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void Write_NOVOS4(void)
 {
 	if(IS_MASK_CLEAR(LENOVOPMFW_Temp,EEPROM_Token))
@@ -1999,8 +1830,7 @@ void Write_NOVOS4(void)
 		EEPROM_PwrSts = Read_Eflash_Byte(EEPROMA2,(EEPROMA1_B03 | 0x07) ,0xDF);
 		if(CURRENT_STATUS & ENTER_S4) // S4
 	  	{	// Entering S4
-			//if ( (SYS_STATUS & 0x07) == 0x04 )
-			if (( (SYS_STATUS & 0x07) >= 0x04 )&&( (SYS_STATUS & 0x07) <= 0x06))	// Win8 or win10 ANGELAS010: add win10 mode
+			if (( (SYS_STATUS & 0x07) >= 0x04 )&&( (SYS_STATUS & 0x07) <= 0x06))	// Win8 or win10 // add win10 mode
 			{	// Win8
 				if( (EEPROM_PwrSts & 0x10) == 0 )		// check S4 bit to before.
 			    {
@@ -2054,8 +1884,7 @@ void Write_NOVOS4(void)
 			{
 				if ( (EEPROM_PwrSts & 0x01) == 0 )	// check S4 bit to before.
 				{
-					//if ( (SYS_STATUS & 0x07) != 0x04 )	// Check WIN8.
-					if (!( (SYS_STATUS & 0x07) >= 0x04 )&&( (SYS_STATUS & 0x07) <= 0x06))	// check not Win8, win8.1  or win10 ANGELAS010: add win10 mode
+					if (!( (SYS_STATUS & 0x07) >= 0x04 )&&( (SYS_STATUS & 0x07) <= 0x06))	// check not Win8, win8.1  or win10 // add win10 mode
 					{
 						eEEPROMAddrsss = 0xDF;
 						eEEPROMBank = 0x07;
@@ -2068,9 +1897,22 @@ void Write_NOVOS4(void)
 	}
 }
 
-//-----------------------------------------------------------------------------
-// The function of pulsing S.B. power button 100ms
-//-----------------------------------------------------------------------------
+
+/*
+*******************************************************************************
+* Function name: PulseSBPowerButton      
+*
+* Descriptoin:  pulsing S.B. power button 100ms
+*
+* Invoked by: service_scan(),ChkS3ResumeRSOC(),LID_Released()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void PulseSBPowerButton(void)
 {
 	PM_PWRBTN_LOW();
@@ -2078,9 +1920,21 @@ void PulseSBPowerButton(void)
 }
 
 
-//-----------------------------------------------------------------------------
-// The function of releasing S.B. power button
-//-----------------------------------------------------------------------------
+/*
+*******************************************************************************
+* Function name: CheckSBPowerButton      
+*
+* Descriptoin:  releasing S.B. power button
+*
+* Invoked by: Hook_Timer10msEventB()
+*
+* TimeDiv：10ms
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void CheckSBPowerButton(void)
 {
 	if(SBSWReleaseCunt!=0x00)
@@ -2093,58 +1947,21 @@ void CheckSBPowerButton(void)
 	}
 }
 
-void GC6_FBClamp(void)
-{
-	
-	if( (IS_MASK_SET(SYS_MISC1, ACPI_OS)) && (SystemNotS3) && (SystemNotS5) )
-	{  
-		// for GC6  function control by interrupt
-        if(IS_MASK_CLEAR(FBClamp, REQactive))
-       	{
-			WUEMR7 |= 0x02;
-			WUESR7 = 0x02;
-			SET_MASK(IER9, Int_WKO71);
-			SET_MASK(FBClamp, REQactive);
-        }
-    }
-	else
-	{
-		//FB_Clamp_OFF();
-		CLR_MASK(FBClamp, FBClamp_EN);
-
-		if(IS_MASK_SET(FBClamp, REQactive))
-		{
-			CLR_MASK(IER9, Int_WKO71);
-			CLEAR_MASK(FBClamp, REQactive);
-		}
-	}
-	/*    
-       if(!Read_GC6_EVENT()&& IS_MASK_SET(FBClamp, FBClamp_REQ))
-	{
-		if(IS_MASK_CLEAR(FBClamp, FBClamp_EN))
-		{
-			FB_Clamp_ON();
-			SET_MASK(FBClamp, FBClamp_EN);
-			return;
-		}
-		else
-		{
-			FB_Clamp_OFF();
-			CLR_MASK(FBClamp, FBClamp_EN);
-			return;
-		}
-	}
-	}
-
-	else
-	{
-		FB_Clamp_OFF();
-		CLR_MASK(FBClamp, FBClamp_EN);
-	}
-	*/   
-}
-
-//ANGELAS047:add start
+/*
+*******************************************************************************
+* Function name: Lowpower_ENfunction      
+*
+* Descriptoin:  Low power enable function.
+*
+* Invoked by: S0S5_Init_Status(),S0S3_Init_Status()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void Lowpower_ENfunction(void)
 {
 	SET_MASK(CHGIC_WriteCmd0x12H,LOWPWR_EN);
@@ -2155,6 +1972,21 @@ void Lowpower_ENfunction(void)
     }
 }
 
+/*
+*******************************************************************************
+* Function name: Lowpower_DISfunction      
+*
+* Descriptoin:  Low power disable function.
+*
+* Invoked by: S5S0_Init_Status(),S3S0_Init_Status()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void Lowpower_DISfunction(void)
 {
 	CLEAR_MASK(CHGIC_WriteCmd0x12H,LOWPWR_EN);
@@ -2163,39 +1995,66 @@ void Lowpower_DISfunction(void)
 		 CHGIC_SMbusFailCnt++;
 	}
 }
-//ANGELAS047:add end
 
-//MEILING002: S+
+
+
 const sPMICStruct code powerInit[] =
 {//     command               REG               no.
-	//{ SDWN,			&PowerSDWN			}, //ANGELAG002: remove
+	//{ SDWN,			&PowerSDWN			}, // remove
 	{ EN_MASK,		&PowerEN_MASK		},
-	{ EN_RW,		&PowerEN_RW			},
-	
+	{ EN_RW,		&PowerEN_RW			},	
 	{ BUCK1CTRL,	&PowerBUCK1CTRL		},
 	{ BUCK2CTRL,	&PowerBUCK2CTRL		},
 	{ BUCK3CTRL,	&PowerBUCK3CTRL		},
 	{ LDO1CTRL,		&PowerLDO1CTRL		},
 	{ LDO2CTRL,		&PowerLDO2CTRL		},
 	{ DISCHCTRL1,	&PowerDISCHCTRL1	},
-	//{ DISCHCTRL2,	&PowerDISCHCTRL2	}, //ANGELAG002: remove
-	{ OC_CTRL,		&PowerOC_CTRL		}, //ANGELAG002: remove
+	//{ DISCHCTRL2,	&PowerDISCHCTRL2	}, //remove
+	{ OC_CTRL,		&PowerOC_CTRL		}, //remove
 	{ BUCK_FSW,		&PowerBUCK_FSW		},
 };
 
+/*
+*******************************************************************************
+* Function name: CheckInitPMIC      
+*
+* Descriptoin:  Check init PMIC
+*
+* Invoked by: InitPMIC()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 BYTE CheckInitPMIC(void)
 {
-	PowerReturnData=0xFE; //ANGELAN011 add
-	if(!PowerIICWriteByte(0xE2,0x00)) //ANGELAN011 03 to 00
+	PowerReturnData=0xFE; 
+	if(!PowerIICWriteByte(0xE2,0x00)) // 03 to 00
 	{
 		RamDebug(0xC1);
 		return 0;
 	}
 	return 1;
 }
-//ANGELAN011 add s
-//ANGELAG030: add start
-//ANGELAG011: remove end
+
+/*
+*******************************************************************************
+* Function name: PMICID      
+*
+* Descriptoin:  PMIC ID
+*
+* Invoked by: InitPMICReg()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void PMICID(void)
 {
 	if(!bRWSMBus(SMbusChA, SMbusRB, powerICaddress, VENDODID, &PowerVENDODID,SMBus_NoPEC))
@@ -2203,52 +2062,59 @@ void PMICID(void)
 		PowerInitError++;
 	}
 }
-//ANGELAG011: remove start
-//ANGELAG030: add end
-//ANGELAN011 add e
-//Reference G330 ICF I+N EC Parameter V01 20171018
+
+/*
+*******************************************************************************
+* Function name: InitPMICReg      
+*
+* Descriptoin:  Init PMIC register
+*
+* Invoked by: InitPMIC()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void InitPMICReg(void)
 {
-//	PMICID(); //ANGELAG011: remove //ANGELAN011 add
-//ANGELAG030: add start
+
 	if(PowerVENDODID == 0)
 	{
-		PMICID(); //ANGELAG011: remove //ANGELAN011 add
+		PMICID(); 
 	}
-//ANGELAG030: add end
+
 	PowerInitIndex = 0;
 
-	//PowerSDWN = 0x00;
 	PowerEN_MASK = 0x80; 
 	PowerEN_RW = 0x80;  //set to 0x80 allow EC write PMIC
-	////ANGELAN011 add s
-	if(PowerVENDODID==0x53) //ANGELAG030: add //ANGELAG011: remove //ANGELAN013 //5028
-	{ //ANGELAG030: add //ANGELAG011: remove
+	if(PowerVENDODID==0x53) 
+	{ 
 		PowerBUCK1CTRL = 0x26;  
-		PowerBUCK2CTRL = 0x2C;  //ANGELAG053: modify 2c to 3c
-		PowerBUCK3CTRL = 0x3E; //ANGELAG040: from 0x34 to 0x36 to solve GPU noise issue.
+		PowerBUCK2CTRL = 0x2C;  
+		PowerBUCK3CTRL = 0x42; //from 0x34 to 0x36 to solve GPU noise issue.  //change to 1.08V
 		PowerLDO1CTRL = 0x1E;  
 		PowerLDO2CTRL = 0x02; 
 		PowerDISCHCTRL1 = 0x15;
         
         PowerOC_CTRL = 0x35;
 		PowerBUCK_FSW = 0x03; 
-		//ANGELAG030: add start
-	 //ANGELAG011: remove start
 	}
-	else //5075 
+	else  
 	{
-// //ANGELAN011 add e
-		PowerBUCK1CTRL = 0x26; //ANGELAG053: 26 TO 24
-		PowerBUCK2CTRL = 0x0C;  //ANGELAN013: 28 to 04 //ANGELAN002: 08 to 28 follow power demand
-		PowerBUCK3CTRL = 0x3E;  //ANGELAN008 modify 0x34 to 0x38 follow power demand.
+
+		PowerBUCK1CTRL = 0x26; 
+		PowerBUCK2CTRL = 0x0C;  
+		PowerBUCK3CTRL = 0x42;  //change to 1.08V
 		PowerLDO1CTRL = 0x1E;  
-		PowerLDO2CTRL = 0x04; // 
+		PowerLDO2CTRL = 0x04;  
 		PowerDISCHCTRL1 = 0x15;
 		
         PowerOC_CTRL = 0x35;
 		PowerBUCK_FSW = 0x00; 
-	} //ANGELAG030: add end //ANGELAN011 Add //ANGELAG011: remove end
+	} 
 	
 	while(PowerInitIndex < (sizeof(powerInit)/sizeof(sPMICStruct)))
 	{
@@ -2273,6 +2139,21 @@ void InitPMICReg(void)
 	}
 }
 
+/*
+*******************************************************************************
+* Function name: InitPMIC      
+*
+* Descriptoin:  Init PMIC
+*
+* Invoked by: DSXS5_PMIC_Init(),S5S0_PMIC_Initial()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void InitPMIC(void)
 {
 	if(!PowerInitOK)
@@ -2286,6 +2167,21 @@ void InitPMIC(void)
 	}
 }
 
+/*
+*******************************************************************************
+* Function name: PowerIICWriteByte      
+*
+* Descriptoin:  Power IIC write byte.
+*
+* Invoked by: CheckInitPMIC(),InitPMICReg()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 BYTE PowerIICWriteByte(BYTE Reg_offset, BYTE PS_data)
 {
 	PMIC_counter = 0;
@@ -2319,11 +2215,25 @@ BYTE PowerIICWriteByte(BYTE Reg_offset, BYTE PS_data)
 	}
 }
 
+/*
+*******************************************************************************
+* Function name: PollingOTP      
+*
+* Descriptoin:  Polling OTP.
+*
+* Invoked by: Hook_Timer1SecEventA(),S0S5_Init_Status()
+*
+* TimeDiv：NA
+*
+* Arguments: NA
+*
+* Return Values: NA
+*******************************************************************************
+*/
 void PollingOTP(void)
 {
 	if(PowerInitOK==1)
 	{
-	//ANGELAG007: add start
 		if(!bRWSMBus(SMbusChA, SMbusRB, powerICaddress, OVP_REG, &PowerOVP_REG,SMBus_NoPEC))
 		{
 			PowerInitError++;
@@ -2336,13 +2246,10 @@ void PollingOTP(void)
 		{
 			PowerInitError++;
 		}
-		//ANGELAG007: add end
 		if(!bRWSMBus(SMbusChA, SMbusRB, powerICaddress, OTP_REG, &PowerOTP_REG,SMBus_NoPEC))
 		{
 			PowerInitError++;
-		//	ResetSMBus(SMbusChA); //ANGELAG007: REMOVE
 		}
 	}
 }
-//MEILING002: E+
 

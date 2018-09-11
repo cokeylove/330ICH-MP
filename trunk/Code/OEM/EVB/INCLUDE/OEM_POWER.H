@@ -64,8 +64,6 @@
 #define SC_ECColdBoot       0xFC    // EC VSTBY or WRST reset
 #define SC_EC8SRESET        0xFD    // EC VSTBY or WRST reset ANGELAS089:add
 
-//B04 + e
-#define CPU_PWROK_VLIMIT    0X111  //0.8V   0.8*(3/3FF)=0X111 JERRYB0033
 void Write_NOVOS4(void);
 extern void CheckResetSource(void);
 extern void OEM_LPC_Reset(void);
@@ -75,7 +73,6 @@ extern void Oem_S0S5Sequence(void);
 extern void Oem_S3S0Sequence(void);
 extern void Oem_S0S3Sequence(void);
 extern void CheckAutoPowerOn(void);
-//extern void CHK_BATT_5PERCL(void);
 extern void check8sreset(void); //ANGELAS041:add
 extern void S0S3_VR_ON(void);
 extern void S0S3_SUSP(void);  //ANGELAS063:add
@@ -87,13 +84,12 @@ extern void Oem_S5DSXSequence(void); //JIMAPLO002
 extern void Oem_DSXS5Sequence(void); //JIMAPLO002 
 
 
+
 extern void SendSynapticsIDSequence();
 extern void SendElanIDSequence();
 extern void ReadTPid();
-extern void Check_EC_ON();
 extern void Lowpower_ENfunction(void); //ANGELAS047:add //ANGELAS059: add extern
 extern void Lowpower_DISfunction(void);	//ANGELAS047:add //ANGELAS059: add extern
-//extern void GC6_FBClamp(void);
 
 typedef struct PowerSEQ
 {

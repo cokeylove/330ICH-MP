@@ -82,7 +82,6 @@ void Core_Initialization(void)
 
     Core_Init_SMBus();		//
     //EC_MainPwr_ON(); //ANGELAS044:remove
-	//CHK_BATT_5PERCL();		// 2012.03.01 update by AC
 	check8sreset(); //ANGELAS041:add
 
     Init_Kbd();

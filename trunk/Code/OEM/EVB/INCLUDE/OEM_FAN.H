@@ -19,11 +19,11 @@ typedef struct FanControlstruct
 	BYTE T_Low;
 	BYTE T_Step1;
 	BYTE T_Step2;
-	BYTE T_Step3; //MEILING003:add.
+	BYTE T_Step3; 
 	BYTE T_High;
 	XBYTE *DCRx;
 } FanControlstruct;
-//JERRYCH00:s+Modify the fan control from linear to the ladder.
+//Modify the fan control from linear to the ladder.
 typedef struct thermalstruct
 {
 	BYTE 	Level;
@@ -34,7 +34,7 @@ typedef struct thermalstruct
 	BYTE	*FanOff;
 	BYTE	*RPM;
 }thermalstruct;
-//JERRYCH00:e+Modify the fan control from linear to the ladder.
+//Modify the fan control from linear to the ladder.
 typedef struct CPUTHRstruct
 {
 	BYTE Thr_Off;
@@ -48,17 +48,17 @@ typedef struct CPUTHRstruct
 #define TmlIC_Addr			0x98    // Thermal IC SMBus address.//G12:Change thermal IC address from 0X9A to 0X98.
 #define VGA_Addr			0x82			//0x9E    // AMD SMBus address.
 #define EXTVGA_Addr			0x9E    // nVIDIA SMBus address.
+#define PCH_Temp            0X88    //PCH SMBus address.
 
 #define TmlIC_Temp			0x00    // Thermal IC Temperature Data register.
 #define VRAM_Temp			0x01    // Thermal IC EXT 1 Temperature Data register.
 #define TmlIC_Rate			0x04    // Thermal IC Conversion Rate register.
 #define SSD_Temp			0x23    // Thermal IC EXT 2 Temperature Data register.
 
-extern void ThmIC_Temperature(void);
 extern void Oem_Thermal_Control(void);
 extern void VGA_Temperature(void);
 //extern void EXTVGA_Temperature(void); //ANGELAS070:remove
-extern void Clr_Thermal_Tab(void);
+extern void ReadPCHTemp(void);
 //void Tml_SMLink(void); //ANGELAS050:remove
 void FanTab_ToRAM(BYTE BStep);
 void THRTab_ToRAM(BYTE BStep);
@@ -191,7 +191,6 @@ extern void Oem_Fan_Speed(void);
 extern void Fan_Init(void);
 extern void ThrottlingControl(void);
 extern void GPUThrottlingControl(void); //MEILING033:add.
-extern void FAN_Dust_Mode(void);
 //ANGELAG031: remove start
 //ANGELAG022: add start
 //==============================

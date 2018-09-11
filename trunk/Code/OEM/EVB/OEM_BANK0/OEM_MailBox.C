@@ -1024,8 +1024,6 @@ void Diag_interface(void)
 			*/
 	        break;
         case DiagRecoverThermalTable:					//0x2B: real thermal table control
-            //InitThermalTable1();
-			//InitThermalTable2();
 	        break;				 				 
 	    case ClearAllDiagRam:				  //0xFF Clear All Diag RAM
 		    ClearDiagRam();				 

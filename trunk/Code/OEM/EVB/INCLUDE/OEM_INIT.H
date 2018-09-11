@@ -40,11 +40,11 @@ typedef struct DMAScratchSRAM
 	XBYTE	*scarm	;
 	XBYTE	*scarl	;
 } sDMAScratchSRAM;
-//ANGELAS016:s+Change charge IC option setting.
+
 typedef struct Charger
 {
 	BYTE Cmd;
 	BYTE *Var;
 }sCharger;
-//ANGELAS016:e+Change charge IC option setting.
+
 #endif

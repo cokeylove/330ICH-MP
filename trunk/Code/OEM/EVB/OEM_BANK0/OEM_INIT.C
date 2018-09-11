@@ -21,16 +21,13 @@ void Oem_StartUp(void)
 //----------------------------------------------------------------------------
 // The function of init. registers
 //----------------------------------------------------------------------------
-//const struct REG_INIT_DEF code reg_init_table[] =
 const sREG_INIT_DEF code reg_init_table[] =
 {
 // ADC
   	{ &ADCSTS    	,AINITB             }, 	// Enable Analog accuracy initialization
-    //{ &ADCSTS    	,0                    		}, 	// Stop adc accuracy initialization
     { &ADCSTS    	,0x80          	   	},  // Stop adc accuracy initialization
 	{ &ADCCFG    	,0x21         	   	},  //
     { &KDCTL     	,AHCE               },  // Enable Hardware Callibration
-	//{ &ADCCFG    	,DFILEN  	   		},	// Enable Digital Filter enable,
 	{ &ADCCTL		,0x15	   			},
 
 // DAC
@@ -65,12 +62,12 @@ const sREG_INIT_DEF code reg_init_table[] =
 	{ &CTR2			,0xC8				},	// 23KHz Cycle Time 2(Fan used)
 	{ &CTR3			,0xFF				},	// Cycle Time 3(Panel used)
 	{ &PWMODENR		,0x06				},	// PWM output open-drain  //cwy
-	{ &TSWCTRL		,0x0A				},	// Enable TACH0A,TACH1A speed.
+	{ &TSWCTLR		,0x0A				},	// Enable TACH0A,TACH1A speed.
 	{ &ZTIER		,0x02				},	// Enable
 	//{ &GCR19        ,0x00				},	
 	{ &GCR15 		,0xC0				},  // Tony: Fix the issue of black screen when plug out 80port.
-	{ &PWM0LCR1 	,0x35				},  // MEILING030:add.
-	{ &PWM0LCR2 	,0x50				},  // MEILING030:add.
+	{ &PWM0LCR1 	,0x35				},  //
+	{ &PWM0LCR2 	,0x50				},  // 
 };
 
 void Init_Regs(void)
@@ -82,7 +79,6 @@ void Init_Regs(void)
       	*Tmp_XPntr = reg_init_table[index].initdata;
         index ++;
     }
-	//RamDebug(0xAA);
 }
 
 
@@ -93,7 +89,7 @@ const sREG_INIT_DEF code Init_SMBus_table[] =
   { &SMB4P7USL		,0x28		},	// 100K
   { &SMB4P0USH   	,0x25      	},
   { &SMB300NS     	,0x03      	},
-  { &SMB250NS     	,0x05      	},//:modify SMBUS date step from 0x02 to 0x03// G62:Modify SMBUS date step from 0x03 to 0x05.
+  { &SMB250NS     	,0x05      	},
   { &SMB25MS       	,0x19      	},
   { &SMB45P3USL   	,0xA5      	},
   { &SMBS4P3USH   	,0x01      	},
@@ -138,8 +134,7 @@ void Oem_Initialization(void)
 	ECBIOSVersionL = REV0_BYTE1;
 	ECBIOSUbSVersion = REV0_BYTE3;
     
-    TP_Type =0xFF; //T071A+
-    // GPCRM4=0X02;
+    TP_Type =0xFF; 
 	CheckKSO1617Support();
 	Init_Regs();
 	Init_SMBus_Regs();	// initial SMBUS
@@ -147,13 +142,13 @@ void Oem_Initialization(void)
 	InitSysMemory2ECRam();		// H2RAM function
 	Init_ADC();
 	Init_PECI();//:Change PECI initialize after S0 states.
-	InitChargerIC();//ANGELAS016:Change charge IC option setting.
+	InitChargerIC();
 	//SetPowerBatteryparameter();
 	Init_VC(3);	// Init All VC Channel.	// CMW 20121022
 	//LID_readytime = 11; //ANGELAS007:Optimize power on sequence.
 
 	eEEPROMData = Read_Eflash_Byte(EEPROMA2,(EEPROMA1_B03 | 0x07) ,0xE4);	// read USB charger status of EEPROM 0x0001B7E4
-#if Support_USB_Charge  //T19+
+#if Support_USB_Charge  
     #if UCS1022_Support
 	//UCS1002ID = ReadUCS1022ID();
 	UCS1002ID = SMSC_UCS1002ID;

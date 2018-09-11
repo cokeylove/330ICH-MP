@@ -95,17 +95,7 @@ void Send_Key(BYTE table_entry, BYTE event)
     Buffer_Mark();									// Mark Buffer in case of overrun.
     temp_scanner_state.byte = Scanner_State;
     if (table_entry >= SSKEY2_OVL_CODE)				// Fn key + any key.
-    {   
-        /*
-        	temp = (table_entry - SSKEY2_OVL_CODE);
-        	temp = temp << 1;   						// Multiply 2 because each entry takes 2 bytes 
-		if (temp_scanner_state.field.tFN)
-		{   										// Fn key
-            		temp++; // Increment index to get the odd byte of table entry 
-        	}
-       	 table_entry = sskey2_overlay_table[temp];	// Get a sskey2 value. 
-        	*/
-        
+    {           
         temp = (table_entry - SSKEY2_OVL_CODE);
         temp = temp << 1;// Multiply 2 because each entry takes 2 bytes 
 
@@ -146,8 +136,7 @@ void Send_Key(BYTE table_entry, BYTE event)
             }
         }
 		//Modify hotkey(F1-F12) implement method.
-		//if(IS_MASK_CLEAR(ACPI_HOTKEY, HotkeyDisable)) //ANGELAG029: remove
-		if(IS_MASK_CLEAR(ACPI_HOTKEY, HotkeyDisable) && (IS_MASK_SET(SYS_MISC1,ACPI_OS)) && ((SYS_STATUS & 0x07) != 0))  //ANGELAG036: add os type check  ////ANGELAG029: add
+		if(IS_MASK_CLEAR(ACPI_HOTKEY, HotkeyDisable) && (IS_MASK_SET(SYS_MISC1,ACPI_OS)) && ((SYS_STATUS & 0x07) != 0))  //add os type check
 		{
         	table_entry = sskey2_overlay_table1[temp];	// Get a sskey2 value. 
 		}

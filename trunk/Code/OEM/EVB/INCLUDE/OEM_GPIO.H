@@ -119,7 +119,7 @@
 #define PortB2_Ctrl		OUTPUT         	//O    	123 	   EC_VCCIO_EN(G_Skylake)
 #define PortB3_Ctrl		INPUT			//A    	110 	   PWRSW#
 #define PortB4_Ctrl		INPUT			//A    	111 	   EC_ON(reseved)(G_Skylake)
-#define PortB5_Ctrl		OUTPUT			//O    	126    EC_RTCRST#_ON(G_Skylake) //ANGELAS052:INPUT TO OUTPUT
+#define PortB5_Ctrl		OUTPUT			//O    	126        EC_RTCRST#_ON(G_Skylake) //ANGELAS052:INPUT TO OUTPUT
 #define PortB6_Ctrl		OUTPUT			//O    	4    	  KBRST#
 #define PortB7_Ctrl		INPUT			//O    	112 	  3VLP
 
@@ -134,15 +134,6 @@
 
 #define Read_EC_PWRBTN() 	IS_MASK_CLEAR(GPDRB,BIT(3))
 
-
-
-//MEILING001:S-
-/*//no function
-#define GATEA20_ON()		SET_MASK(GPDRB,BIT(5))
-#define GATEA20_OFF()		CLEAR_MASK(GPDRB,BIT(5))
-#define GATEA20_HI()		SET_MASK(GPDRB,BIT(5))
-#define GATEA20_LOW()		CLEAR_MASK(GPDRB,BIT(5))*/
-//MEILING001:E-
 
 #define RTCRST_ON_HI()		SET_MASK(GPDRB,BIT(5))
 #define RTCRST_ON_LOW()		CLEAR_MASK(GPDRB,BIT(5))
@@ -412,16 +403,6 @@
 #define PCH_PWR_EN_ON()		SET_MASK(GPDRH,BIT(4))
 #define PCH_PWR_EN_OFF()	CLEAR_MASK(GPDRH,BIT(4))
 
-//MEILING001:S-
-//no function
-/*#define ACOFF_LOW()		CLEAR_MASK(GPDRH,BIT(5))
-#define ACOFF_HI()			{								\
-								CHGIC_ptr = 2;				\
-								WriteSmartChgIC();			\
-								SET_MASK(GPDRH,BIT(5));		\
-							}
-#define Read_ACOFF()		IS_MASK_SET(GPDRH,BIT(5))*/
-//MEILING001:E-
 
 #define SYS_PWROK_HI()				SET_MASK(GPDRH,BIT(5))
 #define SYS_PWROK_LOW()				CLEAR_MASK(GPDRH,BIT(5))
@@ -473,16 +454,10 @@
 #define PortJ7_Ctrl		INPUT			//O    	2 	 PCIE_WAKE#(G_Skylake)
 
 #define Read_EC_NOVO()		IS_MASK_CLEAR(GPDRJ,BIT(0))
-//ANGELAN012 add s
+
 #define EC_MUTE_ACT()		CLEAR_MASK(GPDRJ,BIT(1))
 #define EC_MUTE_INACT()		SET_MASK(GPDRJ,BIT(1))
-//ANGELAN012 add e
-//MEILING001:S- remove EC_SD_PWR_EN pin.
-/*#define EC_SD_PWR_EN_HI()		SET_MASK(GPDRJ,BIT(1))
-#define EC_SD_PWR_EN_LOW() 		CLEAR_MASK(GPDRJ,BIT(1))
-#define EC_SD_PWR_EN_OUTPUT		GPCRJ1 = OUTPUT		// S3,S5 SET input		
-#define EC_SD_PWR_EN_INPUT		GPCRJ1 = INPUT		// S3,S5 SET input*/
-//MEILING001:E-
+
 
 #define EC_TS_ON_HI()       SET_MASK(GPDRJ,BIT(2)) // (first mask)
 #define EC_TS_ON_LOW()      CLEAR_MASK(GPDRJ,BIT(2))

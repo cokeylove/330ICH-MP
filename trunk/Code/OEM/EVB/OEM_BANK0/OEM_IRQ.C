@@ -15,11 +15,11 @@
 //----------------------------------------------------------------------------
 void Hook_IRQ_INT1_WKO20(void)
 {
-	SlpS3_Wake_Dis(); //ANGELAS057:add
+	SlpS3_Wake_Dis(); 
 	//ANGELAS063:add start
 	if(!Read_SLPS3())
     {
-		EC_MUTE_ACT(); //ANGELAG010: add
+		EC_MUTE_ACT(); 
 		S0S3_VR_ON();
 		S0S3_SUSP();
 		RamDebug(0x92);

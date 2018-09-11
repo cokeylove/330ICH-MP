@@ -11,9 +11,9 @@
 #define ProjectID0L		0x02	// Proect ID  (low byte)
 #define ProjectID0H		0x00	// Proect ID  (high byte)
 #define REV0_BYTE0		0x01	//from 0 to 1 // Major number from 0 to 7
-#define REV0_BYTE1		28	// 2nd version from 1 to 99
+#define REV0_BYTE1		27	// 2nd version from 1 to 99
 #define REV0_BYTE2		'A'		// Type of KB-BIOS from 'A' to 'Z'
-#define REV0_BYTE3		0// Verify byte from 0 to 15, 0 is ROM other is T01-T15
+#define REV0_BYTE3		3// Verify byte from 0 to 15, 0 is ROM other is T01-T15
 #define REV0_BYTE4		0	// Series number of EC F/W release 
 
 #define CHIP_TYPE0		0x0A	// 8580 - Chip type

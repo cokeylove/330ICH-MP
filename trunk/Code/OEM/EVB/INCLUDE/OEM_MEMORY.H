@@ -511,6 +511,7 @@ extern XBYTE pPROCHOT;						//_at_ OEMRAM2+0x0C;
 #define b1ISCT_PROCHOTon		BIT1
 extern XBYTE	pProject4;				//at_(OEMRAM2+0x0D)//Y7JERRY085:Add CMD for press power button 4s don't shutdown when flash bios.
 #define  pPWSWdisable      BIT0         //Y7JERRY085:Add CMD for press power button 4s don't shutdown when flash bios
+#define  b1WinAndXpress    BIT1
 
 extern XBYTE SMartNoise;					//_at_ OEMRAM2+0x11;
 #define	b0FanCleanOn			BIT0
@@ -576,7 +577,7 @@ extern XBYTE P80Index;                      //_at_ OEMRAM2+0x97;
 extern XBYTE P80CMOSSts;                    //_at_ OEMRAM2+0xA0;
 #define P80CMOSDis                  BIT0
 //end for save P80 code to setup. 
-//extern XWORD  Read_VR_CPU_PWROK;           //_at_ OEMRAM2+0xb0;
+
 extern XWORD  API_ID;                      //_at_ OEMRAM2+0xb0;
 
 extern XBYTE CombineKeyShip;               //_at_ OEMRAM2+0xb3; 
@@ -704,8 +705,6 @@ extern XBYTE	uISCT_2;							//_at_ OEMRAM3+0x71
 #define	b4ISCT_Camera			BIT4				// ISCT 1:Disable Camera.
 #define b5ISCT_PwrLED			BIT5				// ISCT 1:Disable Power LED.
 
-extern XBYTE	Reset_Delay;                    	// _at_(OEMRAM3+0x72); 
-extern XBYTE	Reset_Delay_Count;              	// _at_(OEMRAM3+0x73); 
 extern XWORD   ShipModeACK;                         //_at_ OEMRAM3+0x75;//A53-H120128: Start Shipmode disable 5s loop once 20130608 20:28 
 extern XBYTE   ShipModeCnt;                         //_at_ OEMRAM3+0x77;//A53-H120128: Start Shipmode disable 5s loop once 20130608 20:28 
 extern XBYTE	ShipModeEn;                      	//_at_ OEMRAM3+0x79;
@@ -731,7 +730,7 @@ extern XBYTE	nAtmFanSpeed; 					//_at_(NameSpace+0x06);		// Fan speed. For Lenov
 extern XBYTE	LENOVOBATT;						//_at_(NameSpace+0x07);		//
 #define BATTERY_USAGE		BIT0				// 1: Battery has been running over 72hrs, EM should pop out a message
 #define BATTERY_LEGAL		BIT1				// 1: Battery is legal
-#define BATTERY_Exhaustion	BIT2				// 1: Battery performance is on the normal status  //T082
+#define BATTERY_Exhaustion	BIT2				// 1: Battery performance is on the normal status  
 #define NOTIFY_STORAGE		BIT3				// 1: Indicates close the storage mode
 #define BATT_TEST_MODE		BIT4				// 1: Battery Testing Mode of SVCR (1:Start Battery Testing Mode: turn off all LED lights except the Power Button LED, Make the step1 fan on temperature increased by 10 degrees in thermal table.)
 #define BAD_BATT			BIT5				// 1: indicates the main battery is bad
@@ -835,6 +834,8 @@ extern XBYTE	 CRESERVED2C;					//_at_(NameSpace+0x2C);	// 0x2C
 
 extern XBYTE	 PANEL_INFO[16];	    			//_at_(NameSpace+0x30);	//ANGELAG008: modify to 16 bytes // 0x30~0x46	 // PanelROM 20100406 David
 //ANGELAG008: add start
+extern XBYTE     QEVENTFlag;                  //_at_(NameSpace+0x40);	// 0x40
+#define QEVENT_dis   BIT0
 extern XBYTE	 pDevStatus1; 			      // _at_(NameSpace+0x43);  // 0x43
 #define b0F6ScanCodeSend 	BIT0                //////1: have send 0: TP driver has responsed //W121
 #define b1F6DisableTP       BIT1          //b1=1 F6 Disable TP
@@ -1208,9 +1209,9 @@ extern XBYTE	BATTCELL;						//_at_(NameSpace+0xF8);
 #define ENBATT3S			BIT6				// Set battery is 3 series
 #define ENBATT4S			BIT7				// Set battery is 4 series
 
-//extern XBYTE	PECIBIOSTEST;						// _at_(NameSpace+0xFC);  //£ºwhen enter S3/S4/CB,BIOS sent B4 CMD to EC from 66port for peci fail.//: Remove JERRYB0048 and  PECI workaround.
+//extern XBYTE	PECIBIOSTEST;						// _at_(NameSpace+0xFC);  //when enter S3/S4/CB,BIOS sent B4 CMD to EC from 66port for peci fail.//: Remove JERRYB0048 and  PECI workaround.
 extern XBYTE	MBID_FB;						// _at_(NameSpace+0xFB);  //T054+
-extern XBYTE F2_Pressed;                      //_at_(OEMRAM4+0xFC) //ANGELAG001:add.
+extern XBYTE F2_Pressed;                      //_at_(OEMRAM4+0xFC) 
 #define F2Flag          BIT0  //ANGELAG001:add.
 #define F12Flag         BIT1  //ANGELAG001:add.
 extern XBYTE	nAtmFan1Speed; 					//_at_(NameSpace+0xFE);//JERRYCH00:+Modify the fan control from linear to the ladder.
@@ -1241,11 +1242,13 @@ extern XBYTE PECI_Err_CNT;				//_at_ OEMRAM5 + 0x21;
 extern XBYTE PECI_GET_TEMPL;			//_at_ OEMRAM5 + 0x24;
 extern XBYTE PECI_GET_TEMPH;			//_at_ OEMRAM5 + 0x25;
 
+extern XBYTE PCHErrCnt;					//_at_ OEMRAM5 + 0x38;
 extern XBYTE ERR_THMSTS;				// _at_ OEMRAM5 + 0x39;
 #define	b0ThmICError		BIT0		// Thermal IC read temperature error.
 #define	b1VGATempEr			BIT1		// VGA read temperature error.
 #define	b2EXTVGATempEr		BIT2		// External VGA read temperature error.
 #define	b3PECITempEr		BIT3		// CPU read temperature error.
+#define	b4PCHTempEr         BIT4        //PCH read temperature error.
 
 extern XBYTE TMErrCnt;					//_at_ OEMRAM5 + 0x3A;
 extern XBYTE VGAErrCnt;					//_at_ OEMRAM5 + 0x3B;
@@ -1289,7 +1292,9 @@ extern  BYTE  pDevStatus3; 			//_at_ OEMRAM5 + 0x60;
     
 #define b6EnDisTPSend       BIT6           
 #define b7TPStateFormer     BIT7           
-extern XWORD   DisCPUTurboFor90s;               //_at_(OEMRAM5+0x6A);   //COKEYXU029:add
+extern XBYTE   DisCPUTurboFor90s;               //_at_(OEMRAM5+0x6A);   //COKEYXU029:add
+extern XBYTE   CountOfWinAndX;               //_at_(OEMRAM5+0x6B);
+
 
 //ANGELAG008: ADD END
 extern XBYTE MaxCPU_MCHTemp;			//_at_ OEMRAM5+0x6C
@@ -1506,7 +1511,6 @@ extern XBYTE    GPUProchotONCnt;        //_at_ OEMRAM5+0xC6;
 extern XBYTE    cBATTLowThrottling;   	//_at_ OEMRAM5+0xC7;
 //MEILING055:E+.
 extern XBYTE    cGPUBattLTPThrottling;  //_at_ OEMRAM5+0xC8; //COKEYXU046: add
-extern XBYTE    BatteryOCPDelay;        //_at_ OEMRAM5+0xC9; //ANGELAG017: add
 extern XBYTE    cGPUBattPsysThrottling;  //_at_ OEMRAM5+0xCA; //ANGELAG019: add
 
 extern XBYTE    GPU_Prochot;   	//_at_ OEMRAM5+0xCB; ///ANGELAG020: add
@@ -1711,6 +1715,7 @@ extern XBYTE Fan_Debug_Temp;					//_at_ OEMRAMB + 0x07;
 #define b0CPU_Temp 			BIT0				// CPU Temperature.
 #define b1VGA_Temp 			BIT1				// VGA Temperature.
 #define b2EXTVGA_Temp 		BIT2				// SLI VGA Temperature.
+#define b3PCH_Temp          BIT3                // PCH Temperature.
 
 extern XBYTE VGA_TBuff1;						//_at_ OEMRAMB + 0x08;
 extern XBYTE VGA_TBuff2;						//_at_ OEMRAMB + 0x09;
@@ -1765,7 +1770,7 @@ extern XBYTE Thro_Status2;						//_at_ OEMRAMB + 0x15;
 #define	b2Batt_LTP		    BIT2   //COKEYXU039:add
 #define b3Batt_OTP          BIT3  //MEILING033:add.
 #define	b4FAN1_FullOn		BIT4
-#define	b5Bat_5PProtect		BIT5   
+
 #define b6BattRSOC_Low      BIT6  //MEILING033:add.
 //#define	b7ProCH_ADP			BIT7    //ANGELAG019: remove
 #define	b7ProCH_Psys			BIT7   //ANGELAG019: add
@@ -1901,6 +1906,11 @@ extern XBYTE      FanFullOnCont; 			// _at_ OEMRAMB+0xC7
 extern XBYTE      RPMTimeShift; 			// _at_ OEMRAMB+0xC8 
 extern XBYTE      DebugFan1RPMT; 			// _at_ OEMRAMB+0xC9
 
+
+
+extern XBYTE      PCHTEMP_Buff_1; 			// _at_ OEMRAMB+0xCA
+extern XBYTE      PCHTEMP_Buff_2; 			// _at_ OEMRAMB+0xCB 
+extern XBYTE      PCHTEMP_Buff_3; 			// _at_ OEMRAMB+0xCC
 
 
 

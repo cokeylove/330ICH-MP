@@ -446,7 +446,6 @@ ECReg	F2TLRR    		_at_ 0x1820;	// Fan 2 Tachometer LSB Reading
 ECReg	F2TMRR     		_at_ 0x1821;	// Fan 2 Tachometer MSB Reading
 ECReg	ZINTSCR   		_at_ 0x1822;	// Zone Interrupt Status Control
 ECReg	ZTIER      		_at_ 0x1823;	// PWM Clock Control Register
-ECReg	TSWCTLR    		_at_ 0x1824;	// Tachometer Switch Control Register
 ECReg	C4CPRS    		_at_ 0x1827;	// Channel 4 Clock Prescaler Register
 ECReg	C4MCPRS    		_at_ 0x1828;	// Channel 4 Clock Prescaler MSB Register
 ECReg	C6CPRS    		_at_ 0x182B;	// Channel 6 Clock Prescaler Register
@@ -462,7 +461,7 @@ ECReg	CFLRR    		_at_ 0x1845;	// Color Frequency LSB Register
 ECReg	CFMRR    		_at_ 0x1846;	// Color Frequency MSB Register
 ECReg	CFINTCTRL		_at_ 0x1847;	// Color Frequency Interrupt Control Register
 
-ECReg	TSWCTRL    		_at_ 0x1848;	// Tachometer Switch Control Register
+ECReg	TSWCTLR    		_at_ 0x1848;	// Tachometer Switch Control Register
 ECReg	PWMODENR		_at_ 0x1849;	// PWM Output Open-Drain Enable Register
 
 //MEILING030:S+ add PWM0 dimming control register.

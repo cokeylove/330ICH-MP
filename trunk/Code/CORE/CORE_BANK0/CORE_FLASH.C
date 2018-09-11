@@ -849,7 +849,7 @@ void ITE_Flash_Utility_WINF(void)
 {
 
 	#if WDT_Support
-    DisableInternalWDT();
+        DisableInternalWDT();
 	#endif
 
 	DisableAllInterrupt();				// Disable all interrupt 

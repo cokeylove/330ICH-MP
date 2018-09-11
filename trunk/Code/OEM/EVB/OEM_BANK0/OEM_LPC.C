@@ -17,13 +17,12 @@
 /*****************************************************************************/
 void MuteProcess(void)
 {
-	//ANGELAG010: add start
 	if(!Read_SLPS3()) 
-    	{
+    {
 		EC_MUTE_ACT();
 		return;
 	}
-	//ANGELAG010: add end
+
 	if ( SystemIsS0 )
 	{	// Check ISCT and command 94 status.
 		if( MuteCount == 0 )
@@ -431,7 +430,6 @@ void WakeUp_DO_Function(void)
     }
 
     ChkBattery_Percl();
-	//Check_EC_ON();
 	/*//ANGELAS007:Optimize power on sequence.
 	//ANGELAS005:s+ Support UMA SKU EC_ON pin design.
 	if(NTC_V1>682)

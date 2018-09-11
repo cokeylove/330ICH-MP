@@ -18,7 +18,7 @@
 #define SMbusChA    0x00    // SMbus channel A index,SMbusCh1.
 #define SMbusChB    0x01    // SMbus channel B index,SMbusCh2.
 #define SMbusChC    0x02    // SMbus channel C index,SMbusCh3.
-#define SMbusChD    0x03    // SMbus channel C index,SMbusCh4.
+#define SMbusChD    0x03    // SMbus channel D index,SMbusCh4.
 // msmart
 //#define SMbusChC    0x00    // SMbus channel C index
 
@@ -136,22 +136,6 @@ typedef struct RTVTstruct
 //#define BOverVoltage		13400
 
 
-//#if 0
-//#define CHG_ABattery()	GPIOA.GPin5 = 1;GPIOA.GPin6 = 0;
-//#define CHG_BBattery()	GPIOA.GPin5 = 0;GPIOA.GPin6 = 1;
-//#define DISCHG_ABattery()	GPIOA.GPin7 = 1;
-//#define DISCHG_BBattery()	GPIOA.GPin7 = 0;
-//#endif
-//#define CHG_ABattery()		DACDAT0=0xE7; 	//Set charge current
-//#define CHG_BBattery()		;
-//#define DISCHG_ABattery()	DACDAT0=0; 		//off charge current
-//#define DISCHG_BBattery()	;
-//#define	NONE_BAT		0x00
-//#define	PWR_CHANGE		0x01
-//#define	CHARGE_BAT		0x02
-//#define	DISCHARGE_BAT	0x03
-//#define	PRE_CHARGE		0x04
-//#define	BAT_ERR			0x05
 
 
 //extern bit bCheckChargeDeviceID(void);
@@ -227,17 +211,14 @@ extern void Lenovo_Battery_EM80(void);
 extern void Lenovo_Battery_EM60(void);
 extern void FirstGetBatData(void);
 extern void Battery1Sec(void);
-extern void Chk_Shutdown_Volt(void);
 extern void Chk_CHG_TimeOut(void);
 extern void Chk_BatSMbusFailCount(void);
 extern void Unlock_ShipMode(void);
 extern void Lock_ShipMode(void);
 extern void Chk_Battery_Full(void);
-extern void UpBatteryPState();
 extern void DownBatteryPState();
 extern void CPUProchotCtrl();//MEILING033:add.
 extern void Battery100ms(void);
-extern void ChkBattery_abnormal(void);
 extern void LV_BAT_Authentication(void);
 extern void BATT_LEN_OFF(void);
 extern void BATT_LEN_ON(void);

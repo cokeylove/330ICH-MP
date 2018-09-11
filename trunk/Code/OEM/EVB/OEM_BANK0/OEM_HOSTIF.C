@@ -173,7 +173,6 @@ void InitSysMemory2ECRam(void)
 {
 	HRAMW0BA = 0x00;					// Define RAM window 0 base address 0x000
 	HRAMW0AAS |= HostRamSize2048Byte;	// Host RAM Window 0 Size 2K bytes
-	//HRAMWC |= Window0En;
 	HRAMW1BA = 0x80;					// Define RAM window 1 base address 0x800
 	HRAMW1AAS |= HostRamSize2048Byte;	// Host RAM Window 1 Size 2K bytes
 	HRAMWC = 0x03;						// open two windows

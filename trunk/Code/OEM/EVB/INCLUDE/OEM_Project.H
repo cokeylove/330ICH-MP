@@ -19,18 +19,18 @@
 #define Support_EC_Sleep	        TRUE   // Support EC sleep function.   //change true to false //ANGELAS057: false to true//JERRYCH002:Enable EC sleep feature.
 #define Support_External_IO	    	FALSE  // Support EC External IO function.
 
-// CMW 20121022 +
+
 #define Support_Mirror_Code	    	TRUE   //TRUE
 
 #define Support_VC0_Function	    FALSE  //ANGELAS042: true to false // change False to true  // (set to FALSE to avoid turn off MainPWRON)  // Support Voltage Compare 0 Function.
 #define Support_VC1_Function	    FALSE  // False(use FW to control later)   //: True  // Support Voltage Compare 1 Function.
 #define Support_VC2_Function	    FALSE  // Support Voltage Compare 2 Function.
-// CMW 20121022 -
+
 #define Support_USB_Charge	    	FALSE  //T19+
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // ITE EC Function Setting and selection
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// CMW 20121022 +
+
 #if Support_Mirror_Code
 #define EC_Signature_Flag	     0x10    // 0x94 to 0x10 use New FU to do CRC.    // For 8518 crystal free //ANGELAS038 0x11 to 0x10
 #else
@@ -42,7 +42,6 @@
 #else
 #define	EC_Mirror_Size		     0xAA
 #endif
-// CMW 20121022 -
 
 //-----------------------------------------------------------------------------
 // PS2 interface
@@ -73,6 +72,7 @@
 #define SHA1_Support			TRUE	//for first SMT  //COKEYXU017:false to true
 #define UCS1022_Support			FALSE
 #define WDT_Support				TRUE    //COKEYXU051: enable WDT_Support
+#define GetPCHTempSupport       TRUE    
 
 #define ACTION					0x03
 
@@ -204,7 +204,7 @@
 
 // Battery
 #define S3RSOCPercentage	    0x05		// 5%
-#define BatteryOTPSD  		    65          // 65 degree  //MEILING033:change 70 to 65.
+#define BatteryOTPSD  		    65          // OTP shutdown degree  
 #define BatteryOTPHi		    55			// 50 degree  //ANGELAG019: 60 to 55 //MEILING033:change 68 to 58.  //MEILING037:modify 58 to 50.//MEILING049: 54 TO 60
 #define BatteryOTPLow	        53			// 45 degree  //ANGELAG019: 58 to 53 //MEILING033:change 66 to 53.  //MEILING037:modify 53 to 45.//MEILING049: 50 TO 58
 #define FastChgTimeOut		    720 		// 12 * 60 = 720min
