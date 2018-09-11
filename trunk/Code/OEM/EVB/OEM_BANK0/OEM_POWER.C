@@ -2225,8 +2225,8 @@ void InitPMICReg(void)
 	if(PowerVENDODID==0x53) //ANGELAG030: add //ANGELAG011: remove //ANGELAN013 //5028
 	{ //ANGELAG030: add //ANGELAG011: remove
 		PowerBUCK1CTRL = 0x26;  
-		PowerBUCK2CTRL = 0x2C;  //ANGELAG053: modify 2c to 3c
-		PowerBUCK3CTRL = 0x3E; //ANGELAG040: from 0x34 to 0x36 to solve GPU noise issue.
+		PowerBUCK2CTRL = 0x2C;  
+		PowerBUCK3CTRL = 0x42; //from 0x34 to 0x36 to solve GPU noise issue.  //change to 1.08V
 		PowerLDO1CTRL = 0x1E;  
 		PowerLDO2CTRL = 0x02; 
 		PowerDISCHCTRL1 = 0x15;
@@ -2238,10 +2238,10 @@ void InitPMICReg(void)
 	}
 	else //5075 
 	{
-// //ANGELAN011 add e
-		PowerBUCK1CTRL = 0x26; //ANGELAG053: 26 TO 24
-		PowerBUCK2CTRL = 0x0C;  //ANGELAN013: 28 to 04 //ANGELAN002: 08 to 28 follow power demand
-		PowerBUCK3CTRL = 0x3E;  //ANGELAN008 modify 0x34 to 0x38 follow power demand.
+
+		PowerBUCK1CTRL = 0x26; 
+		PowerBUCK2CTRL = 0x0C;  
+		PowerBUCK3CTRL = 0x42;  //change to 1.08V
 		PowerLDO1CTRL = 0x1E;  
 		PowerLDO2CTRL = 0x04; // 
 		PowerDISCHCTRL1 = 0x15;
