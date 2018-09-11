@@ -736,6 +736,7 @@ XBYTE	VGAErrCnt					_at_(OEMRAM5+0x3B);
 XBYTE	EXTVGAErrCnt				_at_(OEMRAM5+0x3C);
 XBYTE	TmlICStep					_at_(OEMRAM5+0x3D);
 XBYTE	vgaok						_at_(OEMRAM5+0x3E);
+XBYTE   PCHErrCnt                   _at_(OEMRAM5+0x3F);
 
 XWORD	cWriteCurrentPL1			_at_(OEMRAM5+0x40);
 XWORD	cWriteCurrentPL2			_at_(OEMRAM5+0x42);
@@ -746,7 +747,9 @@ XBYTE 	USB_Delay					_at_(OEMRAM5+0x44);  //ANGELAG008: modify BYTE to XBYTE
 XBYTE	  Fan1RPM			       _at_ (OEMRAM5+0x46);
 XBYTE	  Fan2RPM			       _at_ (OEMRAM5+0x47);
 
-
+XBYTE      PCHTEMP_Buff_1          _at_ (OEMRAM5+0x48);    
+XBYTE      PCHTEMP_Buff_2          _at_ (OEMRAM5+0x49);
+XBYTE      PCHTEMP_Buff_3          _at_ (OEMRAM5+0x4A);
 
 XBYTE	   Fan1On_Step1			   _at_ (OEMRAM5+0x50);
 XBYTE	   Fan1On_Step2 		   _at_ (OEMRAM5+0x51);

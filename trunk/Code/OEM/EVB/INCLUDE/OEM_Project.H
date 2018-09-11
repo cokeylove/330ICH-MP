@@ -198,6 +198,7 @@
 #define turboboostandstorage	TRUE    //storage mode action with support turbo boost charger
 #define WorkaroundHangBios      TRUE    //ANGELAS094:Add workaround for hang bios.
 #define chPWSW1WDT              TRUE    //Y7JERRY085:Add CMD for press power button 4s don't shutdown when flash bios.
+#define GetPCHTempSupport      TRUE
 
 #define KBDEBUG        FALSE  //ANGELAG057: add
 

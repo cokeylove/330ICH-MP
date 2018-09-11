@@ -1246,15 +1246,17 @@ extern XBYTE ERR_THMSTS;				// _at_ OEMRAM5 + 0x39;
 #define	b1VGATempEr			BIT1		// VGA read temperature error.
 #define	b2EXTVGATempEr		BIT2		// External VGA read temperature error.
 #define	b3PECITempEr		BIT3		// CPU read temperature error.
+#define	b4PCHTempEr		    BIT4		// PCH read temperature error
 
 extern XBYTE TMErrCnt;					//_at_ OEMRAM5 + 0x3A;
 extern XBYTE VGAErrCnt;					//_at_ OEMRAM5 + 0x3B;
 extern XBYTE EXTVGAErrCnt;				//_at_ OEMRAM5 + 0x3C;
 extern XBYTE TmlICStep;					//_at_ OEMRAM5 + 0x3D;
-extern XBYTE vgaok;					//_at_ OEMRAM5 + 0x3E;
+extern XBYTE vgaok;					    //_at_ OEMRAM5 + 0x3E;
+extern XBYTE PCHErrCnt;                 //_at_ OEMRAM5 + 0x3F;
 
-extern XWORD cWriteCurrentPL1;			//_at_ OEMRAMC + 0x40;
-extern XWORD cWriteCurrentPL2;			//_at_ OEMRAMC + 0x42;
+extern XWORD cWriteCurrentPL1;			//_at_ OEMRAM5 + 0x40;
+extern XWORD cWriteCurrentPL2;			//_at_ OEMRAM5 + 0x42;
 
 extern XBYTE    USB_Delay;              //_at_ OEMRAM5 + 0x44; 
 
@@ -1262,6 +1264,9 @@ extern XBYTE    USB_Delay;              //_at_ OEMRAM5 + 0x44;
 extern XBYTE	  Fan1RPM;			       //_at_ (OEMRAM5+0x46);
 extern XBYTE	  Fan2RPM;			       //_at_ (OEMRAM5+0x47);
 
+extern XBYTE      PCHTEMP_Buff_1;          //_at_ (OEMRAM5+0x48);    
+extern XBYTE      PCHTEMP_Buff_2;          //_at_ (OEMRAM5+0x49);
+extern XBYTE      PCHTEMP_Buff_3;          //_at_ (OEMRAM5+0x4A); 
 
 extern XBYTE      Fan1On_Step1;   		    //_at_ (OEMRAM5+0x50)
 extern XBYTE      Fan1On_Step2; 		    //_at_ (OEMRAM5+0x51)
@@ -1711,6 +1716,7 @@ extern XBYTE Fan_Debug_Temp;					//_at_ OEMRAMB + 0x07;
 #define b0CPU_Temp 			BIT0				// CPU Temperature.
 #define b1VGA_Temp 			BIT1				// VGA Temperature.
 #define b2EXTVGA_Temp 		BIT2				// SLI VGA Temperature.
+#define b3PCH_Temp 			BIT3				// PCH Temperature.
 
 extern XBYTE VGA_TBuff1;						//_at_ OEMRAMB + 0x08;
 extern XBYTE VGA_TBuff2;						//_at_ OEMRAMB + 0x09;

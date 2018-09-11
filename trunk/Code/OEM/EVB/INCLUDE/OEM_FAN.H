@@ -53,6 +53,7 @@ typedef struct CPUTHRstruct
 #define VRAM_Temp			0x01    // Thermal IC EXT 1 Temperature Data register.
 #define TmlIC_Rate			0x04    // Thermal IC Conversion Rate register.
 #define SSD_Temp			0x23    // Thermal IC EXT 2 Temperature Data register.
+#define PCH_Temp            0x24    
 
 extern void ThmIC_Temperature(void);
 extern void Oem_Thermal_Control(void);
@@ -192,6 +193,7 @@ extern void Fan_Init(void);
 extern void ThrottlingControl(void);
 extern void GPUThrottlingControl(void); //MEILING033:add.
 extern void FAN_Dust_Mode(void);
+extern void ReadPCHTemp(void);
 //ANGELAG031: remove start
 //ANGELAG022: add start
 //==============================

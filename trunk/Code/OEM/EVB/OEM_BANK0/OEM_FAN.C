@@ -2174,5 +2174,66 @@ void Chk_FAN_RPM_Control(void)
 }
 
 
+/*
+*******************************************************************************
+* Function name: ReadPCHTemp
+*
+* Descriptoin: 
+           Read PCH temperature. 
+*          This is invoked when Hook_Timer1SecEventB.
+*
+* Arguments:
+*       none
+* Return Values:
+*       none 
+*******************************************************************************
+*/
+void ReadPCHTemp(void) 
+{
+	BYTE BsData;
+	if( SystemNotS0 && (PwrOnDly5Sec==0)) 
+		{ return; }
+
+	if(!bRWSMBus(SMbusChD, SMbusRB, PCH_Temp, 0x01, &BsData, 0))
+	{
+		PCHErrCnt++;  
+		if( IS_MASK_CLEAR(ERR_THMSTS, b4PCHTempEr) ) 
+		{
+			if ( PCHErrCnt > 3 )    
+			{
+				SET_MASK(ERR_THMSTS, b4PCHTempEr); 
+			}
+		}
+		else
+		{
+			if ( PCHErrCnt > 34 )   
+			{
+/*
+				SET_MASK(SysStatus,ERR_ShuntDownFlag);
+				ProcessSID(CPUCOMMFAIL_ID);  
+				PCHErrCnt = 0;      
+#if !EN_ThermalSensorTest
+				ETWCFG=EWDKEYEN;			 // enable external WDT key
+				EWDKEYR=0xFF;			// external WDT reset	
+				while(1);						   // Wait for watch dog time-out
+#endif  // EN_PwrSeqTest       */
+			}  
+		}
+		ResetSMBus(SMbusChD);
+	}
+	else
+	{
+		nNBTemp = BsData;   // Get PCH temperature.
+		PCHErrCnt = 0;   // Clear error count.
+		CLEAR_MASK(ERR_THMSTS, b4PCHTempEr); // Clear bit3 PCH read temperature error.
+		if ( IS_MASK_CLEAR(Fan_Debug_Temp,b3PCH_Temp) )  // Debug PCH Temperature, Engineer myself control.
+		{
+			PCHTEMP_Buff_3 = PCHTEMP_Buff_2;
+			PCHTEMP_Buff_2 = PCHTEMP_Buff_1;
+			PCHTEMP_Buff_1 = nNBTemp;
+			PCHTEMP_Buff_3 = (PCHTEMP_Buff_1 + PCHTEMP_Buff_2 + PCHTEMP_Buff_3)/3;  // PCH average temperature.
+		}
+	} 
+}
 
 

@@ -741,6 +741,10 @@ void Hook_Timer1SecEventB(void)
  	} 		
 	//ANGELAS033:Add end
 
+#if GetPCHTempSupport
+	ReadPCHTemp();
+#endif	
+
 }
 
 //------------------------------------------------------------
