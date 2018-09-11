@@ -1369,12 +1369,12 @@ void psys_throttle() //COKEYXU008: modify as chkpsys
 		{
 			if (nBattGasgauge > 25)
 			{
-				if (Psys_AvgData >= 546) //COKEYXU003:Modify to 80W(1.6V)
+				if (Psys_AvgData >= 648) //COKEYXU003:Modify to 80W(1.6V)//change to 95W(1.9V)
 				{
 					SET_MASK(GPU_Prochot, b1_Psys);
 					SET_MASK(Thro_Status2, b7ProCH_Psys);
 				}
-				else if ((Psys_AvgData >= 409) && (Psys_AvgData < 546))//COKEYXU014:60~80W, cancel prochot, and NV SKU set D2
+				else if ((Psys_AvgData >= 409) && (Psys_AvgData < 648))//COKEYXU014:60~80W, cancel prochot, and NV SKU set D2 //change to 95W(1.9V)
 				{
 					cGPUBattPsysThrottling = 1; //only for NV//COKEYXU014:change to D2.
 					CLR_MASK(GPU_Prochot, b1_Psys);
