@@ -100,6 +100,7 @@ void Hook_Timer10msEventA(void)
 	ScanADCFixChannel();
 	CPUProchotCtrl(); ////ANGELAG028: add.  
 	GPUProchotOnControl();  //ANGELAG028:add.
+	GPUATLTempCONTROL();    //COKEYXU034:add
 	//H2RAMprocess();
 	TPInfor_ToVPC(); //ANGELAG008: add
 	Backlight_Control();
@@ -1201,6 +1202,32 @@ void ACOutProchotRelease(void)
 	//MEILING042:E- remove.
 }
 //MEILING039:E+.
+
+//COKEYXU034:add S+
+void GPUATLTempCONTROL(void)
+{
+	if(SystemIsS0)
+	{
+		if(IS_MASK_CLEAR(Adapter90WWA,b2_GPU_ATL_SET))
+		{
+			if(IS_MASK_SET(Adapter90WWA,b0_GPU_ATL_60))
+			{
+				ECSMI_SCIEvent(GPUATLTemp60);
+				SET_MASK(Adapter90WWA, b2_GPU_ATL_SET);
+				
+			}
+		}
+		else
+		{
+			if(IS_MASK_CLEAR(Adapter90WWA,b0_GPU_ATL_60))
+			{
+				ECSMI_SCIEvent(GPUATLTemp66);
+				CLEAR_MASK(Adapter90WWA, b2_GPU_ATL_SET);				
+			}
+		}
+	}
+}
+//COKEYXU034:add E+
 
 //MEILING042:S+ add GPU prochot on after D5 3S.
 void GPUProchotOnControl(void)

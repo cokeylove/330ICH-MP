@@ -37,5 +37,6 @@ extern bit CheckDebugMode(void);
 extern void Workaround_For_HangBios(void);//ANGELAS094:Add workaround for hang bios.
 extern void ACOutProchotRelease(void); //MEILING039:add.
 extern void GPUProchotOnControl(void); //MEILING042:add.
+extern void GPUATLTempCONTROL(void); //COKEYXU034:add.
 extern void CPUThrottlingDelay(void); //MEILING052:add.
 #endif

@@ -26,7 +26,16 @@
 
 #define ECprochot_88W         600            //COKEYXU005:ADD //88W, 1.75V
 
+#define ECprochot_86W         587            //COKEYXU027:ADD //84W, 1.72V
+
+
+#define ECprochot_84W         573            //COKEYXU027:ADD //84W, 1.68V
+
+
 #define ECprochot_82W         560            //COKEYXU027:ADD //82W, 1.64V
+
+#define ECprochot_80W         546            //COKEYXU027:ADD //80W, 1.60V
+
 
 #define ECprochot_78W         532            //COKEYXU027:ADD //78W, 1.56V
 

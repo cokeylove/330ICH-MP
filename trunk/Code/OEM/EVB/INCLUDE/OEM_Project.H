@@ -150,7 +150,8 @@
  #define DTS_READ_CPU_TEMP      0x50
 
 #define WLANBTFOROSD         	0x42   	// Add sent Qevent 0x42 for WLAN&BT on/off under win7.
-
+#define GPUATLTemp60            0x43    //Add sent Qevent 0x43 for BIOS to set GPU ATL temp to 60.
+#define GPUATLTemp66            0x45    //Add sent Qevent 0x45 for BIOS to set GPU ATL temp to 66.
 
 //Q60	SDV	Wireless switch event
 //Q2C	SDV	Any event in S0_ISCT to announce BIOS set S0_ISCT status to be "0"

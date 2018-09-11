@@ -1520,7 +1520,9 @@ extern XBYTE    GPU_Prochot;   	//_at_ OEMRAM5+0xCB; ///ANGELAG020: add
 extern XBITS_8	cGPUThrottlingSet;  	//_at_ OEMRAM5+0xCC; //JERRYCH00:Modify the fan control from linear to the ladder.
 
 extern XBYTE    Adapter90WWA;   	//_at_ OEMRAM5+0xCD; //COKEYXU030: add
+#define b0_GPU_ATL_60 BIT0                //COKEYXU034: add
 #define b1_DisCPUturbo BIT1   //COKEYXU030: add
+#define b2_GPU_ATL_SET BIT2  //COKEYXU034: add
 
 extern XBYTE ManualFan2PRM;						//_at_ OEMRAM5 + 0xFA;//JERRYCH00:Modify the fan control from linear to the ladder.
 //ANGELAG031: remove end

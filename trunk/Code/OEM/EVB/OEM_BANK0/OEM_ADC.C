@@ -303,7 +303,17 @@ void ScanADCDyChannel1(void)
 				{
 					CLEAR_MASK(Adapter90WWA,b1_DisCPUturbo);
 				}
+				
+				if(ADPI_AvgData>ECprochot_84W)   
+				{
+					SET_MASK(Adapter90WWA,b0_GPU_ATL_60);
+				}
+				else if(ADPI_AvgData<ECprochot_82W)
+				{
+					CLEAR_MASK(Adapter90WWA,b0_GPU_ATL_60);
+				}
 			}	
+			
 		}
 		//ANGELAG046: add end
 		
