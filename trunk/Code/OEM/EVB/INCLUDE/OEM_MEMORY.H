@@ -511,6 +511,7 @@ extern XBYTE pPROCHOT;						//_at_ OEMRAM2+0x0C;
 #define b1ISCT_PROCHOTon		BIT1
 extern XBYTE	pProject4;				//at_(OEMRAM2+0x0D)//Y7JERRY085:Add CMD for press power button 4s don't shutdown when flash bios.
 #define  pPWSWdisable      BIT0         //Y7JERRY085:Add CMD for press power button 4s don't shutdown when flash bios
+#define  b1WinAndXpress    BIT1
 
 extern XBYTE SMartNoise;					//_at_ OEMRAM2+0x11;
 #define	b0FanCleanOn			BIT0
@@ -1290,6 +1291,7 @@ extern  BYTE  pDevStatus3; 			//_at_ OEMRAM5 + 0x60;
 #define b6EnDisTPSend       BIT6           
 #define b7TPStateFormer     BIT7           
 extern XWORD   DisCPUTurboFor90s;               //_at_(OEMRAM5+0x6A);   //COKEYXU029:add
+extern XBYTE   CountOfWinAndX;               //_at_(OEMRAM5+0x6B);
 
 //ANGELAG008: ADD END
 extern XBYTE MaxCPU_MCHTemp;			//_at_ OEMRAM5+0x6C

@@ -296,6 +296,10 @@ void PSWPressed(void)
 			//	ECQEvent(ACPI_PWRBTN_SCI); //ANGELAG044: remove //ANGELAG039: add
 				PM_PWRBTN_LOW();
 	        }
+        e0_prefix_code(0x1F,MAKE_EVENT);
+		simple_code(0x22,MAKE_EVENT);
+		SET_MASK(pProject4, b1WinAndXpress);
+		F_Service_SEND = 1;
 		break;
 
     default :

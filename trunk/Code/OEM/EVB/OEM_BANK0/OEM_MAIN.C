@@ -414,7 +414,23 @@ void Hook_Timer100msEventA(void)
     	cmosdelay1++;
 	}
 
-	//MARTINH154 add end
+	if(IS_MASK_SET(pProject4, b1WinAndXpress))
+	{
+	    if(CountOfWinAndX != 0)
+	    {
+            CountOfWinAndX--;
+	    }
+	    else
+	    {
+            CLEAR_MASK(pProject4, b1WinAndXpress);
+            e0_prefix_code(0x1F,BREAK_EVENT);
+    		simple_code(0x22,BREAK_EVENT);
+            simple_code(0x3C,MAKE_EVENT);
+            simple_code(0x3C,BREAK_EVENT);
+            F_Service_SEND = 1;
+        }
+        
+	}
 }
 
 //------------------------------------------------------------

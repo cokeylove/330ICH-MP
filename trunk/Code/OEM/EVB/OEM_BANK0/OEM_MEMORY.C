@@ -769,6 +769,7 @@ XBYTE	   Fan2On_Step8 		   _at_ (OEMRAM5+0x5F);
 
 XBYTE  pDevStatus3 				_at_ (OEMRAM5 + 0x60); //ANGELAG008: add 
 XWORD   DisCPUTurboFor90s                   _at_(OEMRAM5+0x6A);   //COKEYXU029:add
+XBYTE   CountOfWinAndX          _at_(OEMRAM5+0x6B);
 
 XBYTE	MaxCPU_MCHTemp				_at_(OEMRAM5+0x6C);
 // Reserve 0x056D~057F

@@ -134,7 +134,8 @@ void OEM_LPC_Reset(void)
 	CLEAR_MASK(pDevStatus1,b7DisableTP);
 //ANGELAG008: add end
 	//GPU_Prochot = 0; //ANGELAG033: remove //ANGELAG028: add
-	DisCPUTurboFor90s=90;                         //COKEYXU029:add
+	DisCPUTurboFor90s = 90;                         //COKEYXU029:add
+	CountOfWinAndX = 5;
 	CLR_MASK(uVGATurboFun, uDisCPUTurboOK);	     //COKEYXU029: add
 }
 
