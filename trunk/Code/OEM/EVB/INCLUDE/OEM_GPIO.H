@@ -28,6 +28,8 @@
 //                   [11] LPCRST# is dsiabled
 #define GCR_Init		0x06    //
 #define GCR2_Init		0x20	// Turn on SMBus4 function.
+#define GCR9_Init		0x08	// For 8s reset test
+
 
 #define GCR10_Init      0x01 	//ANGELAS014: Modify EC reset time to 8s. 00 to 01
 #define GPOTA_Init      0x00    // none openDrain
@@ -435,14 +437,14 @@
 //-----------------------------------------------------------------
 // GPIO Port I Registers define
 //-----------------------------------------------------------------
-#define PortI_Init		0x00            // PORT Data
+#define PortI_Init		0x20            // PORT Data  //for 8s reset test
 
 #define PortI0_Ctrl		INPUT         //A    	66 	NTC_V1
 #define PortI1_Ctrl		INPUT	      //A    	67 	NTC_V2(G_Skylake)
 #define PortI2_Ctrl		INPUT		  //A    	68   ADD battery detect
 #define PortI3_Ctrl		INPUT	      //O    	69 	SD_PWR_EN#(G_Skylake) 1.2V
 #define PortI4_Ctrl		OUTPUT        //O  	    70 	VR_ON
-#define PortI5_Ctrl		INPUT	      //A   	71 	ADP_I
+#define PortI5_Ctrl		OUTPUT        //A   	71 	//for 8s reset test
 #define PortI6_Ctrl		INPUT		  //I  	    72 	ADAPTER_ID_R  ADC
 #define PortI7_Ctrl		INPUT		  //I   	73 	Test Point(BG_Skylake)
 

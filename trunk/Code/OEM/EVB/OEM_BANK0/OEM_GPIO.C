@@ -17,6 +17,7 @@ const sInitGPIOReg code asInitGPIOReg[] =
 {
  	{ &GCR,		GCR_Init		},	//
  	{ &GCR2,	GCR2_Init		},	//
+ 	{ &GCR9,	GCR9_Init		},	//For 8s reset test
  	{ &GCR10,	GCR10_Init		},
  	
  	{ &GPOTD,	GPOTD_Init		}, //BROOKEW005: start configure GPIO 1.8V and Open drain
