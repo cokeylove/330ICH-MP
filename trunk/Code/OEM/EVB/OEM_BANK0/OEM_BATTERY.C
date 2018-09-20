@@ -2856,7 +2856,7 @@ void Battery_Expresscharge(void)
 		if(IS_MASK_SET(BatSmartChargeL,b1QuickChargeEnable))
 		{
     		CLEAR_MASK(BatSmartChargeL,b1QuickChargeEnable);
-   			if(bRWSMBus(SMbusChB,SMbusWW,SmBat_Addr,BatSmartChargeL,&Bat0x3ETempL,SMBus_NeedPEC))
+   			if(bRWSMBus(SMbusChB,SMbusWW,SmBat_Addr,C_LVMfgFun2,&BatSmartChargeL,SMBus_NeedPEC))
 	 		{
 	 			RamDebug(0xD2);
 				RamDebug(BatSmartChargeL);
