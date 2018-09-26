@@ -98,8 +98,8 @@ void Hook_Timer10msEventA(void)
 	*/     
 	// end for save P80 code to setup. 
 	ScanADCFixChannel();
-	CPUProchotCtrl(); ////ANGELAG028: add.  
-	GPUProchotOnControl();  //ANGELAG028:add.
+	//CPUProchotCtrl(); ////ANGELAG028: add.  
+	//GPUProchotOnControl();  //ANGELAG028:add.
 	//H2RAMprocess();
 	TPInfor_ToVPC(); //ANGELAG008: add
 	Backlight_Control();
@@ -451,8 +451,8 @@ void Hook_Timer100msEventC(void)
 {
 #if !EN_PwrSeqTest
 	//Oem_Fan_Speed();//JERRYCH00:Modify the fan control from linear to the ladder.
-    ThrottlingControl(); 
-	GPUThrottlingControl(); //MEILING033:add.
+    //ThrottlingControl(); 
+	//GPUThrottlingControl(); //MEILING033:add.
 	//CPUProchotCtrl(); //ANGELAG028: remove //MEILING033:add.  
 	//GPUProchotOnControl();  //ANGELAG028: remove //MEILING055:add.
 	Battery100ms();

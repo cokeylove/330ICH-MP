@@ -130,7 +130,7 @@ void AdapterOut(void)
 	//cBATTThrottling = 0x0F;
 	//cBATTThrottling = PSTATE_MAXStep;//0ptimize CPU P_state (change 16 step to 8 step).  //MEILING048:remove.//MEILING051:-Add cpu P_STATE function.
 	//Mos: Send QEvent to Bios
-	ThrottlingControl(); 
+//	ThrottlingControl(); 
 
    	if( SystemIsS0 )
 	{
