@@ -953,9 +953,9 @@ void Hook_IRQ_INT106_WKO101(void)
 	//MEILING039:S+ add interrupt to push CPU prochot when AC out.
 	if(SystemIsS0)
 	{
-		H_PROCHOT_ON();
-		GPU_PROCHOT_OUTPUT;
-		GPU_PROCHOT_ON();
+		//H_PROCHOT_ON();
+		//GPU_PROCHOT_OUTPUT;
+		//GPU_PROCHOT_ON();
 		CPUProchotONCnt = 15; //MEILING054:change 2 to 1.  //MEILING055:change 1 to 15(CPU prochot on 1.5S).
 		
 		//MEILING055:S+.
